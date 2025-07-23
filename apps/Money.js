@@ -1,46 +1,46 @@
-import plugin from '../../../lib/plugins/plugin.js';
-import DeltaForceAPI from '../components/Code.js';
+import plugin from '../../../lib/plugins/plugin.js'
+import utils from '../utils/utils.js'
+import Code from '../components/Code.js'
 
-export class DeltaForceMoney extends plugin {
-    constructor() {
+export class Money extends plugin {
+    constructor (e) {
         super({
-            name: '三角洲行动-货币信息',
+            name: '三角洲货币',
+            dsc: '查询游戏内货币信息',
             event: 'message',
-            priority: 1009,
+            priority: 100,
             rule: [
                 {
-                    reg: '^(#三角洲|\^)(货币|余额)$',
+                    reg: '^(#三角洲|\\^)(货币|money|余额)$',
                     fnc: 'getMoney'
                 }
             ]
-        });
+        })
+        this.e = e
+        this.api = new Code(e)
     }
 
-    async getMoney(e) {
-        // 获取 frameworkToken
-        let raw = await redis.get(`delta-force:token:${e.user_id}`);
-        let token = '';
-        if (raw) {
-            try {
-                const arr = JSON.parse(raw);
-                token = Array.isArray(arr) ? arr[0] : arr;
-            } catch {
-                token = raw;
-            }
+    async getMoney () {
+        const token = await utils.getAccount(this.e.user_id)
+        if (!token) {
+            return await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
         }
-        if (!token) return await e.reply('请先扫码登录或绑定 frameworkToken');
-        // 查询货币信息
-        const res = await DeltaForceAPI.get('/df/person/money', {
-            frameworkToken: token
-        });
-        if (!res || !res.success || !res.data) {
-            return await e.reply('获取货币信息失败，请稍后重试');
+
+        const res = await this.api.getMoney(token)
+
+        if (!res || !res.data) {
+            return await this.e.reply('获取货币信息失败，或API未返回有效数据。')
         }
-        // 渲染货币信息
-        let msg = `【三角洲行动-货币信息】\n`;
-        res.data.forEach(item => {
-            msg += `${item.objectName}: ${item.count}\n`;
-        });
-        await e.reply(msg.trim());
+
+        let msg = `【三角洲行动-货币信息】\n`
+        if (Array.isArray(res.data) && res.data.length > 0) {
+            res.data.forEach(item => {
+                msg += `${item.name}: ${item.totalMoney}\n`
+            })
+        } else {
+            msg += '未查询到任何货币信息。'
+        }
+        
+        await this.e.reply(msg.trim())
     }
 } 

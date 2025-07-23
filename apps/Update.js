@@ -15,12 +15,12 @@ let uping = false
 export class Update extends plugin {
   constructor() {
     super({
-      name: '鸣潮-更新插件',
+      name: '三角洲-更新插件',
       event: 'message',
       priority: 1009,
       rule: [
         {
-          reg: '^(～|~|鸣潮)((插件)?(强制)?更新| update)$',
+          reg: '^(#三角洲|\\^)((插件)?(强制)?更新|update)$',
           fnc: 'update'
         }
       ]
@@ -65,35 +65,36 @@ export class Update extends plugin {
    * @returns
    */
   async runUpdate(isForce) {
-    let command = `git -C ./plugins/waves-plugin/ pull`
+    const pluginName = 'delta-force-plugin'
+    let command = `git -C ./plugins/${pluginName}/ pull`
     if (isForce) {
-      command = `git -C ./plugins/waves-plugin/ reset --hard origin/main && ${command} --rebase`
+      command = `git -C ./plugins/${pluginName}/ reset --hard origin/main && ${command} --rebase`
       this.e.reply('正在执行强制更新操作，请稍等')
     } else {
       this.e.reply('正在执行更新操作，请稍等')
     }
     /** 获取上次提交的commitId，用于获取日志时判断新增的更新日志 */
-    this.oldCommitId = await this.getcommitId('waves-plugin')
+    this.oldCommitId = await this.getcommitId(pluginName)
     uping = true
     const ret = await this.execSync(command)
     uping = false
 
     if (ret.error) {
-      logger.mark(`${this.e.logFnc} 更新失败：waves-plugin`)
+      logger.mark(`${this.e.logFnc} 更新失败：${pluginName}`)
       this.gitErr(ret.error, ret.stdout)
       return false
     }
 
     /** 获取插件提交的最新时间 */
-    const time = await this.getTime('waves-plugin')
+    const time = await this.getTime(pluginName)
 
     if (/(Already up[ -]to[ -]date|已经是最新的)/.test(ret.stdout)) {
-      await this.reply(`waves-plugin已经是最新版本\n最后更新时间：${time}`)
+      await this.reply(`${pluginName}已经是最新版本\n最后更新时间：${time}`)
     } else {
-      await this.reply(`waves-plugin\n最后更新时间：${time}`)
+      await this.reply(`${pluginName}\n最后更新时间：${time}`)
       this.isUp = true
-      /** 获取waves-plugin的更新日志 */
-      const log = await this.getLog('waves-plugin')
+      /** 获取delta-force-plugin的更新日志 */
+      const log = await this.getLog(pluginName)
       await this.reply(log)
     }
 
@@ -103,7 +104,7 @@ export class Update extends plugin {
   }
 
   /**
-   * 获取waves-plugin的更新日志
+   * 获取delta-force-plugin的更新日志
    * @param {string} plugin 插件名称
    * @returns
    */
@@ -136,9 +137,9 @@ export class Update extends plugin {
 
     let end = ''
     end =
-      '更多详细信息，请前往github查看\nhttps://github.com/erzaozi/waves-plugin/commits/main'
+      '更多详细信息，请前往github查看\nhttps://github.com/dnyo/delta-force-plugin/commits/main'
 
-    log = await this.makeForwardMsg(`waves-plugin更新日志，共${line}条`, log, end)
+    log = await this.makeForwardMsg(`delta-force-plugin更新日志，共${line}条`, log, end)
 
     return log
   }
@@ -152,7 +153,7 @@ export class Update extends plugin {
     const cm = `git -C ./plugins/${plugin}/ rev-parse --short HEAD`
 
     let commitId = await execSync(cm, { encoding: 'utf-8' })
-    commitId = lodash.trim(commitId)
+    commitId = commitId.trim()
 
     return commitId
   }
@@ -168,7 +169,7 @@ export class Update extends plugin {
     let time = ''
     try {
       time = await execSync(cm, { encoding: 'utf-8' })
-      time = lodash.trim(time)
+      time = time.trim()
     } catch (error) {
       logger.error(error.toString())
       time = '获取时间失败'
@@ -221,7 +222,7 @@ export class Update extends plugin {
       return msg.join('\n')
     }
 
-    let dec = 'waves-plugin 更新日志'
+    let dec = 'delta-force-plugin 更新日志'
     /** 处理描述 */
     if (typeof (forwardMsg.data) === 'object') {
       let detail = forwardMsg.data?.meta?.detail

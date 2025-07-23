@@ -1,54 +1,61 @@
-import plugin from '../../../lib/plugins/plugin.js';
-import DeltaForceAPI from '../components/Code.js';
-import Render from '../components/Render.js';
-import utils from '../utils/utils.js';
+import plugin from '../../../lib/plugins/plugin.js'
+import utils from '../utils/utils.js'
+import Render from '../components/Render.js'
+import Code from '../components/Code.js'
 
-export class DeltaForceData extends plugin {
-    constructor() {
-        super({
-            name: '三角洲行动-数据',
-            event: 'message',
-            priority: 1009,
-            rule: [
-                {
-                    reg: '^(#三角洲|\\^)数据$',
-                    fnc: 'getUserData'
-                }
-            ]
-        });
+export class Data extends plugin {
+  constructor (e) {
+    super({
+      name: '三角洲数据',
+      dsc: '查询三角洲行动个人游戏数据',
+      event: 'message',
+      priority: 100,
+      rule: [
+        {
+          reg: '^(#三角洲|\\^)(数据|data)$',
+          fnc: 'getUserData'
+        }
+      ]
+    })
+    this.e = e
+    this.api = new Code(e)
+  }
+
+  async getUserData () {
+    const token = await utils.getAccount(this.e.user_id)
+    if (!token) {
+      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      return true
     }
 
-    async getUserData(e) {
-        const token = await utils.getAccount(e.user_id);
-        if (!token) {
-            return await e.reply('您尚未绑定 frameworkToken，请使用 #三角洲QQ登陆 或 #三角洲微信登陆 进行绑定。');
-        }
+    await this.e.reply('正在查询您的游戏数据，请稍候...')
 
-        const res = await DeltaForceAPI.get('/df/person/personalData', { frameworkToken: token });
+    const res = await this.api.getPersonalData(token)
 
-        if (!res || res.retcode !== 0 || !res.data) {
-            return await e.reply(`获取个人数据失败: ${res?.message || '未知错误'}`);
-        }
-
-        const data = res.data;
-
-        // Format durations
-        if (data.solDetail?.totalGameTime) {
-            data.solDetail.totalGameTime = utils.formatDuration(data.solDetail.totalGameTime, 'seconds');
-        }
-        if (data.mpDetail?.totalGameTime) {
-            data.mpDetail.totalGameTime = utils.formatDuration(data.mpDetail.totalGameTime, 'seconds');
-        }
-
-        const img = await Render.render('personalData/personalData', {
-            ...data,
-            // Pass any other necessary data for rendering
-        }, { e, retType: 'base64' });
-
-        if (img) {
-            await e.reply(segment.image(`base64://${img}`));
-        } else {
-            await e.reply('个人数据图片渲染失败，请联系管理员。');
-        }
+    if (!res || !res.data) {
+      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
+      return true
     }
+    
+    const data = res.data
+
+    // 数据处理
+    if (data.solDetail?.totalGameTime) {
+      data.solDetail.totalGameTime = utils.formatDuration(data.solDetail.totalGameTime, 'seconds')
+    }
+    if (data.mpDetail?.totalGameTime) {
+        data.mpDetail.totalGameTime = utils.formatDuration(data.mpDetail.totalGameTime, 'seconds')
+    }
+
+    const img = await Render.render('Template/personalData/personalData', {
+      ...data
+    }, { e: this.e, scale: 1.2 })
+
+    if (img) {
+      await this.e.reply(img)
+    } else {
+      await this.e.reply('生成游戏数据图片失败，请稍后重试。')
+    }
+    return true
+  }
 }

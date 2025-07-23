@@ -1,0 +1,33 @@
+{{extend defaultLayout}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}Template/record/record.css"/>
+{{/block}}
+
+{{block 'main'}}
+<div class="container">
+    <div class="header">
+        <div class="title">战绩记录</div>
+        <div class="sub-title">第 {{page}} 页</div>
+    </div>
+
+    <div class="record-list">
+        {{if data && data.length > 0}}
+            {{each data item}}
+            <div class="record-item">
+                <p><strong>模式:</strong> {{item.matchType === 4 ? '烽火地带' : '全面战场'}}</p>
+                <p><strong>时间:</strong> {{item.gameTime}}</p>
+                <p><strong>结果:</strong> {{item.isWin ? '胜利' : '失败'}}</p>
+                <p><strong>KDA:</strong> {{item.killNum}} / {{item.deadNum}} / {{item.assistNum}}</p>
+            </div>
+            {{/each}}
+        {{else}}
+            <div class="no-data">当前页面无战绩记录</div>
+        {{/if}}
+    </div>
+
+    <div class="footer">
+        由 DeltaForce-Plugin-Yunzai 强力驱动
+    </div>
+</div>
+{{/block}} 

@@ -1,0 +1,132 @@
+body {
+    background-color: #1a1a1a;
+    color: #F2F2F2;
+    font-family: "Microsoft YaHei", Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 25px;
+    border-bottom: 2px solid #0FF796;
+    padding-bottom: 15px;
+}
+
+.title {
+    font-size: 32px;
+    font-weight: bold;
+    color: #0FF796;
+    text-shadow: 0 0 8px #0FF796;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 18px;
+    color: #ccc;
+    margin-top: 5px;
+}
+
+.no-data {
+    text-align: center;
+    font-size: 20px;
+    padding: 50px;
+    color: #888;
+}
+
+.record-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.record-card {
+    background-color: #2c2c2c;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+    border-left: 5px solid #444;
+    transition: all 0.3s ease;
+}
+
+.record-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: rgba(255, 255, 255, 0.05);
+    font-size: 16px;
+}
+
+.record-index {
+    font-weight: bold;
+    color: #0FF796;
+    margin-right: 15px;
+    font-size: 18px;
+}
+
+.record-time {
+    color: #ccc;
+}
+
+.record-status {
+    margin-left: auto;
+    font-weight: bold;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+}
+
+.record-status.success {
+    background-color: rgba(15, 247, 150, 0.2);
+    color: #0FF796;
+}
+
+.record-status.fail {
+    background-color: rgba(255, 82, 82, 0.2);
+    color: #ff5252;
+}
+.record-status.exit {
+    background-color: rgba(255, 180, 0, 0.2);
+    color: #ffb400;
+}
+
+.card-body {
+    padding: 15px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 15px;
+}
+
+.stat-item {
+    font-size: 16px;
+}
+
+.stat-item strong {
+    color: #aaa;
+    margin-right: 8px;
+}
+
+.stat-item span {
+    color: #F2F2F2;
+    font-weight: bold;
+}
+
+.stat-item span.kda {
+    color: #0FF796;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #666;
+    font-size: 14px;
+} 

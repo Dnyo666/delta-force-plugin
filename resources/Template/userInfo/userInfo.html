@@ -1,57 +1,44 @@
-{{extend '../common/layout/default.html'}}
+{{extend defaultLayout}}
 
 {{block 'css'}}
-<link rel="stylesheet" type="text/css" href="{{_res_path}}/Template/userInfo/userInfo.css"/>
+<link rel="stylesheet" type="text/css" href="{{_res_path}}Template/userInfo/userInfo.css"/>
 {{/block}}
 
 {{block 'main'}}
 <div class="container">
     <div class="header">
+        {{if userData && roleInfo}}
         <img class="avatar" src="{{userData.picurl}}" alt="avatar" />
         <div class="user-info">
             <div class="username">{{roleInfo.charac_name}}</div>
             <div class="level">Lv. {{roleInfo.level}}</div>
             <div class="uid">UID: {{roleInfo.uid}}</div>
         </div>
+        {{/if}}
     </div>
 
-    <div class="card-grid">
-        <div class="card">
-            <div class="card-title">基础信息</div>
-            <div class="card-content">
-                <p><strong>账号名:</strong> {{userData.charac_name}}</p>
-                <p><strong>仓库总值:</strong> {{roleInfo.propcapital}}</p>
-                <p><strong>哈夫币:</strong> {{roleInfo.hafcoinnum}}</p>
-                <p><strong>三角币:</strong> {{roleInfo.trianglecoinnum}}</p>
-                <p><strong>注册时间:</strong> {{new Date(roleInfo.register_time * 1000).toLocaleString()}}</p>
-            </div>
+    {{if careerData}}
+    <div class="stats-grid">
+        <div class="stat-card">
+            <h3>烽火地带</h3>
+            <p><strong>排位分:</strong> <span>{{careerData.rankpoint || '-'}}</span></p>
+            <p><strong>总对局:</strong> <span>{{careerData.soltotalfght || '-'}}</span></p>
+            <p><strong>总撤离:</strong> <span>{{careerData.solttotalescape || '-'}}</span></p>
+            <p><strong>撤离率:</strong> <span>{{careerData.solescaperatio || '-'}}</span></p>
+            <p><strong>总击杀:</strong> <span>{{careerData.soltotalkill || '-'}}</span></p>
+            <p><strong>游戏时长:</strong> <span>{{careerData.solduration || '-'}}</span></p>
         </div>
-
-        <div class="card">
-            <div class="card-title">全面战场</div>
-            <div class="card-content">
-                <p><strong>排位分:</strong> {{careerData.tdmrankpoint}}</p>
-                <p><strong>等级:</strong> {{roleInfo.tdmlevel}} ({{roleInfo.tdmexp}} XP)</p>
-                <p><strong>总对局:</strong> {{careerData.tdmtotalfight}}</p>
-                <p><strong>胜率:</strong> {{careerData.tdmsuccessratio}}%</p>
-                <p><strong>总击杀:</strong> {{careerData.tdmtotalkill}}</p>
-                <p><strong>分均击杀:</strong> {{careerData.avgkillperminute}}</p>
-                <p><strong>游戏时长:</strong> {{careerData.tdmduration}}</p>
-            </div>
-        </div>
-        
-        <div class="card">
-            <div class="card-title">烽火地带</div>
-            <div class="card-content">
-                <p><strong>排位分:</strong> {{careerData.rankpoint}}</p>
-                <p><strong>总对局:</strong> {{careerData.soltotalfght}}</p>
-                <p><strong>总撤离:</strong> {{careerData.solttotalescape}}</p>
-                <p><strong>撤离率:</strong> {{careerData.solescaperatio}}%</p>
-                <p><strong>总击杀:</strong> {{careerData.soltotalkill}}</p>
-                <p><strong>游戏时长:</strong> {{roleInfo.solduration}}</p>
-            </div>
+        <div class="stat-card">
+            <h3>全面战场</h3>
+            <p><strong>排位分:</strong> <span>{{careerData.tdmrankpoint || '-'}}</span></p>
+            <p><strong>总对局:</strong> <span>{{careerData.tdmtotalfight || '-'}}</span></p>
+            <p><strong>总胜场:</strong> <span>{{careerData.totalwin || '-'}}</span></p>
+            <p><strong>胜率:</strong> <span>{{careerData.tdmsuccessratio || '-'}}</span></p>
+            <p><strong>总击杀:</strong> <span>{{careerData.tdmtotalkill || '-'}}</span></p>
+            <p><strong>游戏时长:</strong> <span>{{careerData.tdmduration || '-'}}</span></p>
         </div>
     </div>
+    {{/if}}
     <div class="footer">
         由 DeltaForce-Plugin-Yunzai 强力驱动
     </div>

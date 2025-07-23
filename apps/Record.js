@@ -1,67 +1,88 @@
-import plugin from '../../../lib/plugins/plugin.js';
-import DeltaForceAPI from '../components/Code.js';
+import plugin from '../../../lib/plugins/plugin.js'
+import utils from '../utils/utils.js'
+import Code from '../components/Code.js'
+import Render from '../components/Render.js'
 
-const modeMap = {
-    '烽火': 4, '烽火地带': 4, 'sol': 4, '4': 4,
-    '战场': 5, '全面战场': 5, 'mp': 5, '5': 5
-};
+export class Record extends plugin {
+  constructor (e) {
+    super({
+      name: '三角洲战绩',
+      dsc: '查询三角洲行动历史战绩',
+      event: 'message',
+      priority: 100,
+      rule: [
+        {
+          reg: '^(#三角洲|\\^)(战绩|record)\\s*(烽火|战场|烽火地带|全面战场|sol|mp|\\d+)?\\s*(\\d+)?$',
+          fnc: 'getRecord'
+        }
+      ]
+    })
+    this.e = e
+    this.api = new Code(e)
+  }
 
-export class DeltaForceRecord extends plugin {
-    constructor() {
-        super({
-            name: '三角洲行动-战绩记录',
-            event: 'message',
-            priority: 1009,
-            rule: [
-                {
-                    reg: '^(#三角洲|\^)战绩(?: (烽火|烽火地带|sol|4|战场|全面战场|mp|5))?(?: (\\d+))?$',
-                    fnc: 'getRecord'
-                }
-            ]
-        });
+  async getRecord () {
+    const token = await utils.getAccount(this.e.user_id)
+    if (!token) {
+      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      return true
+    }
+    
+    // 解析参数
+    const { mode, page } = this.parseRecordParams()
+
+    await this.e.reply(`正在查询【${mode === 4 ? '烽火地带' : '全面战场'}】第 ${page} 页的战绩...`)
+
+    const res = await this.api.getRecord(token, mode, page)
+    
+    if (!res || !res.data) {
+      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确或该页无记录'}`)
+      return true
+    }
+    
+    // 传递给模板的数据
+    const renderData = {
+        data: res.data,
+        mode: mode,
+        page: page,
+        utils: utils // 将 utils 传入以便在模板中调用
     }
 
-    async getRecord(e) {
-        // 解析参数
-        const [, , modeStr, pageStr] = e.msg.match(this.rule[0].reg);
-        const mode = modeStr ? modeMap[modeStr] : 4; // 默认烽火地带
-        const page = pageStr ? parseInt(pageStr, 10) : 1;
-        // 获取 frameworkToken
-        let raw = await redis.get(`delta-force:token:${e.user_id}`);
-        let token = '';
-        if (raw) {
-            try {
-                const arr = JSON.parse(raw);
-                token = Array.isArray(arr) ? arr[0] : arr;
-            } catch {
-                token = raw;
-            }
-        }
-        if (!token) return await e.reply('请先扫码登录或绑定 frameworkToken');
-        // 查询战绩
-        const res = await DeltaForceAPI.get('/df/person/record', {
-            frameworkToken: token,
-            type: mode,
-            page: page
-        });
-        if (!res || !res.success || !res.data || !res.data.length) {
-            return await e.reply('获取战绩失败，或当前页无记录');
-        }
-        // 渲染战绩
-        let msg = `【三角洲行动-战绩记录】\n模式：${mode === 4 ? '烽火地带' : '全面战场'} | 第 ${page} 页\n\n`;
-        if (mode === 4) { // 烽火地带
-            res.data.forEach((r, i) => {
-                msg += `[${i + 1}] 地图: ${r.MapId} | 时间: ${r.dtEventTime}\n`;
-                msg += `  状态: ${r.EscapeFailReason === 1 ? '成功撤离' : '撤离失败'} | 带出价值: ${r.FinalPrice}\n`;
-                msg += `  击败干员: ${r.KillCount} | 击杀AI: ${r.KillAICount}\n\n`;
-            });
-        } else { // 全面战场
-            res.data.forEach((r, i) => {
-                msg += `[${i + 1}] 地图: ${r.MapID} | 时间: ${r.dtEventTime}\n`;
-                msg += `  结果: ${r.MatchResult === 1 ? '胜利' : '失败'} | 得分: ${r.TotalScore}\n`;
-                msg += `  KDA: ${r.KillNum}/${r.Death}/${r.Assist}\n\n`;
-            });
-        }
-        await e.reply(msg.trim());
+    const img = await Render.render('Template/record/record', renderData, { e: this.e, scale: 1.2 })
+
+    if (img) {
+      await this.e.reply(img)
+    } else {
+      await this.e.reply('生成战绩图片失败，请稍后重试。')
     }
+    return true
+  }
+
+  parseRecordParams () {
+    const match = this.e.msg.match(/(烽火|战场|烽火地带|全面战场|sol|mp|\d+)?\s*(\d+)?$/)
+    const modeMap = {
+      '烽火': 4, '烽火地带': 4, 'sol': 4,
+      '战场': 5, '全面战场': 5, 'mp': 5
+    }
+
+    let mode = 4 // 默认烽火地带
+    let page = 1
+
+    if (!match) return { mode, page }
+
+    let [, arg1, arg2] = match
+
+    if (arg1) {
+      if (modeMap[arg1]) { // #战绩 <模式> <页码?>
+        mode = modeMap[arg1]
+        if (arg2 && !isNaN(arg2)) {
+          page = parseInt(arg2)
+        }
+      } else if (!isNaN(arg1)) { // #战绩 <页码>
+        page = parseInt(arg1)
+      }
+    }
+    
+    return { mode, page }
+  }
 } 

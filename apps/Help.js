@@ -47,14 +47,15 @@ export class Help extends plugin {
                     { "icon": 50, "title": "#三角洲数据", "desc": "查询个人统计数据" },
                     { "icon": 60, "title": "#三角洲战绩 [模式]", "desc": "查询战绩，模式可选" },
                     { "icon": 64, "title": "#三角洲货币", "desc": "查询各类货币信息" },
-                    { "icon": 90, "title": "#三角洲海报", "desc": "生成大红收藏海报" },
+                    // { "icon": 90, "title": "#三角洲海报", "desc": "生成大红收藏海报" },
                     { "icon": 67, "title": "#三角洲流水 [类型]", "desc": "查询交易流水，类型可选" }
                 ]
             },
             {
                 "group": "其他",
                 "list": [
-                    { "icon": 72, "title": "#三角洲帮助", "desc": "显示本帮助菜单" }
+                    { "icon": 72, "title": "#三角洲帮助", "desc": "显示本帮助菜单" },
+                    { "icon": 100, "title": "#三角洲更新", "desc": "更新三角洲插件" }
                 ]
             }
         ];
@@ -84,30 +85,24 @@ export class Help extends plugin {
     }
 
     async getThemeData(diyStyle, sysStyle) {
-        let resPath = '{{_res_path}}/help/imgs/';
-        let helpConfig = _.extend({}, sysStyle, diyStyle);
-        let colCount = Math.min(5, Math.max(parseInt(helpConfig?.colCount) || 3, 2));
-        let colWidth = Math.min(500, Math.max(100, parseInt(helpConfig?.colWidth) || 265));
-        let width = Math.min(2500, Math.max(800, colCount * colWidth + 30));
-        let theme = {
-            main: `${resPath}/bg.jpg`,
-            bg: `${resPath}/bg.jpg`,
+        const resPath = `../resources/help/imgs/`; // 模板文件在 help/index.html，相对路径更可靠
+        const helpConfig = { ...sysStyle, ...diyStyle };
+        const colCount = Math.min(5, Math.max(parseInt(helpConfig?.colCount) || 3, 2));
+        const colWidth = Math.min(500, Math.max(100, parseInt(helpConfig?.colWidth) || 265));
+        const width = Math.min(2500, Math.max(800, colCount * colWidth + 30));
+        const theme = {
+            main: `${resPath}bg.jpg`,
+            bg: `${resPath}bg.jpg`,
             style: style
         };
-        let themeStyle = theme.style || {};
-        let ret = [`
-          body{background-image:url(${theme.bg}) no-repeat;width:${width}px;}
+        const themeStyle = theme.style || {};
+        const ret = [`
+          body{background-image:url(${theme.bg});width:${width}px;}
           .container{background-image:url(${theme.main});background-size:cover;}
           .help-table .td,.help-table .th{width:${100 / colCount}%}
           `];
-        let css = function (sel, css, key, def, fn) {
-            let val = (function () {
-                for (let idx in arguments) {
-                    if (!_.isUndefined(arguments[idx])) {
-                        return arguments[idx];
-                    }
-                }
-            })(themeStyle[key], diyStyle[key], sysStyle[key], def);
+        const css = function (sel, css, key, def, fn) {
+            let val = themeStyle[key] ?? diyStyle[key] ?? sysStyle[key] ?? def;
             if (fn) {
                 val = fn(val);
             }
