@@ -1,7 +1,7 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import utils from '../utils/utils.js'
-import Render from '../components/Render.js'
 import Code from '../components/Code.js'
+import { segment } from 'oicq'
 
 export class Info extends plugin {
   constructor (e) {
@@ -31,37 +31,53 @@ export class Info extends plugin {
     await this.e.reply('正在查询您的个人信息，请稍候...')
 
     const res = await this.api.getPersonalInfo(token)
-    if (!res || !res.data) {
+    if (!res || !res.data || !res.roleInfo) {
       await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
       return true
     }
 
-    const { roleInfo, careerData } = res.data
+    const { userData } = res.data;
+    const { roleInfo } = res;
 
-    // 数据处理
-    if (roleInfo && roleInfo.charac_name) {
-      try {
-        roleInfo.charac_name = decodeURIComponent(roleInfo.charac_name)
-      } catch (e) {
-        logger.warn(`[DELTA FORCE PLUGIN] 用户名解码失败: ${roleInfo.charac_name}`)
-      }
+    // --- 数据处理 ---
+    const decode = (str) => {
+        try { return decodeURIComponent(str || '') } catch (e) { return str || '' }
     }
-    if (careerData.solduration) {
-      careerData.solduration = utils.formatDuration(careerData.solduration, 'seconds')
+    const formatDate = (timestamp) => {
+        if (!timestamp || isNaN(timestamp)) return '未知';
+        return new Date(timestamp * 1000).toLocaleString();
     }
-    if (careerData.tdmduration) {
-      careerData.tdmduration = utils.formatDuration(careerData.tdmduration, 'minutes')
-    }
+    const channelMap = {
+        '10430644': 'PC官启',
+        '10430645': 'WeGame',
+        '10025553': '安卓手游',
+        '10003898': '微信',
+        '2002022121601': 'Wegame-QQ',
+        '1001': 'iPad-QQ'
+    };
 
-    const img = await Render.render('Template/userInfo/userInfo', {
-      ...res.data
-    }, { e: this.e, scale: 1.2 })
+    userData.charac_name = decode(userData.charac_name);
+    userData.picurl = decode(userData.picurl);
+    
+    // --- 消息拼接 ---
+    let msg = '【个人账户信息】\n';
+    msg += `昵称: ${userData.charac_name || roleInfo.charac_name || '未知'}\n`;
+    msg += `等级: ${roleInfo.level || '-'}\n`;
+    msg += `UID: ${roleInfo.uid || '-'}\n`;
+    msg += `哈夫币: ${roleInfo.hafcoinnum?.toLocaleString() || '-'}\n`;
+    msg += `仓库总值: ${roleInfo.propcapital?.toLocaleString() || '-'}\n`;
+    msg += `状态: ${roleInfo.isbanuser === '1' ? '已封禁' : '正常'} | ${roleInfo.isbanspeak === '1' ? '已禁言' : '正常'}\n`;
+    msg += `注册时间: ${formatDate(roleInfo.register_time)}\n`;
+    msg += `最近登录: ${formatDate(roleInfo.lastlogintime)}\n`;
+    msg += `登录渠道: ${channelMap[roleInfo.loginchannel] || roleInfo.loginchannel || '未知'}\n`;
 
-    if (img) {
-      await this.e.reply(img)
+    // 发送头像和文本信息
+    if (userData.picurl) {
+        await this.e.reply([segment.image(userData.picurl), msg.trim()]);
     } else {
-      await this.e.reply('生成个人信息图片失败，请稍后重试。')
+        await this.e.reply(msg.trim());
     }
+    
     return true
   }
 } 

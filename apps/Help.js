@@ -47,7 +47,6 @@ export class Help extends plugin {
                     { "icon": 50, "title": "#三角洲数据", "desc": "查询个人统计数据" },
                     { "icon": 60, "title": "#三角洲战绩 [模式]", "desc": "查询战绩，模式可选" },
                     { "icon": 64, "title": "#三角洲货币", "desc": "查询各类货币信息" },
-                    // { "icon": 90, "title": "#三角洲海报", "desc": "生成大红收藏海报" },
                     { "icon": 67, "title": "#三角洲流水 [类型]", "desc": "查询交易流水，类型可选" }
                 ]
             },
@@ -76,7 +75,7 @@ export class Help extends plugin {
         });
 
         let themeData = await this.getThemeData(helpCfg, helpCfg);
-        return await Render.render('help/index', {
+        return await Render.render('Template/help/index.html', {
             helpCfg,
             helpGroup,
             ...themeData,
@@ -85,14 +84,13 @@ export class Help extends plugin {
     }
 
     async getThemeData(diyStyle, sysStyle) {
-        const resPath = `../resources/help/imgs/`; // 模板文件在 help/index.html，相对路径更可靠
         const helpConfig = { ...sysStyle, ...diyStyle };
         const colCount = Math.min(5, Math.max(parseInt(helpConfig?.colCount) || 3, 2));
         const colWidth = Math.min(500, Math.max(100, parseInt(helpConfig?.colWidth) || 265));
         const width = Math.min(2500, Math.max(800, colCount * colWidth + 30));
         const theme = {
-            main: `${resPath}bg.jpg`,
-            bg: `${resPath}bg.jpg`,
+            main: `../imgs/bg.jpg`,
+            bg: `../imgs/bg.jpg`,
             style: style
         };
         const themeStyle = theme.style || {};

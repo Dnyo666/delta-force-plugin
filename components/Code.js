@@ -1,12 +1,17 @@
-import fetch from 'node-fetch'
 import Config from './Config.js'
-import utils from '../utils/utils.js'
+import fetch from 'node-fetch'
+import https from 'https'
+import crypto from 'crypto'
 
-const BASE_URL = 'https://df-api.cduestc.fun' // 从插件指南获取的临时API地址
+const httpsAgent = new https.Agent({
+  rejectUnauthorized: false
+})
 
-class Code {
+export default class Code {
   constructor (e) {
     this.e = e
+    this.cfg = Config.getConfig()?.delta_force || {}
+    // clientID 将由调用方提供，这里不再处理
   }
 
   /**
@@ -17,20 +22,18 @@ class Code {
    * @returns {Promise<object|boolean>}
    */
   async request (url, params, method = 'GET') {
-    const deltaForceConfig = Config.getConfig().delta_force || {}
-    const apiKey = deltaForceConfig.api_key
+    const { api_key: apiKey, base_url: BASE_URL } = this.cfg
 
-    if (!apiKey) {
-      logger.error('[DELTA FORCE PLUGIN] APIKey 未配置，请在 config/config/config.yaml 中填写')
+    if (!apiKey || apiKey === 'sk-xxxxxxx') {
+      logger.error('[DELTA FORCE PLUGIN] APIKey 未配置，请在 config/config.yaml 中填写')
       if (this.e) {
         await this.e.reply('APIKey 未配置，请联系机器人管理员。')
       }
       return false
     }
-
+    
     const headers = {
-      Authorization: `Bearer ${apiKey}`,
-      'Content-Type': 'application/json'
+      Authorization: `Bearer ${apiKey}`
     }
 
     let fullUrl = `${BASE_URL}${url}`
@@ -42,7 +45,8 @@ class Code {
         fullUrl += `?${queryString}`
       }
     } else if (method === 'POST') {
-      options.body = JSON.stringify(params)
+      headers['Content-Type'] = 'application/x-www-form-urlencoded'
+      options.body = new URLSearchParams(params).toString()
     }
 
         try {
@@ -144,17 +148,63 @@ class Code {
    * 解绑用户 Token
    * @param {object} data - { frameworkToken, platformID, clientID, clientType }
    */
-  async unbindUser (data) {
-    return this.request('/user/unbind', data, 'POST')
-    }
+  async unbindUser (token) {
+    return await this.request('/df/user/unbind', 'post', { frameworkToken: token })
+  }
 
   /**
    * 获取用户绑定的 Token 列表
    * @param {object} params - { platformID, clientID, clientType }
    */
   async getUserList (params) {
-    return this.request('/user/list', params, 'GET')
+    return this.request('/df/user/list', 'get', params)
+  }
+
+  // ---- 开黑房间 V2 ----
+
+  async getRoomList (clientID, type = '', hasPassword = '') {
+    const params = { clientID, type, hasPassword };
+    return await this.request('/df/tools/Room/list', params, 'get');
+  }
+
+  async getRoomInfo (token, clientID, roomId) {
+    const params = { frameworkToken: token, clientID, roomId };
+    return await this.request('/df/tools/Room/info', params, 'get');
+  }
+
+  async createRoom (token, clientID, type, tag = '', password = '', mapid = '0', onlyCurrentlyClient = false) {
+    const data = {
+      frameworkToken: token,
+      clientID,
+      type,
+      tag,
+      password,
+      mapid,
+      onlyCurrentlyClient: String(onlyCurrentlyClient)
+    };
+    return await this.request('/df/tools/Room/creat', data, 'post');
+  }
+
+  async joinRoom (token, clientID, roomId, password = '') {
+    const data = { frameworkToken: token, clientID, roomId, password };
+    return await this.request('/df/tools/Room/join', data, 'post');
+  }
+
+  async quitRoom (token, clientID, roomId) {
+    const data = { frameworkToken: token, clientID, roomId };
+    return await this.request('/df/tools/Room/quit', data, 'post');
+  }
+
+  async kickMember (token, clientID, roomId, targetFrameworkToken) {
+    const data = { frameworkToken: token, clientID, roomId, targetFrameworkToken };
+    return await this.request('/df/tools/Room/kick', data, 'post');
+  }
+  
+  async getMaps() {
+    return await this.request('/df/tools/Room/maps', {}, 'get');
+  }
+
+  async getTags() {
+    return await this.request('/df/tools/Room/tags', {}, 'get');
   }
 }
-
-export default Code
