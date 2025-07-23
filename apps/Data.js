@@ -11,7 +11,7 @@ export class Data extends plugin {
       priority: 100,
       rule: [
         {
-          reg: '^(#三角洲|\\^)(数据|data)$',
+          reg: '^(#三角洲|\\^)(数据|data)\\s*(.*)$',
           fnc: 'getPersonalData'
         }
       ]
@@ -29,14 +29,31 @@ export class Data extends plugin {
 
     await this.e.reply('正在查询您的统计数据，请稍候...')
 
-    const res = await this.api.getPersonalData(token)
+    const argString = this.e.msg.replace(/^(#三角洲|\^)(数据|data)\s*/, '').trim()
+    const args = argString.split(' ').filter(Boolean)
 
-    if (!res || res.result !== 0 || !res.solDetail || !res.mpDetail) {
-      await this.e.reply(`查询数据失败: ${res.error_info || 'API返回数据不正确'}`)
-      return true
+    let mode = ''
+    let season = 5 // 默认赛季5
+
+    // 健壮的参数解析，不再依赖顺序
+    for (const arg of args) {
+      if (['烽火', '烽火地带'].includes(arg)) {
+        mode = 'sol'
+      } else if (['全面', '全面战场'].includes(arg)) {
+        mode = 'mp'
+      } else if (['all', '全部'].includes(arg.toLowerCase())) {
+        season = 'all'
+      } else if (!isNaN(arg)) {
+        season = parseInt(arg)
+      }
     }
 
-    const { solDetail, mpDetail } = res
+    const res = await this.api.getPersonalData(token, mode, season)
+
+    if (!res || !res.success || !res.data || (!res.data.sol && !res.data.mp)) {
+      await this.e.reply(`查询数据失败: ${res.message || 'API返回数据不正确'}`)
+      return true
+    }
 
     // --- 数据格式化 ---
     const formatDuration = (seconds) => {
@@ -46,28 +63,35 @@ export class Data extends plugin {
         return `${hours}小时${minutes}分钟`;
     }
     
-    solDetail.solduration = formatDuration(solDetail.solduration);
-    mpDetail.tdmduration = formatDuration(mpDetail.tdmduration * 60); // 全面战场是分钟，转为秒再格式化
-
     // --- 消息拼接 ---
     let msg = '【个人统计数据】\n'
+    
+    if (res.data.sol) {
+        const solDetail = res.data.sol.data.data.solDetail
+        solDetail.totalGameTime = formatDuration(solDetail.totalGameTime);
+        msg += '--- 烽火地带 ---\n'
+        msg += `排位分: ${solDetail.levelScore || '-'}\n`
+        msg += `总对局: ${solDetail.totalFight || '-'}\n`
+        msg += `总撤离: ${solDetail.totalEscape || '-'}\n`
+        msg += `总击杀 (干员): ${solDetail.totalKill || '-'}\n`
+        msg += `赚损比: ${solDetail.profitLossRatio ? (solDetail.profitLossRatio / 1000000).toFixed(2) + 'M' : '-'}\n`
+        msg += `游戏时长: ${solDetail.totalGameTime}\n`
+        msg += `收藏大红价值: ${solDetail.redTotalMoney?.toLocaleString() || '-'} (${solDetail.redTotalCount}个)\n`
+    }
 
-    msg += '--- 烽火地带 ---\n'
-    msg += `排位分: ${solDetail.rankpoint || '-'}\n`
-    msg += `总对局: ${solDetail.soltotalfght || '-'}\n`
-    msg += `总撤离: ${solDetail.solttotalescape || '-'}\n`
-    msg += `撤离率: ${solDetail.solescaperatio ? (solDetail.solescaperatio / 100).toFixed(2) + '%' : '-'}\n`
-    msg += `总击杀: ${solDetail.soltotalkill || '-'}\n`
-    msg += `游戏时长: ${solDetail.solduration}\n`
-
-    msg += '\n--- 全面战场 ---\n'
-    msg += `排位分: ${mpDetail.tdmrankpoint || '-'}\n`
-    msg += `总对局: ${mpDetail.tdmtotalfight || '-'}\n`
-    msg += `总胜场: ${mpDetail.totalwin || '-'}\n`
-    msg += `胜率: ${mpDetail.tdmsuccessratio ? (mpDetail.tdmsuccessratio / 100).toFixed(2) + '%' : '-'}\n`
-    msg += `总击杀: ${mpDetail.tdmtotalkill || '-'}\n`
-    msg += `分均击杀: ${mpDetail.avgkillperminute ? (mpDetail.avgkillperminute / 100).toFixed(2) : '-'}\n`
-    msg += `游戏时长: ${mpDetail.tdmduration}`
+    if (res.data.mp) {
+        const mpDetail = res.data.mp.data.data.mpDetail
+        mpDetail.totalGameTime = formatDuration(mpDetail.totalGameTime * 60); // 文档中是秒，但示例像分钟，保持转换
+        if (res.data.sol) msg += '\n'; // 如果前面有烽火数据，加个换行
+        msg += '--- 全面战场 ---\n'
+        msg += `排位分: ${mpDetail.levelScore || '-'}\n`
+        msg += `总对局: ${mpDetail.totalFight || '-'}\n`
+        msg += `总胜场: ${mpDetail.totalWin || '-'}\n`
+        msg += `胜率: ${mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}\n`
+        msg += `分均击杀: ${mpDetail.avgKillPerMinute ? (mpDetail.avgKillPerMinute / 100).toFixed(2) : '-'}\n`
+        msg += `分均得分: ${mpDetail.avgScorePerMinute || '-'}\n`
+        msg += `游戏时长: ${mpDetail.totalGameTime}`
+    }
 
     await this.e.reply(msg.trim())
     return true

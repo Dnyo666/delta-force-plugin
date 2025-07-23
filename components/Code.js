@@ -102,8 +102,16 @@ export default class Code {
    * 获取个人数据（烽火地带和全面战场）
    * @param {string} frameworkToken - 用户绑定的token
    */
-  async getPersonalData (frameworkToken) {
-    return this.request('/df/person/personalData', { frameworkToken }, 'GET')
+  async getPersonalData (frameworkToken, type = '', seasonid = 5) {
+    const params = { frameworkToken }
+    if (type) {
+      params.type = type
+    }
+    // 如果 seasonid 不是 'all'，则添加到参数中
+    if (seasonid !== 'all') {
+      params.seasonid = seasonid
+    }
+    return this.request('/df/person/personalData', params, 'GET')
   }
 
   /**
