@@ -1,0 +1,90 @@
+body {
+    background-color: #1a1a1a;
+    margin: 0;
+    padding: 0;
+    font-family: "Microsoft YaHei", Arial, sans-serif;
+}
+
+.container {
+    color: #F2F2F2;
+    padding: 20px;
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    background-color: #2c2c2c;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px #000000;
+    margin-bottom: 20px;
+}
+
+.avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 3px solid #0FF796;
+    margin-right: 20px;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.username {
+    font-size: 24px;
+    font-weight: bold;
+}
+
+.level {
+    font-size: 16px;
+    color: #aaa;
+}
+
+.uid {
+    font-size: 14px;
+    color: #888;
+}
+
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.card {
+    background-color: #2c2c2c;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px #000000;
+    overflow: hidden;
+}
+
+.card-title {
+    background-color: #0FF796;
+    color: #1a1a1a;
+    padding: 10px 15px;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+.card-content {
+    padding: 15px;
+}
+
+.card-content p {
+    margin: 8px 0;
+    line-height: 1.6;
+}
+
+.card-content strong {
+    color: #0FF796;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 30px;
+    color: #888;
+    font-size: 12px;
+} 

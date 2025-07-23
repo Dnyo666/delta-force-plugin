@@ -1,0 +1,15 @@
+# ---------- Delta Force（三角洲行动）API 配置 ----------
+delta_force:
+  api_key: "sk-xxxxxxx" # 在管理网页创建
+  base_url: "https://df-api.cduestc.fun" # 后端API地址
+  clientID: "xxxxxx" # 从管理网页复制用户ID
+
+# ---------- 通用配置 ----------
+# 是否开启成功日志输出
+enable_log: false
+# 代理地址
+proxy_url: ''
+# 图片渲染精度
+render_scale: 100
+# 接口并发量
+limit: 10

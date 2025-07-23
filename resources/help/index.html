@@ -1,0 +1,48 @@
+{{extend defaultLayout}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}/help/index.css"/>
+<style>
+  {{@style}}
+</style>
+{{/block}}
+
+{{block 'main'}}
+
+<div class="info-box">
+  <div class="head-box type{{bgType}}">
+    <div class="title">{{helpCfg.title||"使用帮助"}}</div>
+    <div class="label">{{helpCfg.subTitle || "DeltaForce-Plugin"}}</div>
+  </div>
+</div>
+
+{{each helpGroup group}}
+{{set len = group?.list?.length || 0 }}
+<div class="cont-box">
+  <div class="help-group">{{group.group}}</div>
+  {{if len > 0}}
+  <div class="help-table">
+    <div class="tr">
+      {{each group.list help idx}}
+      <div class="td">
+        <span class="help-icon" style="{{@ help.css}}"></span>
+        <strong class="help-title">{{help.title}}</strong>
+        <span class="help-desc">{{help.desc}}</span>
+      </div>
+      {{set isRowEnd = (idx + 1) % colCount === 0}}
+      {{set isNotLast = idx < len - 1}}
+      {{if isRowEnd && isNotLast}}
+    </div>
+    <div class="tr">
+      {{/if}}
+      {{/each}}
+      <% const padding = (colCount - len % colCount) % colCount; %>
+      <% for(let i = 0; i < padding; i++) { %>
+        <div class="td"></div>
+      <% } %>
+    </div>
+  </div>
+  {{/if}}
+</div>
+{{/each}}
+{{/block}}

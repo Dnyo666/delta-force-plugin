@@ -1,0 +1,55 @@
+{{extend '../common/layout/default.html'}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}/Template/personalData/personalData.css"/>
+{{/block}}
+
+{{block 'main'}}
+<div class="container">
+    <div class="header">
+        <div class="title">个人数据统计</div>
+    </div>
+
+    <div class="data-grid">
+        <!-- 烽火地带 -->
+        <div class="card">
+            <div class="card-title">烽火地带</div>
+            <div class="card-content">
+                <p><strong>排位分:</strong> {{solDetail.levelScore || '-'}}</p>
+                <p><strong>总对局:</strong> {{solDetail.totalFight || '-'}}</p>
+                <p><strong>总撤离:</strong> {{solDetail.totalEscape || '-'}}</p>
+                <p><strong>总击杀 (干员):</strong> {{solDetail.totalKill || '-'}}</p>
+                <p><strong>赚损比:</strong> {{solDetail.profitLossRatio || '-'}}</p>
+                <p><strong>总游戏时长:</strong> {{solDetail.totalGameTime || '-'}}</p>
+                <p><strong>收藏大红价值:</strong> {{solDetail.redTotalMoney?.toLocaleString() || '-'}}</p>
+                <p><strong>收藏大红个数:</strong> {{solDetail.redTotalCount || '-'}}</p>
+                <div class="kd-ratios">
+                    <p><strong>战损比 (常规):</strong> {{solDetail.lowKillDeathRatio || '-'}}</p>
+                    <p><strong>战损比 (机密):</strong> {{solDetail.medKillDeathRatio || '-'}}</p>
+                    <p><strong>战损比 (绝密):</strong> {{solDetail.highKillDeathRatio || '-'}}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 全面战场 -->
+        <div class="card">
+            <div class="card-title">全面战场</div>
+            <div class="card-content">
+                <p><strong>排位分:</strong> {{mpDetail.levelScore || '-'}}</p>
+                <p><strong>总对局:</strong> {{mpDetail.totalFight || '-'}}</p>
+                <p><strong>总胜场:</strong> {{mpDetail.totalWin || '-'}}</p>
+                <p><strong>胜率:</strong> {{mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}}</p>
+                <p><strong>总得分:</strong> {{mpDetail.totalScore || '-'}}</p>
+                <p><strong>分均击杀:</strong> {{(mpDetail.avgKillPerMinute / 100).toFixed(2) || '-'}}</p>
+                <p><strong>分均得分:</strong> {{mpDetail.avgScorePerMinute || '-'}}</p>
+                <p><strong>总游戏时长:</strong> {{mpDetail.totalGameTime || '-'}}</p>
+                <p><strong>呼叫载具数:</strong> {{mpDetail.callVehicle || '-'}}</p>
+                <p><strong>部署重生信标数:</strong> {{mpDetail.callRebirth || '-'}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        由 DeltaForce-Plugin-Yunzai 强力驱动
+    </div>
+</div>
+{{/block}} 
