@@ -19,7 +19,7 @@ export class Login extends plugin {
       priority: 100,
       rule: [
         {
-          reg: '^(#三角洲|\\^)(qq|微信|wx|wegame|qqsafe)?(登陆|登录)$',
+          reg: '^(#三角洲|\\^)(qq|微信|wx|wegame|qqsafe|安全中心|qq安全中心)?(登陆|登录)$',
           fnc: 'login'
         },
         {
@@ -33,11 +33,10 @@ export class Login extends plugin {
   }
 
   async login () {
-    let platform = 'qq' // 默认QQ登录
-    if (this.e.msg.includes('微信')) platform = 'wechat'
-    if (this.e.msg.includes('wegame')) platform = 'wegame'
-    // QQ安全中心在API中的标识是 qqsafe
-    if (this.e.msg.includes('安全中心')) platform = 'qqsafe'
+    const match = this.e.msg.match(this.rule[0].reg);
+    let platform = match[2] || 'qq';
+    if (['wx', '微信'].includes(platform)) platform = 'wechat';
+    if (['qqsafe', '安全中心', 'qq安全中心'].includes(platform)) platform = 'qqsafe';
     
     const res = await this.api.getLoginQr(platform)
 
@@ -60,7 +59,15 @@ export class Login extends plugin {
     segment.image(qrImage)
   ])
   if (qrMsg?.message_id) messagesToRecall.push(qrMsg.message_id);
-  if (getQrMsg?.message_id) this.e.recall(getQrMsg.message_id); // 获取到图片后，撤回"正在获取"
+  
+  // 尝试撤回"正在获取"消息，兼容不同环境
+  if (getQrMsg?.message_id) {
+    try {
+      await this.e.bot.deleteMsg(getQrMsg.message_id);
+    } catch (err) {
+      logger.warn(`[DELTA FORCE PLUGIN] 撤回"正在获取"消息失败: ${getQrMsg.message_id}`, err);
+    }
+  }
 
   // --- 开始健壮的轮询逻辑 ---
   const startTime = Date.now();
@@ -97,6 +104,19 @@ export class Login extends plugin {
         case 'scanned': // 已扫码，待确认
           if (!notifiedScanned) {
             notifiedScanned = true;
+            // 撤回二维码图片
+            if (qrMsg?.message_id) {
+              try {
+                await this.e.bot.deleteMsg(qrMsg.message_id);
+                // 从待撤回列表中移除，避免重复撤回
+                const index = messagesToRecall.indexOf(qrMsg.message_id);
+                if (index > -1) {
+                  messagesToRecall.splice(index, 1);
+                }
+              } catch (err) {
+                logger.warn(`[DELTA FORCE PLUGIN] 撤回二维码消息失败: ${qrMsg.message_id}`, err);
+              }
+            }
             const scannedMsg = await this.e.reply('扫码成功，请在手机上确认登录。');
             if (scannedMsg?.message_id) messagesToRecall.push(scannedMsg.message_id);
           }
@@ -127,7 +147,11 @@ export class Login extends plugin {
 
       // 撤回二维码等消息
       for (const msgId of messagesToRecall) {
-          await this.e.recall(msgId);
+          try {
+            await this.e.bot.deleteMsg(msgId);
+          } catch (err) {
+            logger.warn(`[DELTA FORCE PLUGIN] 撤回消息失败: ${msgId}`, err);
+          }
       }
 
       const clientID = Config.getConfig()?.delta_force?.clientID;
@@ -151,7 +175,11 @@ export class Login extends plugin {
     } catch (error) {
       // 出错时也尝试撤回消息
       for (const msgId of messagesToRecall) {
-          await this.e.recall(msgId);
+          try {
+            await this.e.bot.deleteMsg(msgId);
+          } catch (err) {
+            logger.warn(`[DELTA FORCE PLUGIN] 撤回消息失败: ${msgId}`, err);
+          }
       }
       await this.e.reply(`登录失败: ${error.message}`);
     }
@@ -175,11 +203,12 @@ export class Login extends plugin {
     await this.e.reply('正在为您绑定游戏内角色，请稍候...');
 
     const res = await this.api.bindCharacter(token);
-
-    if (res && res.code === 0) {
-        await this.e.reply(res.msg || '角色绑定成功！');
+    
+    const apiMsg = res?.msg || res?.message || '';
+    if ((res && res.code === 0) || (res && apiMsg.includes('绑定成功'))) {
+        await this.e.reply(apiMsg || '角色绑定成功！');
     } else {
-        await this.e.reply(`角色绑定失败: ${res.msg || res.message || '未知错误'}`);
+        await this.e.reply(`角色绑定失败: ${apiMsg || '未知错误'}`);
     }
     return true;
   }
