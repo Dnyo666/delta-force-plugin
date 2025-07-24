@@ -31,20 +31,21 @@ export default class Code {
       }
       return false
     }
-    
+
     const headers = {
       Authorization: `Bearer ${apiKey}`
     }
 
     let fullUrl = `${BASE_URL}${url}`
-    const options = { method, headers }
+    const upperCaseMethod = method.toUpperCase();
+    const options = { method: upperCaseMethod, headers }
 
-    if (method === 'GET') {
+    if (upperCaseMethod === 'GET') {
       if (params) {
         const queryString = new URLSearchParams(params).toString()
         fullUrl += `?${queryString}`
       }
-    } else if (method === 'POST') {
+    } else if (upperCaseMethod === 'POST') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded'
       options.body = new URLSearchParams(params).toString()
     }
@@ -158,7 +159,7 @@ export default class Code {
    */
   async unbindUser (token) {
     return await this.request('/df/user/unbind', 'post', { frameworkToken: token })
-  }
+    }
 
   /**
    * 获取用户绑定的 Token 列表
@@ -171,16 +172,22 @@ export default class Code {
   // ---- 开黑房间 V2 ----
 
   async getRoomList (clientID, type = '', hasPassword = '') {
-    const params = { clientID, type, hasPassword };
+    const params = { clientID };
+    if (type) {
+      params.type = type;
+    }
+    if (hasPassword !== '') {
+      params.hasPassword = hasPassword;
+    }
     return await this.request('/df/tools/Room/list', params, 'get');
   }
 
-  async getRoomInfo (token, clientID, roomId) {
-    const params = { frameworkToken: token, clientID, roomId };
+  async getRoomInfo (token, clientID) {
+    const params = { frameworkToken: token, clientID };
     return await this.request('/df/tools/Room/info', params, 'get');
   }
 
-  async createRoom (token, clientID, type, tag = '', password = '', mapid = '0', onlyCurrentlyClient = false) {
+  async createRoom (token, clientID, type, mapid = '0', tag = '', password = '', onlyCurrentlyClient = false) {
     const data = {
       frameworkToken: token,
       clientID,

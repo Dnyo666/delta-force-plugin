@@ -2,9 +2,9 @@
 
 <img decoding="async" align=right src="resources/readme/girl.png" width="35%">
 
-# WAVES-PLUGIN
+# Delta-Force-Plugin
 
-- 一个适用于 [Yunzai 系列机器人框架](https://github.com/yhArcadia/Yunzai-Bot-plugins-index) 的鸣潮游戏数据查询插件
+- 一个适用于 [Yunzai 系列机器人框架](https://github.com/yhArcadia/Yunzai-Bot-plugins-index) 的三角洲行动游戏数据查询和娱乐功能插件
 
 - 支持手机验证码登录或 Token 登录，支持查询玩家、日常、数据坞、抽卡等游戏数据
 

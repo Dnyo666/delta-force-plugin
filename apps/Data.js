@@ -39,7 +39,7 @@ export class Data extends plugin {
     for (const arg of args) {
       if (['烽火', '烽火地带'].includes(arg)) {
         mode = 'sol'
-      } else if (['全面', '全面战场'].includes(arg)) {
+      } else if (['全面', '全面战场', '战场'].includes(arg)) {
         mode = 'mp'
       } else if (['all', '全部'].includes(arg.toLowerCase())) {
         season = 'all'
@@ -50,8 +50,35 @@ export class Data extends plugin {
 
     const res = await this.api.getPersonalData(token, mode, season)
 
-    if (!res || !res.success || !res.data || (!res.data.sol && !res.data.mp)) {
-      await this.e.reply(`查询数据失败: ${res.message || 'API返回数据不正确'}`)
+    if (!res) {
+      await this.e.reply('查询数据失败，请检查网络或联系管理员查看后台日志。')
+      return true
+    }
+
+    if (res.success === false) {
+      await this.e.reply(`查询数据失败: ${res.message || '未知API错误'}`)
+      return true
+    }
+    
+    let solDetail = null;
+    let mpDetail = null;
+
+    if (mode) { // 查询单模式
+      const singleModeData = res.data?.data?.data;
+      if (singleModeData?.solDetail) solDetail = singleModeData.solDetail;
+      if (singleModeData?.mpDetail) mpDetail = singleModeData.mpDetail;
+    } else { // 查询全部模式
+      const allModesData = res.data;
+      if (allModesData?.sol?.data?.data?.solDetail) {
+        solDetail = allModesData.sol.data.data.solDetail;
+      }
+      if (allModesData?.mp?.data?.data?.mpDetail) {
+        mpDetail = allModesData.mp.data.data.mpDetail;
+      }
+    }
+
+    if (!solDetail && !mpDetail) {
+      await this.e.reply('未能查询到有效的游戏数据，可能是尚未进行过对局或API返回数据格式有误。');
       return true
     }
 
@@ -64,25 +91,23 @@ export class Data extends plugin {
     }
     
     // --- 消息拼接 ---
-    let msg = '【个人统计数据】\n'
+    let msg = `【个人统计数据 S${season === 'all' ? '全部' : season}】\n`
     
-    if (res.data.sol) {
-        const solDetail = res.data.sol.data.data.solDetail
+    if ((!mode || mode === 'sol') && solDetail) {
         solDetail.totalGameTime = formatDuration(solDetail.totalGameTime);
         msg += '--- 烽火地带 ---\n'
         msg += `排位分: ${solDetail.levelScore || '-'}\n`
         msg += `总对局: ${solDetail.totalFight || '-'}\n`
         msg += `总撤离: ${solDetail.totalEscape || '-'}\n`
         msg += `总击杀 (干员): ${solDetail.totalKill || '-'}\n`
-        msg += `赚损比: ${solDetail.profitLossRatio ? (solDetail.profitLossRatio / 1000000).toFixed(2) + 'M' : '-'}\n`
+        msg += `赚损比: ${solDetail.profitLossRatio ? (solDetail.profitLossRatio / 10000).toFixed(2) + '万' : '-'}\n`
         msg += `游戏时长: ${solDetail.totalGameTime}\n`
         msg += `收藏大红价值: ${solDetail.redTotalMoney?.toLocaleString() || '-'} (${solDetail.redTotalCount}个)\n`
     }
 
-    if (res.data.mp) {
-        const mpDetail = res.data.mp.data.data.mpDetail
+    if ((!mode || mode === 'mp') && mpDetail) {
         mpDetail.totalGameTime = formatDuration(mpDetail.totalGameTime * 60); // 文档中是秒，但示例像分钟，保持转换
-        if (res.data.sol) msg += '\n'; // 如果前面有烽火数据，加个换行
+        if (solDetail && !mode) msg += '\n'; // 如果前面有烽火数据且是查询全部，加个换行
         msg += '--- 全面战场 ---\n'
         msg += `排位分: ${mpDetail.levelScore || '-'}\n`
         msg += `总对局: ${mpDetail.totalFight || '-'}\n`

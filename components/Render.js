@@ -10,7 +10,7 @@ export default {
       beforeRender ({ data }) {
         const _res_path = data.pluResPath
         return {
-          ...data,
+      ...data,
           _res_path: `${_res_path}/`,
           defaultLayout: `${pluginRoot}/resources/common/layout/default.html`
         }
