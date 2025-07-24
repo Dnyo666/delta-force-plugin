@@ -152,7 +152,7 @@ export class Room extends plugin {
       await this.e.reply('当前没有公开的开黑房间。')
       return true
     }
-    
+
     const maps = await getMapData(this.api);
     let msg = '--- 开黑房间列表 ---\n'
     rooms.forEach((room, index) => {

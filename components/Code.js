@@ -100,6 +100,28 @@ export default class Code {
   }
 
   /**
+   * 获取每日密码
+   */
+  async getDailyKeyword() {
+    return this.request('/df/tools/dailykeyword', {}, 'GET');
+  }
+
+  /**
+   * 获取文章列表
+   */
+  async getArticleList() {
+    return this.request('/df/tools/article/list', {}, 'POST');
+  }
+
+  /**
+   * 获取文章详情
+   * @param {string} threadId 文章ID
+   */
+  async getArticleDetail(threadId) {
+    return this.request('/df/tools/article/detail', { threadId }, 'GET');
+  }
+  
+  /**
    * 获取个人信息
    * @param {string} frameworkToken - 用户绑定的token
    */
