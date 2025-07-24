@@ -5,6 +5,10 @@ import path from 'path'
 import Code from '../components/Code.js'
 import Config from '../components/Config.js'
 import { pluginRoot } from '../model/path.js'
+import utils from '../utils/utils.js'
+
+const LOGIN_TIMEOUT = 180 * 1000; // 登录总超时时间，180秒
+const POLL_INTERVAL = 1000; // 轮询间隔，1秒
 
 export class Login extends plugin {
   constructor (e) {
@@ -17,6 +21,10 @@ export class Login extends plugin {
         {
           reg: '^(#三角洲|\\^)(qq|微信|wx|wegame|qqsafe)?(登陆|登录)$',
           fnc: 'login'
+        },
+        {
+          reg: '^(#三角洲|\\^)角色绑定\\s*([a-zA-Z0-9\\-]+)?$',
+          fnc: 'bindCharacter'
         }
       ]
     })
@@ -25,76 +33,154 @@ export class Login extends plugin {
   }
 
   async login () {
-    const match = this.e.msg.match(/^(#三角洲|\^)(qq|微信|wx|wegame|qqsafe)?(登陆|登录)/)
-    let platform = match[2] || 'qq'
-    
-    if (platform === 'wx' || platform === '微信') platform = 'wechat'
-    
+    let platform = 'qq' // 默认QQ登录
+    if (this.e.msg.includes('微信')) platform = 'wechat'
+    if (this.e.msg.includes('wegame')) platform = 'wegame'
     // QQ安全中心在API中的标识是 qqsafe
     if (this.e.msg.includes('安全中心')) platform = 'qqsafe'
-
-    this.e.reply(`正在获取【${platform.toUpperCase()}】登录二维码，请稍候...`)
-
+    
     const res = await this.api.getLoginQr(platform)
 
-    if (!res || (!res.qr_image && !res.frameworkToken)) {
-      this.e.reply('获取二维码失败，请稍后重试。')
-      return true
-    }
-    
-    // 根据您的提示，只有微信是URL，其他都按base64处理
-    let qrImage = res.qr_image
-    if (platform !== 'wechat') {
-        // 大部分框架支持直接发送 base64，不再写入文件
-        qrImage = `base64://${qrImage.replace(/^data:image\/png;base64,/, '')}`
-    }
+    if (!res || !res.qr_image) {
+    await this.e.reply('二维码获取失败，请稍后重试。')
+    return true
+  }
+  
+  const messagesToRecall = [];
+  const getQrMsg = await this.e.reply(`正在获取【${platform.toUpperCase()}】登录二维码，请稍候...`);
+  if (getQrMsg?.message_id) messagesToRecall.push(getQrMsg.message_id);
 
-    const tipMsg = `请使用【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。`
-    await this.e.reply([tipMsg, segment.image(qrImage)])
-
-    this.pollLoginStatus(platform, res.token || res.frameworkToken)
+  let qrImage = res.qr_image;
+  if (platform !== 'wechat' && qrImage.startsWith('data:image/png;base64,')) {
+      qrImage = `base64://${qrImage.replace(/^data:image\/png;base64,/, '')}`;
   }
 
-  async pollLoginStatus (platform, frameworkToken) {
-    const startTime = Date.now()
-    const interval = setInterval(async () => {
-      if (Date.now() - startTime > 2 * 60 * 1000) {
-        clearInterval(interval)
-        this.e.reply('登录已超时，请重新发送登录指令。')
-        return
+  const qrMsg = await this.e.reply([
+    `请使用【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。`,
+    segment.image(qrImage)
+  ])
+  if (qrMsg?.message_id) messagesToRecall.push(qrMsg.message_id);
+  if (getQrMsg?.message_id) this.e.recall(getQrMsg.message_id); // 获取到图片后，撤回"正在获取"
+
+  // --- 开始健壮的轮询逻辑 ---
+  const startTime = Date.now();
+  let notifiedScanned = false; // 用于标记是否已通知用户"已扫码"
+
+  const poll = async (resolve, reject) => {
+    // 检查是否超时
+      if (Date.now() - startTime > LOGIN_TIMEOUT) {
+        return reject(new Error('二维码已超时'));
       }
 
-      const statusRes = await this.api.getLoginStatus(platform, frameworkToken)
+      const statusRes = await this.api.getLoginStatus(platform, res.frameworkToken);
 
-      if (statusRes && statusRes.status === 'success') {
-        clearInterval(interval)
-        // 自动绑定
-        const clientID = (Config.getConfig().delta_force || {}).clientID
-        const bindRes = await this.api.bindUser({
-          frameworkToken: statusRes.frameworkToken,
-          platformID: this.e.user_id,
-          clientID: clientID,
-          clientType: 'qq' // 假设都通过QQ机器人绑定
-        })
-        
-        if (bindRes && (bindRes.code === 0 || bindRes.success)) {
-          let userData = Config.getUserData(this.e.user_id) || []
-          // 防止重复添加
-          if (!userData.some(acc => acc.token === statusRes.frameworkToken)) {
-            userData.push({ token: statusRes.frameworkToken, platform, bindTime: new Date().toLocaleString() })
-            Config.setUserData(this.e.user_id, userData)
+      if (!statusRes) {
+        // API请求失败，短暂延迟后重试
+        setTimeout(() => poll(resolve, reject), POLL_INTERVAL * 2);
+        return;
+      }
+      
+      // 优先处理 Token 无效的错误情况
+      if (statusRes.code === -2) {
+        return reject(new Error(statusRes.msg || '登录凭证无效或已过期'));
+      }
+
+      switch (statusRes.status) {
+        case 'done': // 登录成功
+          if (statusRes.frameworkToken) {
+            resolve(statusRes.frameworkToken);
+          } else {
+            reject(new Error('登录成功但未能获取到最终Token'));
           }
-          this.e.reply(`QQ：${statusRes.qq || '未知'} 登录成功，并已为您自动绑定账号！\n可通过 #三角洲账号 查看。`)
-        } else {
-          this.e.reply(`登录成功，但自动绑定失败: ${bindRes.msg || '未知错误'}`)
-        }
-      } else if (statusRes && statusRes.status === 'scanned') {
-          // 可选：提示用户已扫码
-      } else if (!statusRes) {
-        // API 请求失败或返回格式不正确
-        clearInterval(interval);
-        this.e.reply('登录状态查询失败，已停止轮询。请检查网络或联系管理员。');
+          break;
+
+        case 'scanned': // 已扫码，待确认
+          if (!notifiedScanned) {
+            notifiedScanned = true;
+            const scannedMsg = await this.e.reply('扫码成功，请在手机上确认登录。');
+            if (scannedMsg?.message_id) messagesToRecall.push(scannedMsg.message_id);
+          }
+          setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
+          break;
+        
+        case 'pending': // 等待扫描
+          setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
+          break;
+
+        case 'expired': // 二维码超时
+          reject(new Error('二维码已超时'));
+          break;
+
+        default: // 其他未知状态或需要继续轮询的状态(如authed)
+          // logger.debug(`[DELTA FORCE PLUGIN] 轮询登录状态: ${statusRes.status}`); // Original code had this line commented out
+          setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
+          break;
       }
-    }, 3000)
+    };
+
+    try {
+      const finalToken = await new Promise(poll);
+
+      if (!finalToken) {
+          throw new Error('未能获取到有效的Token');
+      }
+
+      // 撤回二维码等消息
+      for (const msgId of messagesToRecall) {
+          await this.e.recall(msgId);
+      }
+
+      const clientID = Config.getConfig()?.delta_force?.clientID;
+      if (!clientID) {
+          throw new Error('clientID 未配置，无法进行绑定');
+      }
+
+      const bindRes = await this.api.bindUser({
+        frameworkToken: finalToken,
+        platformID: this.e.user_id,
+        clientID: clientID,
+        clientType: 'qq'
+      });
+
+      if (bindRes && (bindRes.code === 0 || bindRes.success)) {
+        await this.e.reply('登录成功，账号已自动绑定！');
+      } else {
+        await this.e.reply(`登录成功，但自动绑定失败: ${bindRes.msg || bindRes.message || '未知错误'}`);
+      }
+
+    } catch (error) {
+      // 出错时也尝试撤回消息
+      for (const msgId of messagesToRecall) {
+          await this.e.recall(msgId);
+      }
+      await this.e.reply(`登录失败: ${error.message}`);
+    }
+
+    return true
+  }
+
+  async bindCharacter() {
+    const match = this.e.msg.match(/^(#三角洲|\^)角色绑定\s*([a-zA-Z0-9\-]+)?$/);
+    let token = match[2]; // Optional token from command
+
+    if (!token) {
+        token = await utils.getAccount(this.e.user_id);
+    }
+
+    if (!token) {
+        await this.e.reply('您尚未登录或激活任何账号，请先使用 #三角洲登录，或提供一个有效的Token。');
+        return true;
+    }
+
+    await this.e.reply('正在为您绑定游戏内角色，请稍候...');
+
+    const res = await this.api.bindCharacter(token);
+
+    if (res && res.code === 0) {
+        await this.e.reply(res.msg || '角色绑定成功！');
+    } else {
+        await this.e.reply(`角色绑定失败: ${res.msg || res.message || '未知错误'}`);
+    }
+    return true;
   }
 } 

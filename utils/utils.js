@@ -3,28 +3,59 @@ import lodash from 'lodash'
 import fs from 'fs'
 import path from 'path'
 import Config from '../components/Config.js'
+import Code from '../components/Code.js'; // 引入Code以调用API
+
+function getClientID () {
+    return Config.getConfig()?.delta_force?.clientID;
+}
 
 const utils = {
     /**
-     * @description: 获取绑定用户的 token
+     * @description: 设置当前用户的激活token
+     * @param {string} user_id
+     * @param {string} token
+     */
+    async setActiveToken(user_id, token) {
+        await redis.set(`delta-force:active-token:${user_id}`, token);
+    },
+
+    /**
+     * @description: 获取当前用户的激活token
+     * 优先从Redis读取激活token，如果没有则从API获取列表并自动设置第一个为激活
      * @param {String} user_id
      * @return {String|null}
      */
     async getAccount(user_id) {
-        // 优先从 Redis 获取，速度最快
-        let token = await redis.get(`delta-force:token:${user_id}`);
-        if (token) return token;
+        // 1. 优先从 Redis 获取激活 token
+        let activeToken = await redis.get(`delta-force:active-token:${user_id}`);
+        if (activeToken) return activeToken;
 
-        // 如果 Redis 没有，则从文件读取，并回写 Redis
-        const userData = Config.getUserData(user_id);
-        if (userData && userData.length > 0 && userData[0].token) {
-            token = userData[0].token;
-            // 将正确的 token 写回 redis，保持数据一致性
-            await redis.set(`delta-force:token:${user_id}`, token);
-            return token;
+        // 2. 如果没有，则从API获取账号列表
+        const clientID = getClientID();
+        const api = new Code(); // 实例化API
+        if (!clientID) {
+            logger.error('[DELTA FORCE PLUGIN] getAccount无法获取clientID');
+            return null;
         }
 
-        return null; // 确实没有绑定
+        const res = await api.getUserList({
+            clientID,
+            platformID: user_id,
+            clientType: 'qq'
+        });
+
+        if (res && res.code === 0 && res.data && res.data.length > 0) {
+            // 3. 寻找第一个有效的token作为默认激活token
+            const firstValidAccount = res.data.find(acc => acc.isValid);
+            if (firstValidAccount && firstValidAccount.frameworkToken) {
+                const defaultToken = firstValidAccount.frameworkToken;
+                // 4. 将其设置为激活token并返回
+                await this.setActiveToken(user_id, defaultToken);
+                return defaultToken;
+            }
+        }
+
+        return null; // 用户确实没有任何有效账号
     },
 
     /**

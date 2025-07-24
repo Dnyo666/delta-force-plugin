@@ -92,6 +92,14 @@ export default class Code {
   // --- 用户数据 ---
   
   /**
+   * 绑定游戏内角色
+   * @param {string} frameworkToken 
+   */
+  async bindCharacter(frameworkToken) {
+    return this.request('/df/person/bind', { frameworkToken, method: 'bind' }, 'GET');
+  }
+
+  /**
    * 获取个人信息
    * @param {string} frameworkToken - 用户绑定的token
    */
@@ -157,8 +165,8 @@ export default class Code {
    * 解绑用户 Token
    * @param {object} data - { frameworkToken, platformID, clientID, clientType }
    */
-  async unbindUser (token) {
-    return await this.request('/df/user/unbind', 'post', { frameworkToken: token })
+  async unbindUser (data) {
+    return this.request('/user/unbind', data, 'POST')
     }
 
   /**
@@ -166,7 +174,7 @@ export default class Code {
    * @param {object} params - { platformID, clientID, clientType }
    */
   async getUserList (params) {
-    return this.request('/df/user/list', 'get', params)
+    return this.request('/user/list', params, 'GET')
   }
 
   // ---- 开黑房间 V2 ----
