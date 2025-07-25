@@ -39,6 +39,7 @@ export class Login extends plugin {
     if (['qqsafe', '安全中心', 'qq安全中心'].includes(platform)) platform = 'qqsafe';
     
     const res = await this.api.getLoginQr(platform)
+    const frameworkToken = res.token || res.frameworkToken;
 
     if (!res || !res.qr_image) {
     await this.e.reply('二维码获取失败，请稍后重试。')
@@ -79,7 +80,7 @@ export class Login extends plugin {
         return reject(new Error('二维码已超时'));
       }
 
-      const statusRes = await this.api.getLoginStatus(platform, res.frameworkToken);
+      const statusRes = await this.api.getLoginStatus(platform, frameworkToken);
 
       if (!statusRes) {
         // API请求失败，短暂延迟后重试
@@ -94,8 +95,9 @@ export class Login extends plugin {
 
       switch (statusRes.status) {
         case 'done': // 登录成功
-          if (statusRes.frameworkToken) {
-            resolve(statusRes.frameworkToken);
+          const finalToken = statusRes.token || statusRes.frameworkToken;
+          if (finalToken) {
+            resolve(finalToken);
           } else {
             reject(new Error('登录成功但未能获取到最终Token'));
           }
