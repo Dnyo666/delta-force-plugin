@@ -37,9 +37,9 @@ export class Data extends plugin {
 
     // 健壮的参数解析，不再依赖顺序
     for (const arg of args) {
-      if (['烽火', '烽火地带'].includes(arg)) {
+      if (['烽火', '烽火地带', 'sol', '摸金'].includes(arg)) {
         mode = 'sol'
-      } else if (['全面', '全面战场', '战场'].includes(arg)) {
+      } else if (['全面', '全面战场', '战场', 'mp'].includes(arg)) {
         mode = 'mp'
       } else if (['all', '全部'].includes(arg.toLowerCase())) {
         season = 'all'
@@ -113,8 +113,8 @@ export class Data extends plugin {
         msg += `总对局: ${mpDetail.totalFight || '-'}\n`
         msg += `总胜场: ${mpDetail.totalWin || '-'}\n`
         msg += `胜率: ${mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}\n`
-        msg += `分均击杀: ${mpDetail.avgKillPerMinute ? (mpDetail.avgKillPerMinute / 100).toFixed(2) : '-'}\n`
-        msg += `分均得分: ${mpDetail.avgScorePerMinute || '-'}\n`
+        msg += `分均击杀: ${mpDetail.avgKillPerMinute ? (Math.floor(mpDetail.avgKillPerMinute) / 100).toFixed(2) : '-'}\n`
+        msg += `分均得分: ${mpDetail.avgScorePerMinute ? (Math.floor(mpDetail.avgScorePerMinute) / 100).toFixed(2) : '-'}\n`
         msg += `游戏时长: ${mpDetail.totalGameTime}`
     }
 
