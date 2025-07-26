@@ -161,6 +161,9 @@ export class Login extends plugin {
           throw new Error('clientID 未配置，无法进行绑定');
       }
 
+      // 记录绑定前的激活token
+      const oldActiveToken = await utils.getAccount(this.e.user_id);
+
       const bindRes = await this.api.bindUser({
         frameworkToken: finalToken,
         platformID: this.e.user_id,
@@ -169,7 +172,65 @@ export class Login extends plugin {
       });
 
       if (bindRes && (bindRes.code === 0 || bindRes.success)) {
-        await this.e.reply('登录成功，账号已自动绑定！');
+        await this.e.reply('登录成功，账号已自动绑定！正在检查并更新激活状态...');
+
+        const listRes = await this.api.getUserList({ clientID, platformID: this.e.user_id, clientType: 'qq' });
+
+        if (!listRes || listRes.code !== 0 || !listRes.data) {
+            await this.e.reply('获取账号列表失败，无法为您自动激活。请手动切换。');
+            return true;
+        }
+        
+        const newAccounts = listRes.data;
+        const newlyBoundAccount = newAccounts.find(a => a.frameworkToken === finalToken);
+
+        if (!newlyBoundAccount) {
+            await this.e.reply('绑定成功，但未能从账号列表中确认，请手动切换。');
+            return true;
+        }
+
+        let shouldActivateNewToken = false;
+        let activationReason = '';
+
+        // Case 1: 首次登录
+        if (!oldActiveToken) {
+            shouldActivateNewToken = true;
+            activationReason = '首次绑定账号，已为您自动激活！';
+        } else {
+            // Case 2: 分组首次登录或重新登录
+            const newAccountType = newlyBoundAccount.tokenType.toLowerCase();
+            let newAccountGroupKey = 'qq_wechat';
+            if (newAccountType === 'wegame') newAccountGroupKey = 'wegame';
+            if (newAccountType === 'qqsafe') newAccountGroupKey = 'qqsafe';
+            
+            const accountsInGroup = newAccounts.filter(a => {
+                const type = a.tokenType.toLowerCase();
+                if (newAccountGroupKey === 'qq_wechat') return ['qq', 'wechat'].includes(type);
+                return type === newAccountGroupKey;
+            });
+            
+            if (accountsInGroup.length === 1) {
+                // 这个分组下只有一个号，说明是分组首次登录
+                shouldActivateNewToken = true;
+                activationReason = `首次绑定${newAccountType.toUpperCase()}账号，已为您自动激活！`;
+            } else {
+                // Case 3: 检查是否是已激活账号的更新
+                // 如果旧的激活token在绑定后的新列表中找不到了, 说明它被新的替换了
+                const oldActiveAccountInNewList = newAccounts.find(a => a.frameworkToken === oldActiveToken);
+                if (!oldActiveAccountInNewList) {
+                    shouldActivateNewToken = true;
+                    activationReason = '检测到当前激活的账号已更新，已为您自动切换到最新会话！';
+                }
+            }
+        }
+
+        if (shouldActivateNewToken) {
+            await utils.setActiveToken(this.e.user_id, finalToken);
+            await this.e.reply(activationReason);
+        } else {
+            await this.e.reply('绑定成功！新账号已添加，当前激活账号未改变。');
+        }
+
       } else {
         await this.e.reply(`登录成功，但自动绑定失败: ${bindRes.msg || bindRes.message || '未知错误'}`);
       }
