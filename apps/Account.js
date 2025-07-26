@@ -20,7 +20,7 @@ export class Account extends plugin {
       priority: 101, // 优先级略低于Login
       rule: [
         {
-          reg: '^(#三角洲|\\^)账号$',
+          reg: '^(#三角洲|\\^)账号(列表)?$',
           fnc: 'showAccounts'
         },
         {
@@ -155,7 +155,7 @@ export class Account extends plugin {
     buildGroupMsg('QQ安全中心', grouped.qqsafe);
 
     msg += '\n可通过 #三角洲解绑 <序号> 来解绑账号。';
-    msg += '\n使用 #账号切换 <序号> 可切换当前激活账号。';
+    msg += '\n使用 #三角洲账号切换 <序号> 可切换当前激活账号。';
     
     await this.e.reply(msg.trim());
     return true;
@@ -196,7 +196,7 @@ export class Account extends plugin {
     const args = this.e.msg.replace(/^(#三角洲|\^)?(账号切换|切换账号)\s*/, '').trim().split(' ');
     
     if (isNaN(args[0])) {
-      await this.e.reply('指令格式错误，请使用：#账号切换 <序号>');
+      await this.e.reply('指令格式错误，请使用：#三角洲账号切换 <序号>');
       return true;
     }
     const targetIndex = parseInt(args[0]) - 1;
@@ -221,7 +221,8 @@ export class Account extends plugin {
     await utils.setActiveToken(this.e.user_id, targetToken);
     
     const maskedToken = `${targetToken.substring(0, 4)}****${targetToken.slice(-4)}`;
-    await this.e.reply(`账号切换成功！\n当前使用账号: ${maskedToken}`);
+    const qqDisplay = targetAccount.qqNumber ? ` (${targetAccount.qqNumber.slice(0, 4)}****)` : '';
+    await this.e.reply(`账号切换成功！\n当前使用账号:${qqDisplay} ${maskedToken}`);
     return true;
   }
 }

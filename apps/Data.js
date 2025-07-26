@@ -78,7 +78,7 @@ export class Data extends plugin {
     }
 
     if (!solDetail && !mpDetail) {
-      await this.e.reply('未能查询到有效的游戏数据，可能是尚未进行过对局或API返回数据格式有误。');
+      await this.e.reply('暂未查询到该账号的游戏数据。');
       return true
     }
 
