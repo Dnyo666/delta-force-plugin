@@ -1,7 +1,7 @@
 {
-  "name": "waves-plugin",
-  "version": "1.5.26",
-  "description": "基于 Yunzai 的鸣潮游戏数据查询插件",
+  "name": "delta-force-plugin",
+  "version": "1.1.2",
+  "description": "基于 Yunzai 的三角洲行动游戏数据查询插件",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -17,9 +17,10 @@
   "keywords": [
     "Yunzai-Bot",
     "云崽",
-    "Wuthering Waves",
-    "鸣潮"
+    "Delta Force",
+    "三角洲行动",
+    "三角洲"
   ],
-  "author": "@CikeyQi",
+  "author": "@Dnyo666",
   "license": "AGPL-3.0"
 }
