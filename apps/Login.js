@@ -267,11 +267,21 @@ export class Login extends plugin {
 
     const res = await this.api.bindCharacter(token);
     
-    const apiMsg = res?.msg || res?.message || '';
-    if ((res && res.code === 0) || (res && apiMsg.includes('绑定成功'))) {
-        await this.e.reply(apiMsg || '角色绑定成功！');
+    if (res && res.success && res.roleInfo) {
+      const { charac_name, level, tdmlevel, adultstatus } = res.roleInfo;
+      const isAdult = adultstatus === '0' ? '否' : '是';
+
+      let msg = '角色绑定成功！\n';
+      msg += '--- 角色信息 ---\n';
+      msg += `昵称: ${charac_name}\n`;
+      msg += `烽火地带等级: ${level}\n`;
+      msg += `全面战场等级: ${tdmlevel}\n`;
+      msg += `防沉迷: ${isAdult}`;
+      
+      await this.e.reply(msg);
     } else {
-        await this.e.reply(`角色绑定失败: ${apiMsg || '未知错误'}`);
+      const apiMsg = res?.msg || res?.message || '未知错误';
+      await this.e.reply(`角色绑定失败: ${apiMsg}`);
     }
     return true;
   }

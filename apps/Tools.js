@@ -10,7 +10,7 @@ export class Tools extends plugin {
       priority: 100,
       rule: [
         {
-          reg: '^(#三角洲|\\^)(每日密码|每日口令)$',
+          reg: '^(#三角洲|\\^)(每日密码|今日密码)$',
           fnc: 'getDailyKeyword'
         },
         {
@@ -28,13 +28,16 @@ export class Tools extends plugin {
   }
 
   async getDailyKeyword() {
-    await this.e.reply('正在获取每日密码...');
     const res = await this.api.getDailyKeyword();
 
-    if (res && res.code === 0 && res.data) {
-      await this.e.reply(`今日密码：${res.data.keywords.desc}`);
+    if (res && (res.code === 0 || res.success) && res.data?.list?.length > 0) {
+      let msg = '【每日密码】\n';
+      res.data.list.forEach(item => {
+        msg += `【${item.mapName}】: ${item.secret}\n`;
+      });
+      await this.e.reply(msg.trim());
     } else {
-      await this.e.reply(`获取每日密码失败: ${res.msg || res.message || '未知错误'}`);
+      await this.e.reply(`获取每日密码失败: ${res.msg || res.message || '暂无数据'}`);
     }
     return true;
   }

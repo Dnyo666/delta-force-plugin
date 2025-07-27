@@ -173,6 +173,48 @@ export default class Code {
     return this.request('/df/person/flows', { frameworkToken, type, page }, 'GET')
   }
 
+  /**
+   * 获取个人藏品
+   * @param {string} frameworkToken - 用户绑定的token
+   */
+  async getCollection (frameworkToken) {
+    return this.request('/df/person/collection', { frameworkToken }, 'GET')
+  }
+
+  /**
+   * 获取藏品信息对照表
+   */
+  async getCollectionMap () {
+    return this.request('/df/object/collection', {}, 'GET')
+  }
+
+  /**
+   * 获取日报
+   * @param {string} frameworkToken - 用户绑定的token
+   * @param {string} type - 'sol' 或 'mp'
+   */
+  async getDailyRecord(frameworkToken, type = '') {
+      const params = { frameworkToken };
+      if (type) {
+          params.type = type;
+      }
+      return this.request('/df/person/dailyRecord', params, 'GET');
+  }
+
+  /**
+   * 获取周报
+   * @param {string} frameworkToken - 用户绑定的token
+   * @param {string} type - 'sol' 或 'mp'
+   * @param {boolean} isShowNullFriend - 是否显示空值队友
+   * @param {string} date - 日期，格式 YYYYMMDD
+   */
+  async getWeeklyRecord(frameworkToken, type = '', isShowNullFriend = true, date = '') {
+      const params = { frameworkToken, isShowNullFriend: String(isShowNullFriend) };
+      if (type) params.type = type;
+      if (date) params.date = date;
+      return this.request('/df/person/weeklyRecord', params, 'GET');
+  }
+
   // --- 账号绑定 ---
 
   /**
@@ -246,7 +288,11 @@ export default class Code {
   }
   
   async getMaps() {
-    return await this.request('/df/tools/Room/maps', {}, 'get');
+    return await this.request('/df/object/maps', {}, 'get');
+  }
+
+  async getOperators() {
+    return await this.request('/df/object/operator2', {}, 'get');
   }
 
   async getTags() {

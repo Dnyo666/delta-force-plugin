@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import Init from './model/init.js';
+import DataManager from './utils/Data.js';
 
 if (!global.segment) {
   global.segment = (await import("oicq")).segment;
@@ -15,6 +16,9 @@ const appsDir = path.join(pluginRoot, 'apps');
 let ret = [];
 
 logger.info(logger.yellow("- 正在载入 DELTA-FORCE-PLUGIN"));
+
+// 强制等待数据缓存初始化
+await DataManager.init();
 
 let files = [];
 try {

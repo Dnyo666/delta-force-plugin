@@ -122,9 +122,9 @@ export class Account extends plugin {
   async showAccounts () {
     const accountData = await this._getGroupedAccounts();
     if (!accountData) return true;
-
-    const { grouped, activeToken } = accountData;
     
+    const { grouped, activeToken } = accountData;
+
     if (accountData.all.length === 0) {
         await this.e.reply('您尚未绑定任何账号，请使用 #三角洲登录 进行绑定。');
         return true;
@@ -210,13 +210,13 @@ export class Account extends plugin {
       await this.e.reply('序号无效，请检查序号是否正确。');
       return true;
     }
-    
+
     const targetAccount = all[targetIndex];
     if (!targetAccount.isValid) {
       await this.e.reply('该账号已失效，无法切换。');
       return true;
     }
-
+    
     const targetToken = targetAccount.frameworkToken;
     await utils.setActiveToken(this.e.user_id, targetToken);
     

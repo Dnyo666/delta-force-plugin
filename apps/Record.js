@@ -1,28 +1,8 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
+import DataManager from '../utils/Data.js'
 
-// --- 数据字典 ---
-const solMap = {
-  '2231': '零号大坝-前夜', '2201': '零号大坝-常规', '2202': '零号大坝-机密',
-  '1901': '长弓溪谷-常规', '1902': '长弓溪谷-机密',
-  '3901': '航天基地-机密', '3902': '航天基地-绝密',
-  '8102': '巴克什-机密', '8103': '巴克什-绝密',
-  '8803': '潮汐监狱-绝密'
-};
-const mpMap = {
-  '107': '沟壕战-攻防', '108': '沟壕战-占领',
-  '302': '风暴眼-攻防', '303': '风暴眼-占领',
-  '54': '攀升-攻防', '103': '攀升-占领',
-  '75': '临界点-攻防', '113': '贯穿-攻防',
-  '34': '烬区-占领', '112': '断轨-占领',
-  '210': '临界点-占领'
-};
-const armedForce = {
-  '10007': '红狼', '10010': '威龙', '10011': '无名', '20003': '蜂医',
-  '20004': '蛊', '30008': '牧羊人', '30010': '未知干员', '40005': '露娜',
-  '40010': '骇爪'
-};
 const escapeReason = {
   '1': '撤离成功', '2': '被玩家击杀', '3': '被人机击杀'
 };
@@ -39,7 +19,7 @@ export class Record extends plugin {
       priority: 100,
       rule: [
         {
-          reg: '^#三角洲战绩(.*)$',
+          reg: '^(#三角洲|\\^)战绩(.*)$',
           fnc: 'getRecord'
         }
       ]
@@ -49,7 +29,8 @@ export class Record extends plugin {
   }
 
   async getRecord () {
-    const argStr = this.e.msg.replace(/^#三角洲战绩\s*/, '').trim();
+    const match = this.e.msg.match(/^(#三角洲|\^)战绩\s*(.*)$/);
+    const argStr = match ? match[2].trim() : '';
     const args = argStr.split(/\s+/).filter(Boolean);
 
     let mode = 'sol'; // 默认模式为烽火地带
@@ -108,11 +89,12 @@ export class Record extends plugin {
     forwardMsg.push({ ...userInfo, message: title });
 
     if (mode === 'sol') {
-      records.forEach((r, i) => {
+      for (const r of records) {
+        const i = records.indexOf(r);
         let msg = '';
-        const recordNum = (page - 1) * records.length + i + 1; // 修正编号计算
-        const mapName = solMap[r.MapId] || `未知地图(${r.MapId})`
-        const operator = armedForce[r.ArmedForceId] || `未知干员(${r.ArmedForceId})`
+        const recordNum = (page - 1) * records.length + i + 1;
+        const mapName = DataManager.getMapName(r.MapId);
+        const operator = DataManager.getOperatorName(r.ArmedForceId);
         const status = escapeReason[r.EscapeFailReason] || '撤离失败'
         const duration = utils.formatDuration(r.DurationS, 'seconds')
         const value = Number(r.FinalPrice).toLocaleString()
@@ -124,14 +106,15 @@ export class Record extends plugin {
         msg += `击杀: 干员(${r.KillCount || 0}) / AI玩家(${r.KillPlayerAICount || 0}) / 其他AI(${r.KillAICount || 0})`
         
         forwardMsg.push({ ...userInfo, message: msg.trim() });
-      });
+      }
     } else { // mode === 'mp'
-      records.forEach((r, i) => {
+      for (const r of records) {
+        const i = records.indexOf(r);
         let mainMsg = '';
         let teamMsg = '';
-        const recordNum = (page - 1) * records.length + i + 1; // 修正编号计算
-        const mapName = mpMap[r.MapID] || `未知地图(${r.MapID})`
-        const operator = armedForce[r.ArmedForceId] || `未知干员(${r.ArmedForceId})`
+        const recordNum = (page - 1) * records.length + i + 1;
+        const mapName = DataManager.getMapName(r.MapID);
+        const operator = DataManager.getOperatorName(r.ArmedForceId);
         const result = mpResult[r.MatchResult] || '未知结果'
         const duration = utils.formatDuration(r.gametime, 'seconds')
 
@@ -146,18 +129,18 @@ export class Record extends plugin {
         const teamList = r.RoomInfo?.data?.mpDetailList;
         if (teamList && teamList.length > 0) {
             teamMsg += "--- 对局详情 ---\n";
-            teamList.forEach(t => {
-                const teamOperator = armedForce[t.armedForceType] || `干员(${t.armedForceType})`;
+            for (const t of teamList) {
+                const teamOperator = DataManager.getOperatorName(t.armedForceType);
                 // 解码昵称
                 const nickName = decodeURIComponent(t.nickName || t.PlayerName || '未知玩家');
                 const isCurrentUser = t.isCurrentUser ? ' (我)' : '';
                 
                 teamMsg += `${nickName}${isCurrentUser} (${teamOperator}):\n`;
                 teamMsg += `  K/D/A: ${t.killNum}/${t.death}/${t.assist}, 得分: ${t.totalScore.toLocaleString()}\n`;
-            });
+            }
             forwardMsg.push({ ...userInfo, message: teamMsg.trim() });
         }
-      });
+      }
     }
 
     let msgToSend;

@@ -461,7 +461,7 @@ GET /df/person/personalData?frameworkToken=xxxx&type=sol&seasonid=5
 - `seasonid`：赛季ID（可选，默认全部赛季合计，仅支持单赛季）
 ### 流水查询
 ```http
-GET /df/person/transactionQuery?frameworkToken=xxxx&page=1&limit=20
+GET /df/person/flows?frameworkToken=xxxx&page=1&limit=20
 ```
 **参数说明**
 - `page`：查询页数（可选，默认为1）
@@ -469,12 +469,12 @@ GET /df/person/transactionQuery?frameworkToken=xxxx&page=1&limit=20
 
 ### 货币查询
 ```http
-GET /df/person/currencyQuery?frameworkToken=xxxx
+GET /df/person/money?frameworkToken=xxxx
 ```
 
 ### 战绩查询
 ```http
-GET /df/person/battleRecord?frameworkToken=xxxx&type=4&page=1
+GET /df/person/record?frameworkToken=xxxx&type=4&page=1
 ```
 **参数说明**
 - `type`：游戏模式（4和5分别为烽火地带和全面战场）（必选）
@@ -482,7 +482,7 @@ GET /df/person/battleRecord?frameworkToken=xxxx&type=4&page=1
 
 ### 大红称号
 ```http
-GET /df/person/redTitle?frameworkToken=xxxx
+GET /df/person/title?frameworkToken=xxxx
 ```
 ## 错误响应格式
 
