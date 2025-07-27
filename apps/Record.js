@@ -61,6 +61,12 @@ export class Record extends plugin {
     
     const res = await this.api.getRecord(token, typeId, page)
 
+    // 检查是否需要先绑定大区
+    if (DataManager.isRegionBindingRequired(res)) {
+      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
+      return true
+    }
+
     if (!res || res.success === false) {
       await this.e.reply(`查询战绩失败: ${res?.message || '服务无响应或发生未知错误'}`);
       return true;

@@ -1,6 +1,7 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
+import DataManager from '../utils/Data.js'
 
 export class Collection extends plugin {
   constructor (e) {
@@ -33,6 +34,12 @@ export class Collection extends plugin {
       this.api.getCollection(token),
       this.api.getCollectionMap()
     ])
+
+    // 检查是否需要先绑定大区
+    if (DataManager.isRegionBindingRequired(collectionRes)) {
+      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
+      return true
+    }
 
     if (!collectionRes || collectionRes.success === false) {
       return this.e.reply(`查询藏品失败: ${collectionRes?.message || '服务无响应'}`)

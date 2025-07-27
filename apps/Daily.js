@@ -39,6 +39,12 @@ export class Daily extends plugin {
 
     const res = await this.api.getDailyRecord(token, mode)
 
+    // 检查是否需要先绑定大区
+    if (DataManager.isRegionBindingRequired(res)) {
+      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
+      return true
+    }
+
     if (!res || res.success === false) {
       await this.e.reply(`查询日报失败: ${res.message || '未知错误'}`)
       return true

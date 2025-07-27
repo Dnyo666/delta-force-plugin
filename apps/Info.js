@@ -1,6 +1,7 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
+import DataManager from '../utils/Data.js'
 import { segment } from 'oicq'
 
 export class Info extends plugin {
@@ -35,6 +36,13 @@ export class Info extends plugin {
     await this.e.reply('正在查询您的个人信息，请稍候...')
 
     const res = await this.api.getPersonalInfo(token)
+
+    // 检查是否需要先绑定大区
+    if (DataManager.isRegionBindingRequired(res)) {
+      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
+      return true
+    }
+
     if (!res || !res.data || !res.roleInfo) {
       await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
       return true
@@ -98,6 +106,13 @@ export class Info extends plugin {
     }
 
     const res = await this.api.getPersonalInfo(token)
+    
+    // 检查是否需要先绑定大区
+    if (DataManager.isRegionBindingRequired(res)) {
+      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
+      return true
+    }
+    
     if (!res || !res.roleInfo) {
       await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
       return true
