@@ -5,7 +5,7 @@ export default {
     let { e } = cfg
     if (!e) return false
 
-    return e.runtime.render('delta-force-plugin-cursor', tpl, data, {
+    return e.runtime.render('delta-force-plugin', tpl, data, {
       ...cfg,
       beforeRender ({ data }) {
         const _res_path = data.pluResPath

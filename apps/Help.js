@@ -75,11 +75,12 @@ export class Help extends plugin {
         });
 
         let themeData = await this.getThemeData(helpCfg, helpCfg);
-        return await Render.render('Template/help/index.html', {
+        return await Render.render('help/index.html', {
             helpCfg,
             helpGroup,
             ...themeData,
-            element: 'default'
+            element: 'default',
+            pluResPath: 'resources'
         }, { e, scale: 1.6 });
     }
 
@@ -89,14 +90,14 @@ export class Help extends plugin {
         const colWidth = Math.min(500, Math.max(100, parseInt(helpConfig?.colWidth) || 265));
         const width = Math.min(2500, Math.max(800, colCount * colWidth + 30));
         const theme = {
-            main: `../imgs/bg.jpg`,
-            bg: `../imgs/bg.jpg`,
+            main: `help/imgs/bg.jpg`,
+            bg: `help/imgs/bg.jpg`,
             style: style
         };
         const themeStyle = theme.style || {};
         const ret = [`
-          body{background-image:url(${theme.bg});width:${width}px;}
-          .container{background-image:url(${theme.main});background-size:cover;}
+          body{background-image:url(${theme.bg}) !important;width:${width}px;}
+          .container{background-image:url(${theme.main}) !important;background-size:cover;}
           .help-table .td,.help-table .th{width:${100 / colCount}%}
           `];
         const css = function (sel, css, key, def, fn) {
@@ -115,7 +116,7 @@ export class Help extends plugin {
         css('.help-table .tr:nth-child(odd)', 'background', 'rowBgColor1', 'rgba(34, 41, 51, .2)');
         css('.help-table .tr:nth-child(even)', 'background', 'rowBgColor2', 'rgba(34, 41, 51, .4)');
         return {
-            style: `<style>${ret.join('\\n')}</style>`,
+            style: `<style>${ret.join('\n')}</style>`,
             colCount
         };
     }
