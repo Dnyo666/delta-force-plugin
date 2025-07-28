@@ -185,15 +185,10 @@ export class Update extends plugin {
    * @returns
    */
   async makeForwardMsg(title, msg, end) {
-    let { nickname } = this.e.bot ?? Bot
-    if (this.e.isGroup) {
-      let info = await (this.e.bot ?? Bot).getGroupMemberInfo(this.e.group_id, (this.e.bot ?? Bot).uin)
-      nickname = info.card || info.nickname
-    }
-    let userInfo = {
-      user_id: (this.e.bot ?? Bot).uin,
-      nickname
-    }
+    const userInfo = {
+      user_id: this.e.user_id,
+      nickname: this.e.sender.nickname
+    };
 
     let forwardMsg = [
       {

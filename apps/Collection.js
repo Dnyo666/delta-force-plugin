@@ -28,26 +28,24 @@ export class Collection extends plugin {
       return true
     }
 
-    await this.e.reply('正在查询您的藏品资产，请稍候...')
+    await this.e.reply('正在查询您的藏品信息，请稍候...');
 
+    // 恢复并行请求，同时获取用户藏品和藏品信息表
     const [collectionRes, collectionMapRes] = await Promise.all([
       this.api.getCollection(token),
       this.api.getCollectionMap()
-    ])
+    ]);
+    
+    // 统一处理用户藏品API的错误
+    if (await utils.handleApiError(collectionRes, this.e)) return true;
 
-    // 检查是否需要先绑定大区
-    if (DataManager.isRegionBindingRequired(collectionRes)) {
-      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
-      return true
-    }
-
-    if (!collectionRes || collectionRes.success === false) {
-      return this.e.reply(`查询藏品失败: ${collectionRes?.message || '服务无响应'}`)
-    }
+    // 单独处理藏品信息表API的错误
     if (!collectionMapRes || collectionMapRes.success === false) {
-      return this.e.reply(`获取藏品信息失败: ${collectionMapRes?.message || '服务无响应'}`)
+      logger.mark(`[Collection] 获取藏品对照表失败: ${collectionMapRes?.message || '服务无响应'}`);
+      return this.e.reply(`获取藏品基础信息失败，无法展示您的资产。`);
     }
 
+    // 使用安全的方式获取藏品数据，即使字段不存在或为空也不会报错
     const userItems = collectionRes.data?.userData || []
     const weaponItems = collectionRes.data?.weponData || []
     const allUserItems = [...userItems, ...weaponItems]
@@ -79,15 +77,10 @@ export class Collection extends plugin {
     })
 
     // --- 构造转发消息 ---
-    let { nickname } = this.e.bot
-    if (this.e.isGroup) {
-      const info = await this.e.bot.getGroupMemberInfo(this.e.group_id, this.e.bot.uin)
-      nickname = info.card || info.nickname
-    }
     const userInfo = {
-      user_id: this.e.bot.uin,
-      nickname
-    }
+      user_id: this.e.user_id,
+      nickname: this.e.sender.nickname
+    };
 
     let forwardMsg = []
     const totalCount = allUserItems.length

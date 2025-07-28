@@ -57,41 +57,32 @@ export class Record extends plugin {
       return true
     }
     
-    await this.e.reply(`正在查询 ${modeName} 的战绩 (第${page}页)，请稍候...`)
-    
-    const res = await this.api.getRecord(token, typeId, page)
+    await this.e.reply(`正在查询 ${modeName} 的战绩 (第${page}页)，请稍候...`);
 
-    // 检查是否需要先绑定大区
-    if (DataManager.isRegionBindingRequired(res)) {
-      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
-      return true
-    }
+    const res = await this.api.getRecord(token, typeId, page);
 
-    if (!res || res.success === false) {
-      await this.e.reply(`查询战绩失败: ${res?.message || '服务无响应或发生未知错误'}`);
+    if (await utils.handleApiError(res, this.e)) return true;
+
+    if (!res.data || !Array.isArray(res.data)) {
+      await this.e.reply(`查询失败: API 返回的数据格式不正确或战绩列表为空。`);
       return true;
     }
 
-    if (!res.data || res.data.length === 0) {
-      await this.e.reply(`暂无更多 ${modeName} 的战绩记录。`);
+    const records = res.data;
+    
+    if (records.length === 0) {
+      await this.e.reply(`您在 ${modeName} (第${page}页) 没有更多战绩记录。`);
       return true;
     }
 
     // --- 构造转发消息 ---
-    let { nickname } = this.e.bot;
-    if (this.e.isGroup) {
-        const info = await this.e.bot.getGroupMemberInfo(this.e.group_id, this.e.bot.uin);
-        nickname = info.card || info.nickname;
-    }
     const userInfo = {
-        user_id: this.e.bot.uin,
-        nickname
+      user_id: this.e.user_id,
+      nickname: this.e.sender.nickname
     };
-
-    const records = res.data; 
+    
     let forwardMsg = [];
-
-    const title = `--- ${modeName}战绩 (第${page}页) ---`;
+    const title = `【${modeName}战绩 - 第${page}页】`;
     forwardMsg.push({ ...userInfo, message: title });
 
     if (mode === 'sol') {

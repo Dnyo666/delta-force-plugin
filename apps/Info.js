@@ -37,14 +37,10 @@ export class Info extends plugin {
 
     const res = await this.api.getPersonalInfo(token)
 
-    // 检查是否需要先绑定大区
-    if (DataManager.isRegionBindingRequired(res)) {
-      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
-      return true
-    }
+    if (await utils.handleApiError(res, this.e)) return true;
 
-    if (!res || !res.data || !res.roleInfo) {
-      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
+    if (!res.data || !res.roleInfo) {
+      await this.e.reply(`查询失败: API 返回数据格式不正确`)
       return true
     }
 
@@ -113,14 +109,10 @@ export class Info extends plugin {
 
     const res = await this.api.getPersonalInfo(token)
     
-    // 检查是否需要先绑定大区
-    if (DataManager.isRegionBindingRequired(res)) {
-      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
-      return true
-    }
+    if (await utils.handleApiError(res, this.e)) return true;
     
-    if (!res || !res.roleInfo) {
-      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
+    if (!res.roleInfo) {
+      await this.e.reply(`查询失败: API 返回数据格式不正确`)
       return true
     }
     

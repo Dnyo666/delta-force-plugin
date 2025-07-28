@@ -269,6 +269,8 @@ export class Login extends plugin {
 
     const res = await this.api.bindCharacter(token);
     
+    if (await utils.handleApiError(res, this.e)) return true;
+
     if (res && res.success && res.roleInfo) {
       const { charac_name, level, tdmlevel, adultstatus } = res.roleInfo;
       const isAdult = adultstatus === '0' ? '否' : '是';
@@ -283,10 +285,6 @@ export class Login extends plugin {
       await this.e.reply(msg);
     } else {
       const apiMsg = res?.msg || res?.message || '未知错误';
-      if (apiMsg.includes('绑定大区')) {
-        await this.e.reply('您尚未绑定大区，请绑定后，再使用此命令');
-        return true
-      }
       await this.e.reply(`角色绑定失败: ${apiMsg}`);
     }
     return true;

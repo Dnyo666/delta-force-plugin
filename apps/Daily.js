@@ -37,17 +37,15 @@ export class Daily extends plugin {
       mode = 'mp'
     }
 
-    const res = await this.api.getDailyRecord(token, mode)
+    await this.e.reply('正在查询您的今日战报，请稍候...');
 
-    // 检查是否需要先绑定大区
-    if (DataManager.isRegionBindingRequired(res)) {
-      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
-      return true
-    }
+    const res = await this.api.getDailyReport(token);
+    
+    if (await utils.handleApiError(res, this.e)) return true;
 
-    if (!res || res.success === false) {
-      await this.e.reply(`查询日报失败: ${res.message || '未知错误'}`)
-      return true
+    if (!res.data) {
+      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`);
+      return true;
     }
 
     let solDetail, mpDetail;
