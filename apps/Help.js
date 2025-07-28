@@ -79,8 +79,7 @@ export class Help extends plugin {
             helpCfg,
             helpGroup,
             ...themeData,
-            element: 'default',
-            pluResPath: 'resources'
+            element: 'default'
         }, { e, scale: 1.6 });
     }
 
@@ -90,8 +89,8 @@ export class Help extends plugin {
         const colWidth = Math.min(500, Math.max(100, parseInt(helpConfig?.colWidth) || 265));
         const width = Math.min(2500, Math.max(800, colCount * colWidth + 30));
         const theme = {
-            main: `help/imgs/bg.jpg`,
-            bg: `help/imgs/bg.jpg`,
+            main: `../imgs/bg.jpg`,
+            bg: `../imgs/bg.jpg`,
             style: style
         };
         const themeStyle = theme.style || {};
