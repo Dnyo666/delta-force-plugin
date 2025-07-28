@@ -387,17 +387,17 @@ export class Weekly extends plugin {
         return this.e.reply('未能解析到有效的周报数据。');
     }
     
-    let msgToSend;
-    if (this.e.group?.makeForwardMsg) {
-        msgToSend = await this.e.group.makeForwardMsg(forwardMsg);
+    // --- 尝试以转发消息形式发送 ---
+    let msgToSend = forwardMsg.join('\n\n');
+    if (this.e.group?.raw?.makeForwardMsg) {
+      msgToSend = await this.e.group.raw.makeForwardMsg(forwardMsg);
+    } else if (this.e.group?.makeForwardMsg) {
+      msgToSend = await this.e.group.makeForwardMsg(forwardMsg);
     } else if (this.e.friend?.makeForwardMsg) {
-        msgToSend = await this.e.friend.makeForwardMsg(forwardMsg);
-    } else {
-        msgToSend = forwardMsg.map(item => item.message).join('\n\n');
+      msgToSend = await this.e.friend.makeForwardMsg(forwardMsg);
     }
 
-    await this.e.reply(msgToSend);
-
+    await this.e.reply(msgToSend)
     return true
   }
 } 

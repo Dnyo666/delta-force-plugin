@@ -149,30 +149,17 @@ export class Record extends plugin {
       }
     }
 
-    let msgToSend;
-    if (this.e.group?.makeForwardMsg) {
+    // 尝试以转发消息形式发送
+    let msgToSend = forwardMsg.join('\n\n');
+    if (this.e.group?.raw?.makeForwardMsg) {
+      msgToSend = await this.e.group.raw.makeForwardMsg(forwardMsg);
+    } else if (this.e.group?.makeForwardMsg) {
       msgToSend = await this.e.group.makeForwardMsg(forwardMsg);
     } else if (this.e.friend?.makeForwardMsg) {
       msgToSend = await this.e.friend.makeForwardMsg(forwardMsg);
-    } else {
-      msgToSend = forwardMsg.map(item => item.message).join('\n\n---\n\n');
     }
-
-    // 统一转发消息的标题
-    const dec = `三角洲战绩-${modeName}`;
-    if (typeof (msgToSend.data) === 'object') {
-        let detail = msgToSend.data?.meta?.detail;
-        if (detail) {
-            detail.news = [{ text: dec }];
-        }
-    } else {
-        msgToSend.data = msgToSend.data
-            .replace(/\n/g, '')
-            .replace(/<title color="#777777" size="26">(.+?)<\/title>/g, '___')
-            .replace(/___+/, `<title color="#777777" size="26">${dec}</title>`);
-    }
-
-    await this.e.reply(msgToSend)
+    
+    await this.e.reply(msgToSend);
     return true
   }
 } 

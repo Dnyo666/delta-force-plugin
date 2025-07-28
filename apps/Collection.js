@@ -123,14 +123,14 @@ export class Collection extends plugin {
       return this.e.reply('未能解析到您的任何藏品信息。')
     }
     
-    let msgToSend
-    if (this.e.group?.makeForwardMsg) {
+    // --- 尝试以转发消息形式发送 ---
+    let msgToSend = forwardMsg.join('\n\n');
+    if (this.e.group?.raw?.makeForwardMsg) {
+      msgToSend = await this.e.group.raw.makeForwardMsg(forwardMsg);
+    } else if (this.e.group?.makeForwardMsg) {
       msgToSend = await this.e.group.makeForwardMsg(forwardMsg)
     } else if (this.e.friend?.makeForwardMsg) {
       msgToSend = await this.e.friend.makeForwardMsg(forwardMsg)
-    } else {
-      // Fallback for non-group/friend context
-      msgToSend = forwardMsg.map(item => item.message).join('\n--------------------\n')
     }
 
     const dec = '三角洲藏品查询'
