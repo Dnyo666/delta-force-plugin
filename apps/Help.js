@@ -75,7 +75,7 @@ export class Help extends plugin {
         });
 
         let themeData = await this.getThemeData(helpCfg, helpCfg);
-        return await Render.render('Template/help/index.html', {
+        return await Render.render('help/index.html', {
             helpCfg,
             helpGroup,
             ...themeData,
@@ -95,7 +95,7 @@ export class Help extends plugin {
         };
         const themeStyle = theme.style || {};
         const ret = [`
-          body{background-image:url(${theme.bg});width:${width}px;}
+          body{background-image:url(${theme.bg}) no-repeat;width:${width}px;}
           .container{background-image:url(${theme.main});background-size:cover;}
           .help-table .td,.help-table .th{width:${100 / colCount}%}
           `];
@@ -115,7 +115,7 @@ export class Help extends plugin {
         css('.help-table .tr:nth-child(odd)', 'background', 'rowBgColor1', 'rgba(34, 41, 51, .2)');
         css('.help-table .tr:nth-child(even)', 'background', 'rowBgColor2', 'rgba(34, 41, 51, .4)');
         return {
-            style: `<style>${ret.join('\\n')}</style>`,
+            style: `<style>${ret.join('\n')}</style>`,
             colCount
         };
     }
