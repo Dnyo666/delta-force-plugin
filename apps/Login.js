@@ -19,7 +19,7 @@ export class Login extends plugin {
       priority: 100,
       rule: [
         {
-          reg: '^(#三角洲|\\^)(qq|微信|wx|wegame|qqsafe|安全中心|qq安全中心)?(登陆|登录)$',
+          reg: '^(#三角洲|\\^)(qq|QQ|微信|wx|WX|wegame|WEGAME|wegame微信|微信wegame|qqsafe|QQsafe|安全中心|qq安全中心)?(登陆|登录)$',
           fnc: 'login'
         },
         {
@@ -35,8 +35,17 @@ export class Login extends plugin {
   async login () {
     const match = this.e.msg.match(this.rule[0].reg);
     let platform = match[2] || 'qq';
+    
+    // 统一转为小写处理
+    platform = platform.toLowerCase();
+    
+    // 处理各种登录平台的别名
     if (['wx', '微信'].includes(platform)) platform = 'wechat';
     if (['qqsafe', '安全中心', 'qq安全中心'].includes(platform)) platform = 'qqsafe';
+    if (['wegame微信', '微信wegame'].includes(platform)) platform = 'wegame/wechat';
+    
+    // 记录原始平台类型，用于后续判断是否进行角色绑定
+    const originalPlatform = platform;
     
     const res = await this.api.getLoginQr(platform)
     const frameworkToken = res.token || res.frameworkToken;
@@ -161,12 +170,15 @@ export class Login extends plugin {
       });
 
       if (bindRes && (bindRes.code === 0 || bindRes.success)) {
-        await this.e.reply('登录成功，账号已自动绑定！正在检查并更新激活状态...');
+        // 提供基本的成功消息
+        await this.e.reply('登录成功，账号已自动绑定！');
 
+        // 获取用户现有账号列表
         const listRes = await this.api.getUserList({ clientID, platformID: this.e.user_id, clientType: 'qq' });
 
         if (!listRes || listRes.code !== 0 || !listRes.data) {
             await this.e.reply('获取账号列表失败，无法为您自动激活。请手动切换。');
+            // 直接返回，不修改当前激活的token
             return true;
         }
         
@@ -178,59 +190,88 @@ export class Login extends plugin {
             return true;
         }
 
+        // 获取当前活跃token（可能为null）
+        const oldActiveToken = await utils.getAccount(this.e.user_id);
         let shouldActivateNewToken = false;
-
-        // Case 1: 首次登录
-        if (!oldActiveToken) {
-            shouldActivateNewToken = true;
+        
+        // 获取新账号的类型分组
+        const newAccountType = newlyBoundAccount.tokenType.toLowerCase();
+        let newAccountGroupKey;
+        
+        // 确定新账号所属分组
+        if (['qq', 'wechat'].includes(newAccountType)) {
+          newAccountGroupKey = 'qq_wechat';
+        } else if (['wegame', 'wegame/wechat'].includes(newAccountType)) {
+          newAccountGroupKey = 'wegame';
+        } else if (newAccountType === 'qqsafe') {
+          newAccountGroupKey = 'qqsafe';
         } else {
-            // Case 2: 分组首次登录或重新登录
-            const newAccountType = newlyBoundAccount.tokenType.toLowerCase();
-            let newAccountGroupKey = 'qq_wechat';
-            if (newAccountType === 'wegame') newAccountGroupKey = 'wegame';
-            if (newAccountType === 'qqsafe') newAccountGroupKey = 'qqsafe';
+          newAccountGroupKey = 'other';
+        }
+        
+        if (!oldActiveToken) {
+          // Case 1: 没有激活账号，则直接激活新账号
+          shouldActivateNewToken = true;
+        } else {
+          // Case 2: 已有激活账号，查找该账号信息
+          const oldActiveAccount = newAccounts.find(acc => acc.frameworkToken === oldActiveToken);
+          
+          if (!oldActiveAccount) {
+            // 原激活账号已失效或已被删除，激活新账号
+            shouldActivateNewToken = true;
+          } else {
+            // 获取原账号的类型分组
+            const oldAccountType = oldActiveAccount.tokenType.toLowerCase();
+            let oldAccountGroupKey;
             
-            const accountsInGroup = newAccounts.filter(a => {
-                const type = a.tokenType.toLowerCase();
-                if (newAccountGroupKey === 'qq_wechat') return ['qq', 'wechat'].includes(type);
-                return type === newAccountGroupKey;
-            });
-            
-            if (accountsInGroup.length === 1) {
-                // 这个分组下只有一个号，说明是分组首次登录
-                shouldActivateNewToken = true;
+            if (['qq', 'wechat'].includes(oldAccountType)) {
+              oldAccountGroupKey = 'qq_wechat';
+            } else if (['wegame', 'wegame/wechat'].includes(oldAccountType)) {
+              oldAccountGroupKey = 'wegame';
+            } else if (oldAccountType === 'qqsafe') {
+              oldAccountGroupKey = 'qqsafe';
             } else {
-                // Case 3: 检查是否是已激活账号的更新
-                // 如果旧的激活token在绑定后的新列表中找不到了, 说明它被新的替换了
-                const oldActiveAccountInNewList = newAccounts.find(a => a.frameworkToken === oldActiveToken);
-                if (!oldActiveAccountInNewList) {
-                    shouldActivateNewToken = true;
-                }
+              oldAccountGroupKey = 'other';
             }
+            
+            // 只有在同一分组内才更新激活账号
+            if (oldAccountGroupKey === newAccountGroupKey) {
+              shouldActivateNewToken = true;
+              logger.info(`[DELTA FORCE PLUGIN] 在同一分组(${newAccountGroupKey})内更新激活账号`);
+            } else {
+              logger.info(`[DELTA FORCE PLUGIN] 不同分组账号(${oldAccountGroupKey}->${newAccountGroupKey})，保持原激活账号不变`);
+            }
+          }
         }
 
         if (shouldActivateNewToken) {
-            await utils.setActiveToken(this.e.user_id, finalToken);
+          await utils.setActiveToken(this.e.user_id, finalToken);
+          logger.info(`[DELTA FORCE PLUGIN] 已激活新账号: ${finalToken.substring(0, 4)}****${finalToken.slice(-4)}`);
+        } else {
+          logger.info(`[DELTA FORCE PLUGIN] 保持原激活账号不变: ${oldActiveToken.substring(0, 4)}****${oldActiveToken.slice(-4)}`);
         }
 
-        // 自动绑定角色
-        const characterBindRes = await this.api.bindCharacter(finalToken);
+        // 只有QQ和微信登录才尝试自动绑定角色
+        if (['qq', 'wechat'].includes(originalPlatform)) {
+            // 自动绑定角色
+            const characterBindRes = await this.api.bindCharacter(finalToken);
+            
+            if (characterBindRes && characterBindRes.success && characterBindRes.roleInfo) {
+              const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
+              const isAdult = adultstatus === '0' ? '否' : '是';
         
-        if (characterBindRes && characterBindRes.success && characterBindRes.roleInfo) {
-          const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
-          const isAdult = adultstatus === '0' ? '否' : '是';
-    
-          let charMsg = '登录并绑定成功！\n';
-          charMsg += '--- 角色信息 ---\n';
-          charMsg += `昵称: ${charac_name}\n`;
-          charMsg += `烽火地带等级: ${level}\n`;
-          charMsg += `全面战场等级: ${tdmlevel}\n`;
-          charMsg += `防沉迷: ${isAdult}`;
-          
-          await this.e.reply(charMsg);
-        } else {
-          const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
-          await this.e.reply(`云端账号登录并绑定成功！\n但自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
+              let charMsg = '角色信息已获取！\n';
+              charMsg += '--- 角色信息 ---\n';
+              charMsg += `昵称: ${charac_name}\n`;
+              charMsg += `烽火地带等级: ${level}\n`;
+              charMsg += `全面战场等级: ${tdmlevel}\n`;
+              charMsg += `防沉迷: ${isAdult}`;
+              
+              await this.e.reply(charMsg);
+            } else {
+              const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
+              await this.e.reply(`自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
+            }
         }
 
       } else {

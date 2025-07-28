@@ -75,7 +75,7 @@ export default class Code {
 
   /**
    * 获取登录二维码
-   * @param {string} platform - 'qq', 'wechat', 'qqsafe', 'wegame'
+   * @param {string} platform - 'qq', 'wechat', 'qqsafe', 'wegame', 'wegame/wechat'(通过微信登录WeGame)
    */
   async getLoginQr (platform) {
     return this.request(`/login/${platform}/qr`)
@@ -83,7 +83,7 @@ export default class Code {
 
   /**
    * 获取登录状态
-   * @param {string} platform - 'qq', 'wechat', 'qqsafe', 'wegame'
+   * @param {string} platform - 'qq', 'wechat', 'qqsafe', 'wegame', 'wegame/wechat'(通过微信登录WeGame)
    * @param {string} frameworkToken - 登录流程中获取的临时 token
    */
   async getLoginStatus (platform, frameworkToken) {
