@@ -119,7 +119,7 @@ export default class Code {
    * @param {string} threadId 文章ID
    */
   async getArticleDetail(threadId) {
-    return this.request('/df/tools/article/detail', { threadId }, 'GET');
+    return this.request('/df/tools/article/detail', { threadID: threadId }, 'GET');
   }
   
   /**
