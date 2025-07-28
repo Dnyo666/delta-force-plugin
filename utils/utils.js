@@ -28,6 +28,13 @@ async function handleApiError(res, e) {
     await e.reply('API Key无效或已过期，请联系机器人管理员检查配置。');
     return true;
   }
+  
+  // Case 1.1: API Key permission insufficient (code: 1100)
+  if (String(res.code) === '1100') {
+    logger.mark(`[API Error Handler] API Key权限不足。Response: ${resString}`);
+    await e.reply(`APIKey权限不足，请机器人升级订阅后使用。\n当前等级: ${res.currentTier || 'free'} | 需要等级: ${res.requiredTier || 'pro'}`);
+    return true;
+  }
 
   // Case 4: Login session invalid (ret: 101)
   if (res.data?.ret === 101 || res.error?.includes('请先完成QQ或微信登录') || res.sMsg?.includes('请先登录')) {
