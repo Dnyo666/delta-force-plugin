@@ -214,7 +214,9 @@ export class Update extends plugin {
     }
 
     /** 制作转发内容 */
-    if (this.e.group?.makeForwardMsg) {
+    if (this.e.group?.raw?.makeForwardMsg) {
+      forwardMsg = await this.e.group.raw.makeForwardMsg(forwardMsg)
+    } else if (this.e.group?.makeForwardMsg) {
       forwardMsg = await this.e.group.makeForwardMsg(forwardMsg)
     } else if (this.e?.friend?.makeForwardMsg) {
       forwardMsg = await this.e.friend.makeForwardMsg(forwardMsg)
