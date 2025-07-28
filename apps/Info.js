@@ -71,6 +71,12 @@ export class Info extends plugin {
     userData.charac_name = decode(userData.charac_name);
     userData.picurl = decode(userData.picurl);
     
+    // --- 头像URL处理 ---
+    let finalPicUrl = userData.picurl;
+    if (finalPicUrl && /^[0-9]+$/.test(finalPicUrl)) {
+      finalPicUrl = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin//${finalPicUrl}.webp`;
+    }
+    
     // --- 消息拼接 ---
     let msg = '【个人账户信息】\n';
     const maskedUid = roleInfo.uid ? `${roleInfo.uid.substring(0, 4)}****${roleInfo.uid.slice(-4)}` : '-';
@@ -89,8 +95,8 @@ export class Info extends plugin {
     msg += `登录渠道: ${channelMap[roleInfo.loginchannel] || roleInfo.loginchannel || '未知'}\n`;
 
     // 发送头像和文本信息
-    if (userData.picurl) {
-        await this.e.reply([segment.image(userData.picurl), msg.trim()]);
+    if (finalPicUrl) {
+        await this.e.reply([segment.image(finalPicUrl), msg.trim()]);
     } else {
         await this.e.reply(msg.trim());
     }
