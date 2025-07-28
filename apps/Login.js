@@ -6,6 +6,7 @@ import Code from '../components/Code.js'
 import Config from '../components/Config.js'
 import { pluginRoot } from '../model/path.js'
 import utils from '../utils/utils.js'
+import { Account } from './Account.js'
 
 const LOGIN_TIMEOUT = 180 * 1000; // 登录总超时时间，180秒
 const POLL_INTERVAL = 1000; // 轮询间隔，1秒
@@ -194,7 +195,7 @@ export class Login extends plugin {
         const oldActiveToken = await utils.getAccount(this.e.user_id);
         let shouldActivateNewToken = false;
         
-        // 获取新账号的类型分组
+        // 确定新账号所属分组
         const newAccountType = newlyBoundAccount.tokenType.toLowerCase();
         let newAccountGroupKey;
         
@@ -245,8 +246,11 @@ export class Login extends plugin {
         }
 
         if (shouldActivateNewToken) {
-          await utils.setActiveToken(this.e.user_id, finalToken);
-          logger.info(`[DELTA FORCE PLUGIN] 已激活新账号: ${finalToken.substring(0, 4)}****${finalToken.slice(-4)}`);
+          // 使用Account类中的分组激活方法
+          const accountHelper = new Account({ user_id: this.e.user_id });
+          await accountHelper.setGroupedActiveToken(this.e.user_id, newAccountGroupKey, finalToken);
+          
+          logger.info(`[DELTA FORCE PLUGIN] 已激活${newAccountGroupKey}分组新账号: ${finalToken.substring(0, 4)}****${finalToken.slice(-4)}`);
         } else {
           logger.info(`[DELTA FORCE PLUGIN] 保持原激活账号不变: ${oldActiveToken.substring(0, 4)}****${oldActiveToken.slice(-4)}`);
         }

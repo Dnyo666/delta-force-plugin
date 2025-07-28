@@ -50,7 +50,7 @@ export class Account extends plugin {
    * @returns {Promise<{
    *  all: Array, 
    *  grouped: {qq_wechat: Array, wegame: Array, qqsafe: Array}, 
-   *  activeToken: String
+   *  activeTokens: {qq_wechat: String, wegame: String, qqsafe: String}
    * }|null>}
    */
   async _getGroupedAccounts() {
@@ -60,7 +60,13 @@ export class Account extends plugin {
       return null;
     }
 
-    const activeToken = await utils.getAccount(this.e.user_id);
+    // 获取各个分组的激活token
+    const activeTokens = {
+      qq_wechat: await this.getGroupedActiveToken(this.e.user_id, 'qq_wechat'),
+      wegame: await this.getGroupedActiveToken(this.e.user_id, 'wegame'),
+      qqsafe: await this.getGroupedActiveToken(this.e.user_id, 'qqsafe')
+    };
+    
     const res = await this.api.getUserList({ clientID, platformID: this.e.user_id, clientType: 'qq' });
 
     if (!res || res.code !== 0) {
@@ -82,7 +88,7 @@ export class Account extends plugin {
       const type = acc.tokenType?.toLowerCase();
       if (type === 'qq' || type === 'wechat') {
         grouped.qq_wechat.push(acc);
-      } else if (type === 'wegame') {
+      } else if (type === 'wegame' || type === 'wegame/wechat') {
         grouped.wegame.push(acc);
       } else if (type === 'qqsafe') {
         grouped.qqsafe.push(acc);
@@ -94,7 +100,7 @@ export class Account extends plugin {
     allInOrder.push(...grouped.wegame);
     allInOrder.push(...grouped.qqsafe);
 
-    return { all: allInOrder, grouped, activeToken };
+    return { all: allInOrder, grouped, activeTokens };
   }
 
 
@@ -127,7 +133,7 @@ export class Account extends plugin {
     const accountData = await this._getGroupedAccounts();
     if (!accountData) return true;
     
-    const { grouped, activeToken } = accountData;
+    const { grouped, activeTokens } = accountData;
 
     if (accountData.all.length === 0) {
         await this.e.reply('您尚未绑定任何账号，请使用 #三角洲登录 进行绑定。');
@@ -137,16 +143,18 @@ export class Account extends plugin {
     let msg = `【${this.e.sender.card || this.e.sender.nickname}】绑定的账号列表：\n`;
     let overallIndex = 1;
 
-    const buildGroupMsg = (title, group) => {
+    const buildGroupMsg = (title, group, groupKey) => {
       if (group.length > 0) {
         msg += `---${title}---\n`;
+        const groupActiveToken = activeTokens[groupKey]; // 获取该分组的激活token
+        
         group.forEach(acc => {
           const token = acc.frameworkToken;
           const displayedToken = this.e.isGroup
             ? `${token.substring(0, 4)}****${token.slice(-4)}`
             : token;
           const status = acc.isValid ? '【有效】' : '【失效】';
-          const isActive = (token === activeToken) ? '✅' : '';
+          const isActive = (token === groupActiveToken) ? '✅' : ''; // 使用分组激活token判断
           const qqDisplay = acc.qqNumber ? `(${acc.qqNumber.slice(0, 4)}****)` : '';
 
           msg += `${overallIndex++}. ${isActive}【${acc.tokenType.toUpperCase()}】${qqDisplay} ${displayedToken} ${status}\n`;
@@ -154,9 +162,9 @@ export class Account extends plugin {
       }
     };
 
-    buildGroupMsg('QQ & 微信', grouped.qq_wechat);
-    buildGroupMsg('Wegame', grouped.wegame);
-    buildGroupMsg('QQ安全中心', grouped.qqsafe);
+    buildGroupMsg('QQ & 微信', grouped.qq_wechat, 'qq_wechat');
+    buildGroupMsg('Wegame', grouped.wegame, 'wegame');
+    buildGroupMsg('QQ安全中心', grouped.qqsafe, 'qqsafe');
 
     msg += '\n可通过 #三角洲解绑 <序号> 来解绑账号。';
     msg += '\n使用 #三角洲账号切换 <序号> 可切换当前激活账号。';
@@ -196,6 +204,65 @@ export class Account extends plugin {
       return true;
   }
 
+  /**
+   * 获取指定分组的激活token
+   * @param {string} user_id - 用户ID
+   * @param {string} group - 分组名称 (qq_wechat, wegame, qqsafe)
+   * @returns {Promise<string|null>} - 该分组的激活token或null
+   */
+  async getGroupedActiveToken(user_id, group) {
+    try {
+      // 从Redis获取当前分组的激活token
+      return await redis.get(`delta-force:${group}-token:${user_id}`);
+    } catch (e) {
+      logger.error(`[DELTA FORCE PLUGIN] 获取${group}分组Token失败:`, e);
+      return null;
+    }
+  }
+  
+  /**
+   * 设置指定分组的激活token
+   * @param {string} user_id - 用户ID
+   * @param {string} group - 分组名称 (qq_wechat, wegame, qqsafe)
+   * @param {string} token - 要设置的token
+   * @returns {Promise<boolean>} - 设置是否成功
+   */
+  async setGroupedActiveToken(user_id, group, token) {
+    try {
+      // 设置当前分组的激活token
+      await redis.set(`delta-force:${group}-token:${user_id}`, token);
+      
+      // 如果是QQ&微信分组，同时设置主激活token（向后兼容）
+      if (group === 'qq_wechat') {
+        await redis.set(`delta-force:active-token:${user_id}`, token);
+      }
+      
+      return true;
+    } catch (e) {
+      logger.error(`[DELTA FORCE PLUGIN] 设置${group}分组Token失败:`, e);
+      return false;
+    }
+  }
+  
+  /**
+   * 确定账号所属的分组
+   * @param {Object} account - 账号对象
+   * @returns {string} - 分组名称 (qq_wechat, wegame, qqsafe, other)
+   */
+  getAccountGroup(account) {
+    const tokenType = account.tokenType.toLowerCase();
+    
+    if (['qq', 'wechat'].includes(tokenType)) {
+      return 'qq_wechat';
+    } else if (['wegame', 'wegame/wechat'].includes(tokenType)) {
+      return 'wegame';
+    } else if (tokenType === 'qqsafe') {
+      return 'qqsafe';
+    } else {
+      return 'other';
+    }
+  }
+
   async switchAccount () {
     const args = this.e.msg.replace(/^(#三角洲|\^)?(账号切换|切换账号)\s*/, '').trim().split(' ');
     
@@ -221,12 +288,25 @@ export class Account extends plugin {
       return true;
     }
     
+    // 确定目标账号所属分组
+    const targetGroup = this.getAccountGroup(targetAccount);
     const targetToken = targetAccount.frameworkToken;
-    await utils.setActiveToken(this.e.user_id, targetToken);
+    
+    // 只更新该分组的激活账号
+    await this.setGroupedActiveToken(this.e.user_id, targetGroup, targetToken);
+    
+    // 获取激活状态的信息描述
+    const groupNames = {
+      'qq_wechat': 'QQ/微信',
+      'wegame': 'WeGame',
+      'qqsafe': 'QQ安全中心',
+      'other': '其他'
+    };
     
     const maskedToken = `${targetToken.substring(0, 4)}****${targetToken.slice(-4)}`;
     const qqDisplay = targetAccount.qqNumber ? ` (${targetAccount.qqNumber.slice(0, 4)}****)` : '';
-    await this.e.reply(`账号切换成功！\n当前使用账号:${qqDisplay} ${maskedToken}`);
+    await this.e.reply(`账号切换成功！\n当前${groupNames[targetGroup]}分组使用账号:${qqDisplay} ${maskedToken}`);
+    
     return true;
   }
 

@@ -81,15 +81,22 @@ const utils = {
     /**
      * @description: 获取当前用户的激活token
      * 优先从Redis读取激活token，如果没有则从API获取列表并自动设置第一个为激活
-     * @param {String} user_id
+     * @param {String} user_id - 用户ID
+     * @param {String} group - 分组名称，不指定则默认查询qq_wechat分组
      * @return {String|null}
      */
-    async getAccount(user_id) {
-        // 1. 优先从 Redis 获取激活 token
-        let activeToken = await redis.get(`delta-force:active-token:${user_id}`);
+    async getAccount(user_id, group = 'qq_wechat') {
+        // 1. 优先从分组Redis键获取激活token
+        let activeToken = await redis.get(`delta-force:${group}-token:${user_id}`);
+        
+        // 2. 如果指定的是qq_wechat分组，但没有找到，尝试从传统键中查找（向后兼容）
+        if (!activeToken && group === 'qq_wechat') {
+            activeToken = await redis.get(`delta-force:active-token:${user_id}`);
+        }
+        
         if (activeToken) return activeToken;
 
-        // 2. 如果没有，则从API获取账号列表
+        // 3. 如果没有，则从API获取账号列表
         const clientID = getClientID();
         const api = new Code(); // 实例化API
         if (!clientID) {
@@ -104,17 +111,40 @@ const utils = {
         });
 
         if (res && res.code === 0 && res.data && res.data.length > 0) {
-            // 3. 寻找第一个有效的token作为默认激活token
-            const firstValidAccount = res.data.find(acc => acc.isValid);
+            // 4. 按分组筛选账号
+            const accountsInGroup = res.data.filter(acc => {
+                const tokenType = acc.tokenType.toLowerCase();
+                
+                if (group === 'qq_wechat') {
+                    return ['qq', 'wechat'].includes(tokenType);
+                } else if (group === 'wegame') {
+                    return ['wegame', 'wegame/wechat'].includes(tokenType);
+                } else if (group === 'qqsafe') {
+                    return tokenType === 'qqsafe';
+                } else {
+                    return true; // 其他分组或未指定分组，返回全部
+                }
+            });
+            
+            // 5. 在当前分组中寻找第一个有效的token作为默认激活token
+            const firstValidAccount = accountsInGroup.find(acc => acc.isValid);
+            
             if (firstValidAccount && firstValidAccount.frameworkToken) {
                 const defaultToken = firstValidAccount.frameworkToken;
-                // 4. 将其设置为激活token并返回
-                await this.setActiveToken(user_id, defaultToken);
+                
+                // 6. 将其设置为当前分组的激活token
+                await redis.set(`delta-force:${group}-token:${user_id}`, defaultToken);
+                
+                // 7. 如果是qq_wechat分组，同时设置传统键（向后兼容）
+                if (group === 'qq_wechat') {
+                    await this.setActiveToken(user_id, defaultToken);
+                }
+                
                 return defaultToken;
             }
         }
 
-        return null; // 用户确实没有任何有效账号
+        return null; // 用户确实没有当前分组的任何有效账号
     },
 
     /**
