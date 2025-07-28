@@ -96,8 +96,8 @@ export class Help extends plugin {
         };
         const themeStyle = theme.style || {};
         const ret = [`
-          body{background-image:url(${theme.bg}) !important;width:${width}px;}
-          .container{background-image:url(${theme.main}) !important;background-size:cover;}
+          body{background-image:url(${theme.bg}) no-repeat;width:${width}px;}
+          .container{background-image:url(${theme.main});background-size:cover;}
           .help-table .td,.help-table .th{width:${100 / colCount}%}
           `];
         const css = function (sel, css, key, def, fn) {
