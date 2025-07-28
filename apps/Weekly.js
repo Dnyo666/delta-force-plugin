@@ -51,7 +51,7 @@ export class Weekly extends plugin {
 
     await this.e.reply('正在查询您的本周战报，请稍候...');
 
-    const res = await this.api.getWeeklyReport(token);
+    const res = await this.api.getWeeklyRecord(token);
 
     if (await utils.handleApiError(res, this.e)) return true;
 
