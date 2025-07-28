@@ -299,4 +299,13 @@ export default class Code {
   async getTags() {
     return await this.request('/df/tools/Room/tags', {}, 'get');
   }
+  
+  /**
+   * 刷新登录状态
+   * @param {string} platform - 'wechat', 'qq', 'qqsafe', 'wegame'
+   * @param {string} frameworkToken - 用户的token
+   */
+  async refreshLogin(platform, frameworkToken) {
+    return this.request(`/login/${platform}/refresh`, { frameworkToken }, 'GET');
+  }
 }

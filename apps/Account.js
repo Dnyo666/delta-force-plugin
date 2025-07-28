@@ -34,6 +34,10 @@ export class Account extends plugin {
         {
           reg: '^(#三角洲|\\^)?(账号切换|切换账号)\\s*(.*)$',
           fnc: 'switchAccount'
+        },
+        {
+          reg: '^(#三角洲|\\^)(微信刷新|刷新微信)$',
+          fnc: 'refreshWechat'
         }
       ]
     })
@@ -223,6 +227,32 @@ export class Account extends plugin {
     const maskedToken = `${targetToken.substring(0, 4)}****${targetToken.slice(-4)}`;
     const qqDisplay = targetAccount.qqNumber ? ` (${targetAccount.qqNumber.slice(0, 4)}****)` : '';
     await this.e.reply(`账号切换成功！\n当前使用账号:${qqDisplay} ${maskedToken}`);
+    return true;
+  }
+
+  /**
+   * 手动刷新微信登录状态
+   * @returns {Promise<boolean>}
+   */
+  async refreshWechat() {
+    const token = await utils.getAccount(this.e.user_id);
+    if (!token) {
+      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。');
+      return true;
+    }
+    
+    await this.e.reply('正在刷新微信登录状态，请稍候...');
+    
+    const res = await this.api.refreshLogin('wechat', token);
+    
+    if (await utils.handleApiError(res, this.e)) return true;
+    
+    if (res.success) {
+      await this.e.reply(`微信登录状态刷新成功！`);
+    } else {
+      await this.e.reply(`刷新失败：${res.message || '未知错误'}`);
+    }
+    
     return true;
   }
 }
