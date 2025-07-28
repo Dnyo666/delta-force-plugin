@@ -185,15 +185,10 @@ export class Update extends plugin {
    * @returns
    */
   async makeForwardMsg(title, msg, end) {
-    let { nickname } = this.e.bot ?? Bot
-    if (this.e.isGroup) {
-      let info = await (this.e.bot ?? Bot).getGroupMemberInfo(this.e.group_id, (this.e.bot ?? Bot).uin)
-      nickname = info.card || info.nickname
-    }
-    let userInfo = {
-      user_id: (this.e.bot ?? Bot).uin,
-      nickname
-    }
+    const userInfo = {
+      user_id: this.e.user_id,
+      nickname: this.e.sender.nickname
+    };
 
     let forwardMsg = [
       {
@@ -214,7 +209,9 @@ export class Update extends plugin {
     }
 
     /** 制作转发内容 */
-    if (this.e.group?.makeForwardMsg) {
+    if (this.e.group?.raw?.makeForwardMsg) {
+      forwardMsg = await this.e.group.raw.makeForwardMsg(forwardMsg)
+    } else if (this.e.group?.makeForwardMsg) {
       forwardMsg = await this.e.group.makeForwardMsg(forwardMsg)
     } else if (this.e?.friend?.makeForwardMsg) {
       forwardMsg = await this.e.friend.makeForwardMsg(forwardMsg)

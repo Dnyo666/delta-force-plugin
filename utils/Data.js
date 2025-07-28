@@ -114,25 +114,6 @@ async function fetchAndCache(dataType) {
     }
 }
 
-/**
- * 检查API响应是否是"未绑定大区"错误
- * @param {object} res API响应对象
- * @returns {boolean} 是否是未绑定大区错误
- */
-function isRegionBindingRequired(res) {
-    if (!res) return false;
-    
-    // 检查常见的错误模式
-    if (res.success === false && res.data?.ret === 99998) {
-        return true;
-    }
-    
-    // 检查错误消息是否包含绑定大区的关键词
-    const errorMsg = res.message || res.msg || res.sMsg || '';
-    return errorMsg.includes('绑定大区') || 
-           (res.error && res.error.includes('99998'));
-}
-
 export default {
     async init() {
         logger.info('[Delta-Force 数据管理器] 正在初始化数据缓存...');
@@ -187,6 +168,4 @@ export default {
         return operatorData.get(String(id)) || `未知干员(${id})`;
     },
     
-    // 导出用于检查未绑定大区错误的函数
-    isRegionBindingRequired
 }; 

@@ -49,20 +49,17 @@ export class Weekly extends plugin {
         }
     }
 
-    await this.e.reply('正在生成您的周报，请稍候...');
+    await this.e.reply('正在查询您的本周战报，请稍候...');
 
-    const res = await this.api.getWeeklyRecord(token, mode, isShowNullFriend, date)
-    
-    // 检查是否需要先绑定大区
-    if (DataManager.isRegionBindingRequired(res)) {
-      await this.e.reply('您尚未绑定游戏大区！请先使用 #三角洲角色绑定 命令进行绑定。')
-      return true
+    const res = await this.api.getWeeklyReport(token);
+
+    if (await utils.handleApiError(res, this.e)) return true;
+
+    if (!res.data) {
+      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`);
+      return true;
     }
     
-    if (!res || res.success === false) {
-      return this.e.reply(`查询周报失败: ${res.message || '未知错误'}`)
-    }
-
     let solData, mpData;
     if (mode) { // 指定模式查询
         const detailData = res.data?.data?.data;
@@ -106,14 +103,9 @@ export class Weekly extends plugin {
     }
 
     // --- 构造转发消息 ---
-    let { nickname } = this.e.bot;
-    if (this.e.isGroup) {
-        const info = await this.e.bot.getGroupMemberInfo(this.e.group_id, this.e.bot.uin);
-        nickname = info.card || info.nickname;
-    }
     const userInfo = {
-        user_id: this.e.bot.uin,
-        nickname
+      user_id: this.e.user_id,
+      nickname: this.e.sender.nickname
     };
 
     let forwardMsg = [];
@@ -387,17 +379,17 @@ export class Weekly extends plugin {
         return this.e.reply('未能解析到有效的周报数据。');
     }
     
-    let msgToSend;
-    if (this.e.group?.makeForwardMsg) {
-        msgToSend = await this.e.group.makeForwardMsg(forwardMsg);
+    // --- 尝试以转发消息形式发送 ---
+    let msgToSend = forwardMsg.join('\n\n');
+    if (this.e.group?.raw?.makeForwardMsg) {
+      msgToSend = await this.e.group.raw.makeForwardMsg(forwardMsg);
+    } else if (this.e.group?.makeForwardMsg) {
+      msgToSend = await this.e.group.makeForwardMsg(forwardMsg);
     } else if (this.e.friend?.makeForwardMsg) {
-        msgToSend = await this.e.friend.makeForwardMsg(forwardMsg);
-    } else {
-        msgToSend = forwardMsg.map(item => item.message).join('\n\n');
+      msgToSend = await this.e.friend.makeForwardMsg(forwardMsg);
     }
 
-    await this.e.reply(msgToSend);
-
+    await this.e.reply(msgToSend)
     return true
   }
 } 

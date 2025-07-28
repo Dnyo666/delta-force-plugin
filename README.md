@@ -2,7 +2,7 @@
 
 <img decoding="async" align=right src="resources/readme/hz.png" width="35%">
 
-# Delta-Force-Plugin
+# Delta-Force-Plugin 公测中 加群 936712625
 
 - 一个适用于 [Yunzai 系列机器人框架](https://github.com/yhArcadia/Yunzai-Bot-plugins-index) 的三角洲行动游戏数据查询和娱乐功能插件
 
@@ -37,8 +37,8 @@ pnpm install --filter=delta-force-plugin
 > 非常不建议手动修改配置文件，本插件已兼容 [Guoba-plugin](https://github.com/guoba-yunzai/guoba-plugin) ，请使用锅巴插件对配置项进行修改
 > 
 > 配置项说明：
-> - `api_key`: API密钥，在管理页面创建
-> - `clientID`: 客户端ID，在管理页面的个人信息获取（用户id）
+> - `api_key`: API密钥，在[管理页面](https://df.cduestc.fun/api-keys)创建
+> - `clientID`: 客户端ID，在[管理页面](https://df.cduestc.fun/)的个人信息获取（用户id）
 
 ## 功能列表
 

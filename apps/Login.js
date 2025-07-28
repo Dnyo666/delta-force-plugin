@@ -47,8 +47,6 @@ export class Login extends plugin {
   }
   
   const messagesToRecall = [];
-  const getQrMsg = await this.e.reply(`正在获取【${platform.toUpperCase()}】登录二维码，请稍候...`);
-  if (getQrMsg?.message_id) messagesToRecall.push(getQrMsg.message_id);
 
   let qrImage = res.qr_image;
   if (platform !== 'wechat' && qrImage.startsWith('data:image/png;base64,')) {
@@ -56,19 +54,12 @@ export class Login extends plugin {
   }
 
   const qrMsg = await this.e.reply([
-    `请使用【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。`,
-    segment.image(qrImage)
-  ])
+    segment.at(this.e.user_id),
+    `\n请使用【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。`,
+    segment.image(qrImage),
+    `\n\n【免责声明】\n扫码登录则代表向服务器授权数据。\n继续操作即表示您已了解并愿意承担相关风险。\n请勿扫描他人二维码`
+  ]);
   if (qrMsg?.message_id) messagesToRecall.push(qrMsg.message_id);
-  
-  // 尝试撤回"正在获取"消息，兼容不同环境
-  if (getQrMsg?.message_id) {
-    try {
-      await this.e.bot.deleteMsg(getQrMsg.message_id);
-    } catch (err) {
-      logger.warn(`[DELTA FORCE PLUGIN] 撤回"正在获取"消息失败: ${getQrMsg.message_id}`, err);
-    }
-  }
 
   // --- 开始健壮的轮询逻辑 ---
   const startTime = Date.now();
@@ -109,7 +100,7 @@ export class Login extends plugin {
             // 撤回二维码图片
             if (qrMsg?.message_id) {
               try {
-                await this.e.bot.deleteMsg(qrMsg.message_id);
+                await this.e.group.recallMsg(qrMsg.message_id);
                 // 从待撤回列表中移除，避免重复撤回
                 const index = messagesToRecall.indexOf(qrMsg.message_id);
                 if (index > -1) {
@@ -119,8 +110,6 @@ export class Login extends plugin {
                 logger.warn(`[DELTA FORCE PLUGIN] 撤回二维码消息失败: ${qrMsg.message_id}`, err);
               }
             }
-            const scannedMsg = await this.e.reply('扫码成功，请在手机上确认登录。');
-            if (scannedMsg?.message_id) messagesToRecall.push(scannedMsg.message_id);
           }
           setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
           break;
@@ -150,7 +139,7 @@ export class Login extends plugin {
       // 撤回二维码等消息
       for (const msgId of messagesToRecall) {
           try {
-            await this.e.bot.deleteMsg(msgId);
+            await this.e.group.recallMsg(msgId);
           } catch (err) {
             logger.warn(`[DELTA FORCE PLUGIN] 撤回消息失败: ${msgId}`, err);
           }
@@ -190,12 +179,10 @@ export class Login extends plugin {
         }
 
         let shouldActivateNewToken = false;
-        let activationReason = '';
 
         // Case 1: 首次登录
         if (!oldActiveToken) {
             shouldActivateNewToken = true;
-            activationReason = '首次绑定账号，已为您自动激活！';
         } else {
             // Case 2: 分组首次登录或重新登录
             const newAccountType = newlyBoundAccount.tokenType.toLowerCase();
@@ -212,34 +199,49 @@ export class Login extends plugin {
             if (accountsInGroup.length === 1) {
                 // 这个分组下只有一个号，说明是分组首次登录
                 shouldActivateNewToken = true;
-                activationReason = `首次绑定${newAccountType.toUpperCase()}账号，已为您自动激活！`;
             } else {
                 // Case 3: 检查是否是已激活账号的更新
                 // 如果旧的激活token在绑定后的新列表中找不到了, 说明它被新的替换了
                 const oldActiveAccountInNewList = newAccounts.find(a => a.frameworkToken === oldActiveToken);
                 if (!oldActiveAccountInNewList) {
                     shouldActivateNewToken = true;
-                    activationReason = '检测到当前激活的账号已更新，已为您自动切换到最新会话！';
                 }
             }
         }
 
         if (shouldActivateNewToken) {
             await utils.setActiveToken(this.e.user_id, finalToken);
-            await this.e.reply(activationReason);
+        }
+
+        // 自动绑定角色
+        const characterBindRes = await this.api.bindCharacter(finalToken);
+        
+        if (characterBindRes && characterBindRes.success && characterBindRes.roleInfo) {
+          const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
+          const isAdult = adultstatus === '0' ? '否' : '是';
+    
+          let charMsg = '登录并绑定成功！\n';
+          charMsg += '--- 角色信息 ---\n';
+          charMsg += `昵称: ${charac_name}\n`;
+          charMsg += `烽火地带等级: ${level}\n`;
+          charMsg += `全面战场等级: ${tdmlevel}\n`;
+          charMsg += `防沉迷: ${isAdult}`;
+          
+          await this.e.reply(charMsg);
         } else {
-            await this.e.reply('绑定成功！新账号已添加，当前激活账号未改变。');
+          const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
+          await this.e.reply(`云端账号登录并绑定成功！\n但自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
         }
 
       } else {
-        await this.e.reply(`登录成功，但自动绑定失败: ${bindRes.msg || bindRes.message || '未知错误'}`);
+        await this.e.reply(`登录失败: ${bindRes.msg || bindRes.message || '未知错误'}`);
       }
 
     } catch (error) {
       // 出错时也尝试撤回消息
       for (const msgId of messagesToRecall) {
           try {
-            await this.e.bot.deleteMsg(msgId);
+            await this.e.group.recallMsg(msgId);
           } catch (err) {
             logger.warn(`[DELTA FORCE PLUGIN] 撤回消息失败: ${msgId}`, err);
           }
@@ -267,6 +269,8 @@ export class Login extends plugin {
 
     const res = await this.api.bindCharacter(token);
     
+    if (await utils.handleApiError(res, this.e)) return true;
+
     if (res && res.success && res.roleInfo) {
       const { charac_name, level, tdmlevel, adultstatus } = res.roleInfo;
       const isAdult = adultstatus === '0' ? '否' : '是';

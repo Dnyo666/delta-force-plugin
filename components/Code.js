@@ -50,20 +50,21 @@ export default class Code {
       options.body = new URLSearchParams(params).toString()
     }
 
-        try {
+    try {
       const response = await fetch(fullUrl, options)
+      const responseBody = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        logger.error(`[DELTA FORCE PLUGIN] API 请求失败: ${response.status} ${response.statusText} - ${fullUrl}`)
-        const errorBody = await response.text()
-        logger.error(`[DELTA FORCE PLUGIN] 错误详情: ${errorBody}`)
-        return false
+        logger.error(`[DELTA FORCE PLUGIN] API 请求失败: ${response.status} ${response.statusText} - ${fullUrl}`);
+        logger.error(`[DELTA FORCE PLUGIN] 错误详情: ${JSON.stringify(responseBody)}`);
+        // 关键修复：返回错误体，而不是null
+        return responseBody;
       }
-      const res = await response.json()
       // 根据API文档，code为0代表成功
-      if (res.code !== 0 && res.success !== true) {
-        logger.warn(`[DELTA FORCE PLUGIN] API 返回错误: ${res.msg || res.message || '未知错误'} - ${fullUrl}`)
+      if (responseBody.code !== 0 && responseBody.success !== true) {
+        logger.warn(`[DELTA FORCE PLUGIN] API 返回错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
       }
-      return res
+      return responseBody
         } catch (error) {
       logger.error(`[DELTA FORCE PLUGIN] 网络请求异常: ${error} - ${fullUrl}`)
       return false
