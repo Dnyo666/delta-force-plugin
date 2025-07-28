@@ -36,9 +36,12 @@ export class Flows extends plugin {
         const page = pageStr ? parseInt(pageStr, 10) : 1
 
         const res = await this.api.getFlows(token, type, page)
+        
+        // 添加对API错误的处理
+        if (await utils.handleApiError(res, this.e)) return true;
 
         if (!res || !res.data || !res.data.length) {
-            return await this.e.reply('获取流水记录失败，或当前页无记录。')
+            return await this.e.reply('当前页无流水记录。')
         }
         
         const typeName = Object.keys(typeMap).find(k => typeMap[k] === type)

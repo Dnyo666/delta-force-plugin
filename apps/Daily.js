@@ -39,7 +39,8 @@ export class Daily extends plugin {
 
     await this.e.reply('正在查询您的今日战报，请稍候...');
 
-    const res = await this.api.getDailyReport(token);
+    // mode变量值作为type参数传递
+    const res = await this.api.getDailyRecord(token, mode);
     
     if (await utils.handleApiError(res, this.e)) return true;
 

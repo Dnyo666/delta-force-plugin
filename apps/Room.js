@@ -142,6 +142,8 @@ export class Room extends plugin {
     
     const res = await this.api.getRoomList(clientID, type, hasPassword)
 
+    if (await utils.handleApiError(res, this.e)) return true;
+
     if (!res || res.code !== 0 || !res.data) {
       await this.e.reply(`查询失败: ${res.msg || res.message || '无法获取房间列表'}`)
       return true
@@ -227,6 +229,8 @@ export class Room extends plugin {
     // 修正了参数传递顺序，使其与解析顺序一致
     const res = await this.api.createRoom(token, clientID, typeEng, mapid, tag, password, onlyCurrentlyClient)
 
+    if (await utils.handleApiError(res, this.e)) return true;
+
     if (res && res.code === 0 && res.data) {
       let replyMsg = `房间创建成功！\n房间ID: ${res.data.roomId}`
       if (password) {
@@ -265,6 +269,8 @@ export class Room extends plugin {
     await this.e.reply(`正在加入房间: ${roomId}...`)
     const res = await this.api.joinRoom(token, clientID, roomId, password)
 
+    if (await utils.handleApiError(res, this.e)) return true;
+
     if (res && res.code === 0) {
       let replyMsg = (res.msg || '成功加入房间！') + '\n\n注意: 创建或加入房间即代表您同意插件展示您的昵称、UID等公开信息。';
       await this.e.reply(replyMsg)
@@ -291,6 +297,8 @@ export class Room extends plugin {
 
     await this.e.reply(`正在退出/解散房间: ${roomId}...`)
     const res = await this.api.quitRoom(token, clientID, roomId)
+
+    if (await utils.handleApiError(res, this.e)) return true;
 
     const apiMsg = res?.msg || res?.message || '';
     if (res && res.code === 0) {
@@ -333,6 +341,8 @@ export class Room extends plugin {
     await this.e.reply(`正在从房间 ${roomId} 中踢出玩家 @${targetUserId}...`)
     const res = await this.api.kickMember(token, clientID, roomId, targetFrameworkToken)
 
+    if (await utils.handleApiError(res, this.e)) return true;
+
     if (res && res.code === 0) {
       await this.e.reply(res.msg || '成功踢出玩家！')
     } else {
@@ -355,6 +365,8 @@ export class Room extends plugin {
       
       await this.e.reply(`正在查询您所在的房间信息...`);
       const res = await this.api.getRoomInfo(token, clientID);
+
+      if (await utils.handleApiError(res, this.e)) return true;
 
       if (!res || res.code !== 0 || !res.data) {
           await this.e.reply(`查询失败: ${res.msg || res.message || '未知错误，可能您不在任何房间内'}`);
@@ -383,6 +395,9 @@ export class Room extends plugin {
   async getMapList() {
       await this.e.reply("正在获取最新地图列表...");
       const res = await this.api.getMaps();
+      
+      if (await utils.handleApiError(res, this.e)) return true;
+
       if (!res || res.code !== 0 || !res.data) {
           await this.e.reply(`获取地图列表失败: ${res.msg || res.message || '未知错误'}`);
           return true;
@@ -400,6 +415,9 @@ export class Room extends plugin {
   async getTagList() {
       await this.e.reply("正在获取最新标签列表...");
       const res = await this.api.getTags();
+      
+      if (await utils.handleApiError(res, this.e)) return true;
+
       if (!res || res.code !== 0 || !res.data) {
           await this.e.reply(`获取标签列表失败: ${res.msg || res.message || '未知错误'}`);
           return true;

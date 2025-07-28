@@ -1,5 +1,6 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import Code from '../components/Code.js'
+import utils from '../utils/utils.js'
 
 export class Tools extends plugin {
   constructor (e) {
@@ -29,6 +30,8 @@ export class Tools extends plugin {
 
   async getDailyKeyword() {
     const res = await this.api.getDailyKeyword();
+    
+    if (await utils.handleApiError(res, this.e)) return true;
 
     if (res && (res.code === 0 || res.success) && res.data?.list?.length > 0) {
       let msg = '【每日密码】\n';
@@ -45,6 +48,8 @@ export class Tools extends plugin {
   async getArticleList() {
     await this.e.reply('正在获取最新文章列表...');
     const res = await this.api.getArticleList();
+    
+    if (await utils.handleApiError(res, this.e)) return true;
 
     if (res && res.code === 0 && res.data && res.data.list) {
       let msg = '【最新文章列表】\n';
@@ -68,6 +73,8 @@ export class Tools extends plugin {
     const threadId = this.e.msg.match(/(\d+)$/)[1];
     await this.e.reply(`正在获取文章详情 (ID: ${threadId})...`);
     const res = await this.api.getArticleDetail(threadId);
+    
+    if (await utils.handleApiError(res, this.e)) return true;
 
     if (res && res.code === 0 && res.data) {
       const article = res.data;
