@@ -21,16 +21,12 @@ class Config {
   constructor () {
     this.cache = {
       config: null,
-      config_default: null,
-      user: null,
-      user_default: null
+      config_default: null
     }
 
     this.fileMaps = {
       config: path.join(configDir, 'config.yaml'),
-      config_default: path.join(pluginRoot, 'config', 'config_default.yaml'),
-      user: path.join(configDir, 'user.yaml'),
-      user_default: path.join(pluginRoot, 'config', 'user_default.yaml')
+      config_default: path.join(pluginRoot, 'config', 'config_default.yaml')
     }
 
     this.watchFiles()
@@ -106,57 +102,6 @@ class Config {
       return true
     }
     return false
-  }
-
-  // 用户相关方法可后续重构
-  getUserConfig() {
-    if (!this.cache.user) {
-      this.cache.user = this.loadYAML(this.fileMaps.user);
-    }
-    return this.cache.user;
-  }
-
-  getDefUserConfig() {
-    if (!this.cache.user_default) {
-      this.cache.user_default = this.loadYAML(this.fileMaps.user_default);
-    }
-    return this.cache.user_default;
-  }
-
-  setUserConfig(user_data) {
-    return this.saveConfig(this.fileMaps.user, user_data);
-  }
-
-  getUserData(userId) {
-    const dataDir = path.join(pluginRoot, '..', '..', 'data', 'delta-force');
-    const userConfigFile = path.join(dataDir, `${userId}.yaml`);
-    try {
-      return fs.existsSync(userConfigFile) ? this.loadYAML(userConfigFile) : [];
-    } catch (error) {
-      logger.mark(`[DELTA FORCE PLUGIN] 读取用户数据 ${userId}.yaml 失败`, error);
-      return [];
-    }
-  }
-
-  setUserData(userId, userData) {
-    const dataDir = path.join(pluginRoot, '..', '..', 'data', 'delta-force');
-    const userConfigFile = path.join(dataDir, `${userId}.yaml`);
-    try {
-      if (!userData || !userData.length) {
-        if (fs.existsSync(userConfigFile)) fs.unlinkSync(userConfigFile);
-        redis.del(`delta-force:token:${userId}`);
-        return true;
-      }
-      this.saveConfig(userConfigFile, userData);
-      const currentToken = Array.isArray(userData) && userData.length > 0 ? userData[0].token : userData.token;
-      if (currentToken) {
-        redis.set(`delta-force:token:${userId}`, currentToken);
-      }
-      return true;
-    } catch (error) {
-      logger.mark(`[DELTA FORCE PLUGIN] 写入用户数据 ${userId}.yaml 失败`, error);
-      return false;
-    }
   }
 }
 
