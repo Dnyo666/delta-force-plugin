@@ -75,66 +75,53 @@ export function supportGuoba() {
         },
       ],
       getConfigData() {
-        const config = Config.getConfig();
-        // 确保返回的是嵌套格式的配置
-        const df = config.delta_force || {};
+        // 直接从文件读取最新的、未经缓存的配置
+        const config = Config.loadYAML(Config.fileMaps.config) || {};
+        const df = lodash.cloneDeep(config.delta_force || {});
         
-        // 如果存在扁平格式的配置，将其转为嵌套格式
-        if (df['push_daily_keyword.enabled'] !== undefined) {
-          if (!df.push_daily_keyword) df.push_daily_keyword = {};
-          df.push_daily_keyword.enabled = df['push_daily_keyword.enabled'];
-        }
-        
-        if (df['push_daily_keyword.cron'] !== undefined) {
-          if (!df.push_daily_keyword) df.push_daily_keyword = {};
-          df.push_daily_keyword.cron = df['push_daily_keyword.cron'];
-        }
-        
-        if (df['push_daily_keyword.push_to.group'] !== undefined) {
-          if (!df.push_daily_keyword) df.push_daily_keyword = {};
-          if (!df.push_daily_keyword.push_to) df.push_daily_keyword.push_to = {};
-          df.push_daily_keyword.push_to.group = df['push_daily_keyword.push_to.group'];
-        }
-        
-        if (df['push_daily_keyword.push_to.private'] !== undefined) {
-          if (!df.push_daily_keyword) df.push_daily_keyword = {};
-          if (!df.push_daily_keyword.push_to) df.push_daily_keyword.push_to = {};
-          df.push_daily_keyword.push_to.private = df['push_daily_keyword.push_to.private'];
-        }
-        
+        // 确保 push_daily_keyword 对象及其子属性存在，为UI提供完整的模型
+        // 使用 mergeWith 自定义合并逻辑，确保数组直接被替换而不是合并
+        df.push_daily_keyword = lodash.mergeWith(
+          {
+            enabled: false,
+            cron: '0 8 * * *',
+            push_to: { group: [], private: [] }
+          },
+          df.push_daily_keyword,
+          (objValue, srcValue) => {
+            if (lodash.isArray(srcValue)) {
+              return srcValue;
+            }
+          }
+        );
+
         return df;
       },
       setConfigData(data, { Result }) {
         try {
           const config = Config.getConfig();
-          
-          // 先删除可能存在的扁平格式键
-          delete config.delta_force['push_daily_keyword.enabled'];
-          delete config.delta_force['push_daily_keyword.cron'];
-          delete config.delta_force['push_daily_keyword.push_to.group'];
-          delete config.delta_force['push_daily_keyword.push_to.private'];
-          
-          // 然后进行深度合并
-          const newConfig = lodash.merge({}, config.delta_force, data);
-          
-          // 确保push_daily_keyword的完整性
-          if (newConfig.push_daily_keyword) {
-            if (!newConfig.push_daily_keyword.push_to) {
-              newConfig.push_daily_keyword.push_to = { group: [], private: [] };
-            }
-            if (!newConfig.push_daily_keyword.push_to.group) {
-              newConfig.push_daily_keyword.push_to.group = [];
-            }
-            if (!newConfig.push_daily_keyword.push_to.private) {
-              newConfig.push_daily_keyword.push_to.private = [];
-            }
+
+          // 确保插件的命名空间存在
+          if (!config.delta_force) {
+            config.delta_force = {};
           }
+
+          // 核心修复：将从锅巴面板接收到的扁平数据 (e.g., {'a.b': 1})
+          // 转换为嵌套对象 (e.g., {a: {b: 1}})
+          const unflattenedData = {};
+          for (const key in data) {
+            lodash.set(unflattenedData, key, data[key]);
+          }
+
+          // 将转换后的嵌套对象深度合并到插件的配置命名空间中
+          lodash.merge(config.delta_force, unflattenedData);
           
-          config.delta_force = newConfig;
-          Config.setConfig(config);
-          logger.mark('[DELTA FORCE PLUGIN] 配置已更新:', JSON.stringify(newConfig.push_daily_keyword));
-          
-          return Result.ok({}, '保存成功~');
+          if (Config.setConfig(config)) {
+            logger.mark('[DELTA FORCE PLUGIN] 配置已更新 (Guoba):', JSON.stringify(config.delta_force));
+            return Result.ok({}, '保存成功~');
+          } else {
+            return Result.error('配置保存失败，请检查文件权限');
+          }
         } catch (error) {
           logger.error('[DELTA FORCE PLUGIN] 配置保存失败:', error);
           return Result.error('配置保存失败，请检查日志');
