@@ -99,22 +99,25 @@ export function supportGuoba() {
       },
       setConfigData(data, { Result }) {
         try {
-          const config = Config.getConfig();
+          const config = Config.loadYAML(Config.fileMaps.config) || {};
 
           // 确保插件的命名空间存在
           if (!config.delta_force) {
             config.delta_force = {};
           }
 
-          // 核心修复：将从锅巴面板接收到的扁平数据 (e.g., {'a.b': 1})
-          // 转换为嵌套对象 (e.g., {a: {b: 1}})
+          // 将从锅巴面板接收到的扁平数据转换为嵌套对象
           const unflattenedData = {};
           for (const key in data) {
             lodash.set(unflattenedData, key, data[key]);
           }
 
-          // 将转换后的嵌套对象深度合并到插件的配置命名空间中
-          lodash.merge(config.delta_force, unflattenedData);
+          // 核心修复: 使用 mergeWith 并自定义合并逻辑，确保数组被直接替换而不是合并
+          lodash.mergeWith(config.delta_force, unflattenedData, (objValue, srcValue) => {
+            if (lodash.isArray(srcValue)) {
+              return srcValue;
+            }
+          });
           
           if (Config.setConfig(config)) {
             logger.mark('[DELTA FORCE PLUGIN] 配置已更新 (Guoba):', JSON.stringify(config.delta_force));
