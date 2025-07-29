@@ -24,6 +24,10 @@ export class Login extends plugin {
           fnc: 'login'
         },
         {
+          reg: '^(#三角洲|\\^)ck(登陆|登录)\\s*(.*)$',
+          fnc: 'loginWithCookie'
+        },
+        {
           reg: '^(#三角洲|\\^)角色绑定\\s*([a-zA-Z0-9\\-]+)?$',
           fnc: 'bindCharacter'
         }
@@ -65,9 +69,13 @@ export class Login extends plugin {
 
   const qrMsg = await this.e.reply([
     segment.at(this.e.user_id),
-    `\n请使用【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。`,
+    `\n请使用另一台设备上的【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。`,
     segment.image(qrImage),
-    `\n\n【免责声明】\n扫码登录则代表向服务器授权数据。\n继续操作即表示您已了解并愿意承担相关风险。\n请勿扫描他人二维码`
+    '\n\n【免责声明】',
+    '您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+    '若您的账号因使用本插件出现封禁、被盗等问题，我方概不负责。',
+    '害怕风险请勿扫码！',
+    '\n如果无法扫码，请私聊机器人发送【^ck登陆】获取Cookie登录教程。'
   ]);
   if (qrMsg?.message_id) messagesToRecall.push(qrMsg.message_id);
 
@@ -297,8 +305,87 @@ export class Login extends plugin {
     return true
   }
 
+  async loginWithCookie() {
+    const match = this.e.msg.match(this.rule[1].reg);
+    const cookie = match[3] ? match[3].trim() : '';
+
+    if (!cookie) {
+      const helpMsg = [
+        '三角洲ck登陆教程：',
+        '1. 准备via浏览器(或其他类似浏览器)，在浏览器中打开 https://pvp.qq.com/cp/a20161115tyf/page1.shtml',
+        '2. 在网页中进行QQ登陆',
+        '3. 点击左上角的网页名左侧的盾图标',
+        '4. 点击查看cookies，然后复制全部内容',
+        '5. 返回QQ，私聊机器人，发送 ^ck登陆 刚刚复制的cookies',
+        '6. 成功登陆'
+      ].join('\n');
+      await this.e.reply(helpMsg);
+      return true;
+    }
+
+    await this.e.reply('正在尝试使用Cookie登录，请稍候...');
+
+    try {
+      const res = await this.api.loginWithCookie(cookie);
+
+      if (!res || (res.code !== 0 && !res.success)) {
+        throw new Error(res.msg || res.message || 'Cookie登录失败，请检查Cookie是否有效');
+      }
+
+      const finalToken = res.frameworkToken;
+      if (!finalToken) {
+          throw new Error('未能获取到有效的Token');
+      }
+
+      // -- 复用登录成功后的绑定逻辑 --
+      const clientID = Config.getConfig()?.delta_force?.clientID;
+      if (!clientID) {
+          throw new Error('clientID 未配置，无法进行绑定');
+      }
+
+      const bindRes = await this.api.bindUser({
+        frameworkToken: finalToken,
+        platformID: this.e.user_id,
+        clientID: clientID,
+        clientType: 'qq'
+      });
+
+      if (bindRes && (bindRes.code === 0 || bindRes.success)) {
+        await this.e.reply('Cookie登录成功，账号已自动绑定！');
+
+        // 自动激活Token
+        const accountHelper = new Account({ user_id: this.e.user_id });
+        await accountHelper.setGroupedActiveToken(this.e.user_id, 'qq_wechat', finalToken);
+        logger.info(`[DELTA FORCE PLUGIN] 已通过Cookie登录激活qq_wechat分组新账号: ${finalToken.substring(0, 4)}****`);
+
+        // 自动绑定角色
+        const characterBindRes = await this.api.bindCharacter(finalToken);
+        if (characterBindRes && characterBindRes.success && characterBindRes.roleInfo) {
+          const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
+          const isAdult = adultstatus === '0' ? '否' : '是';
+          let charMsg = '角色信息已获取！\n';
+          charMsg += '--- 角色信息 ---\n';
+          charMsg += `昵称: ${charac_name}\n`;
+          charMsg += `烽火地带等级: ${level}\n`;
+          charMsg += `全面战场等级: ${tdmlevel}\n`;
+          charMsg += `防沉迷: ${isAdult}`;
+          await this.e.reply(charMsg);
+        } else {
+          const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
+          await this.e.reply(`自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
+        }
+      } else {
+        await this.e.reply(`账号绑定失败: ${bindRes.msg || bindRes.message || '未知错误'}`);
+      }
+    } catch (error) {
+      await this.e.reply(`登录失败: ${error.message}`);
+    }
+
+    return true;
+  }
+
   async bindCharacter() {
-    const match = this.e.msg.match(/^(#三角洲|\^)角色绑定\s*([a-zA-Z0-9\-]+)?$/);
+    const match = this.e.msg.match(/^(#三角洲|\^)角色绑定\\s*([a-zA-Z0-9\\-]+)?$/);
     let token = match[2]; // Optional token from command
 
     if (!token) {

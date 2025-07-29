@@ -90,6 +90,14 @@ export default class Code {
     return this.request(`/login/${platform}/status`, { frameworkToken }, 'GET')
   }
 
+  /**
+   * 通过Cookie登录QQ
+   * @param {string} cookie - QQ登录的Cookie字符串
+   */
+  async loginWithCookie(cookie) {
+    return this.request('/login/qq/ck', { cookie }, 'POST');
+  }
+
   // --- 用户数据 ---
   
   /**
