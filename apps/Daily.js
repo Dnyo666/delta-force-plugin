@@ -14,6 +14,10 @@ export class Daily extends plugin {
         {
           reg: '^(#三角洲|\\^)(日报|daily)\\s*(.*)$',
           fnc: 'getDailyReport'
+        },
+        {
+          reg: '^(#三角洲|\\^)(昨日收益|昨日物资)\\s*(.*)$',
+          fnc: 'getYesterdayProfit'
         }
       ]
     })
@@ -113,5 +117,57 @@ export class Daily extends plugin {
 
     await this.e.reply(msg.trim())
     return true
+  }
+  
+  async getYesterdayProfit() {
+    const token = await utils.getAccount(this.e.user_id)
+    if (!token) {
+      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      return true
+    }
+    
+    await this.e.reply('正在查询您的昨日收益数据，请稍候...');
+    
+    // 默认不传模式参数，查询全部数据
+    const res = await this.api.getDailyRecord(token);
+    
+    if (await utils.handleApiError(res, this.e)) return true;
+    
+    if (!res.data) {
+      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`);
+      return true;
+    }
+    
+    // 获取烽火地带数据
+    const solDetail = res.data?.sol?.data?.data?.solDetail;
+    
+    if (!solDetail || !solDetail.userCollectionTop || !solDetail.userCollectionTop.list) {
+      await this.e.reply('暂无昨日收益数据，快去摸金吧！');
+      return true;
+    }
+    
+    const recentGain = solDetail.recentGain;
+    const gainDate = solDetail.recentGainDate || '昨日';
+    const topItems = solDetail.userCollectionTop.list;
+    
+    let msg = `【${gainDate}收益TOP3物资】\n`;
+    
+    // 处理并显示TOP物资
+    if (topItems && topItems.length > 0) {
+      topItems.forEach((item, index) => {
+        const price = parseFloat(item.price).toLocaleString();
+        msg += `${index + 1}. 【${item.objectName}*${item.count}】${price}\n`;
+      });
+      
+      // 添加总收益
+      const gainPrefix = recentGain >= 0 ? '+' : '';
+      msg += `\n${gainDate}总收益: ${gainPrefix}${recentGain?.toLocaleString()}`;
+    } else {
+      msg += '昨日未带出任何高价值物资\n';
+      msg += `${gainDate}总收益: ${recentGain?.toLocaleString()}`;
+    }
+    
+    await this.e.reply(msg.trim());
+    return true;
   }
 } 
