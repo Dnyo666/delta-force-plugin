@@ -4,8 +4,8 @@ delta_force:
   base_url: "https://df-api.cduestc.fun" # 后端API地址
   clientID: "xxxxxx" # 从管理网页复制用户ID
   push_daily_keyword:
-    enabled: false # 是否开启每日密码定时推送
-    cron: '0 8 * * *' # 推送时间的CRON表达式
+    enabled: true # 是否开启每日密码定时推送
+    cron: '0 0 0/3 * * ? *' # 推送时间的CRON表达式
     push_to: # 推送目标
       group: [] # 群号列表
       private: [] # QQ号列表

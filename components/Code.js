@@ -19,15 +19,21 @@ export default class Code {
    * @param {string} url - 请求的API端点
    * @param {object} params - 请求参数 (for GET) or body (for POST)
    * @param {string} method - 'GET' or 'POST'
+   * @param {object} opts - 额外选项，如 { responseType: 'stream' }
    * @returns {Promise<object|boolean>}
    */
-  async request (url, params, method = 'GET') {
+  async request (url, params, method = 'GET', opts = {}) {
+    const { responseType = 'json' } = opts
     const { api_key: apiKey, base_url: BASE_URL } = this.cfg
 
     if (!apiKey || apiKey === 'sk-xxxxxxx') {
+      const errorMsg = 'APIKey 未配置，请联系机器人管理员。'
       logger.error('[DELTA FORCE PLUGIN] APIKey 未配置，请在 config/config.yaml 中填写')
       if (this.e) {
-        await this.e.reply('APIKey 未配置，请联系机器人管理员。')
+        await this.e.reply(errorMsg)
+      }
+      if (responseType === 'stream') {
+        return { stream: null, error: { message: errorMsg } }
       }
       return false
     }
@@ -37,8 +43,8 @@ export default class Code {
     }
 
     let fullUrl = `${BASE_URL}${url}`
-    const upperCaseMethod = method.toUpperCase();
-    const options = { method: upperCaseMethod, headers }
+    const upperCaseMethod = method.toUpperCase()
+    const fetchOptions = { method: upperCaseMethod, headers }
 
     if (upperCaseMethod === 'GET') {
       if (params) {
@@ -47,26 +53,37 @@ export default class Code {
       }
     } else if (upperCaseMethod === 'POST') {
       headers['Content-Type'] = 'application/x-www-form-urlencoded'
-      options.body = new URLSearchParams(params).toString()
+      fetchOptions.body = new URLSearchParams(params).toString()
     }
 
     try {
-      const response = await fetch(fullUrl, options)
-      const responseBody = await response.json().catch(() => ({}));
+      const response = await fetch(fullUrl, fetchOptions)
 
       if (!response.ok) {
-        logger.error(`[DELTA FORCE PLUGIN] API 请求失败: ${response.status} ${response.statusText} - ${fullUrl}`);
-        logger.error(`[DELTA FORCE PLUGIN] 错误详情: ${JSON.stringify(responseBody)}`);
-        // 关键修复：返回错误体，而不是null
-        return responseBody;
+        const errorBody = await response.json().catch(() => ({ message: `API 错误: ${response.statusText}` }))
+        logger.error(`[DELTA FORCE PLUGIN] API 请求失败: ${response.status} ${response.statusText} - ${fullUrl}`)
+        logger.error(`[DELTA FORCE PLUGIN] 错误详情: ${JSON.stringify(errorBody)}`)
+        if (responseType === 'stream') {
+          return { stream: null, error: errorBody }
+        }
+        return errorBody
       }
-      // 根据API文档，code为0代表成功
+
+      if (responseType === 'stream') {
+        return { stream: response.body, error: null }
+      }
+
+      const responseBody = await response.json().catch(() => ({}))
       if (responseBody.code !== 0 && responseBody.success !== true) {
-        logger.warn(`[DELTA FORCE PLUGIN] API 返回错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
+        logger.warn(`[DELTA FORCE PLUGIN] API 返回业务错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
       }
       return responseBody
-        } catch (error) {
+    } catch (error) {
+      const errorMsg = '网络请求异常，请检查后端服务是否可用'
       logger.error(`[DELTA FORCE PLUGIN] 网络请求异常: ${error} - ${fullUrl}`)
+      if (responseType === 'stream') {
+        return { stream: null, error: { message: errorMsg } }
+      }
       return false
     }
   }
@@ -96,6 +113,16 @@ export default class Code {
    */
   async loginWithCookie(cookie) {
     return this.request('/login/qq/ck', { cookie }, 'POST');
+  }
+
+  /**
+   * 获取AI战绩锐评（流式）
+   * @param {string} frameworkToken - 用户token
+   * @param {string} type - 模式 (e.g., 'sol')
+   * @returns {Promise<object|boolean>}
+   */
+  async getAiCommentary(frameworkToken, type) {
+    return this.request('/df/person/ai', { frameworkToken, type }, 'POST');
   }
 
   // --- 用户数据 ---

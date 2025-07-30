@@ -1,0 +1,68 @@
+import plugin from '../../../lib/plugins/plugin.js'
+import utils from '../utils/utils.js'
+import Code from '../components/Code.js'
+
+export class Ai extends plugin {
+  constructor (e) {
+    super({
+      name: '三角洲AI锐评',
+      dsc: '使用AI锐评战绩',
+      event: 'message',
+      priority: 100,
+      rule: [
+        {
+          reg: '^(#三角洲|\\^)(ai|AI)锐评$',
+          fnc: 'getAiCommentary'
+        }
+      ]
+    })
+    this.e = e
+    this.api = new Code(e)
+  }
+
+  async getAiCommentary () {
+    const token = await utils.getAccount(this.e.user_id, 'sol')
+    if (!token) {
+      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      return true
+    }
+
+    await this.e.reply('正在分析您的近期战绩，请耐心等待...')
+
+    try {
+      const res = await this.api.getAiCommentary(token, 'sol')
+
+      if (!res || !res.success || !res.data) {
+        throw new Error(res.msg || res.message || '请求AI接口失败或未返回有效数据')
+      }
+
+      let fullAnswer = ''
+      // 从返回的data字符串中解析流式内容
+      const streamContent = res.data
+      const lines = streamContent.split('\n').filter(line => line.trim().startsWith('data:'))
+
+      for (const line of lines) {
+        const jsonData = line.substring(6)
+        try {
+          const parsedData = JSON.parse(jsonData)
+          // 根据Dify文档，内容在 answer 字段
+          if (parsedData.answer) {
+            fullAnswer += parsedData.answer
+          }
+        } catch (e) {
+          logger.warn(`[AI锐评] 解析流式JSON块失败: ${jsonData}`)
+        }
+      }
+
+      if (fullAnswer.trim()) {
+        await this.e.reply(fullAnswer)
+      } else {
+        await this.e.reply('AI锐评失败，未能生成有效内容。')
+      }
+    } catch (error) {
+      await this.e.reply(`AI锐评出错了: ${error.message}`)
+    }
+
+    return true
+  }
+} 

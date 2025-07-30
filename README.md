@@ -63,7 +63,7 @@ pnpm install --filter=delta-force-plugin
 - [ ] 大红收藏海报
 - [ ] 日报/周报订阅推送
 - [ ] 小黑屋预测
-- [ ] AI锐评战绩
+- [x] AI锐评战绩（已支持烽火地带）
 
 ### 工具类功能
 
@@ -77,7 +77,7 @@ pnpm install --filter=delta-force-plugin
 - [ ] 物品价格历史
 - [ ] 特勤处利润（当前和最佳）
 - [ ] 特勤处制造材料价格
-- [ ] 每日密码定时推送
+- [x] 每日密码定时推送
 
 ## 命令示例
 
