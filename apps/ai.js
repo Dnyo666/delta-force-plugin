@@ -21,11 +21,22 @@ export class Ai extends plugin {
   }
 
   async getAiCommentary () {
+    const cdKey = `delta-force:ai-cd:${this.e.user_id}`;
+    const cd = await redis.ttl(cdKey);
+    if (cd > 0) {
+        const minutes = Math.ceil(cd / 60);
+        await this.e.reply(`AI大脑正在冷却中，请在 ${minutes} 分钟后重试哦~`);
+        return true;
+    }
+
     const token = await utils.getAccount(this.e.user_id, 'sol')
     if (!token) {
       await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
       return true
     }
+
+    // 抢占式设置临时CD，防止重复请求
+    await redis.set(cdKey, '1', { EX: 90 }); // 90秒临时CD
 
     await this.e.reply('正在分析您的近期战绩，请耐心等待...')
 
@@ -55,11 +66,17 @@ export class Ai extends plugin {
       }
 
       if (fullAnswer.trim()) {
+        // 成功，将CD延长至1小时
+        await redis.expire(cdKey, 3600);
         await this.e.reply(fullAnswer)
       } else {
+        // 失败，立即删除CD
+        await redis.del(cdKey);
         await this.e.reply('AI锐评失败，未能生成有效内容。')
       }
     } catch (error) {
+      // 任何错误都应立即删除CD
+      await redis.del(cdKey);
       await this.e.reply(`AI锐评出错了: ${error.message}`)
     }
 

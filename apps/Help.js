@@ -39,7 +39,8 @@ export class Help extends plugin {
                     { icon: 80, title: "#三角洲账号", desc: "查看已绑定token" },
                     { icon: 71, title: "#三角洲账号切换 [序号]", desc: "激活指定序号账号" },
                     { icon: 48, title: "#三角洲解绑 [序号]", desc: "解绑指定序号token" },
-                    { icon: 49, title: "#三角洲微信刷新", desc: "刷新微信token" }
+                    { icon: 49, title: "#三角洲微信刷新", desc: "刷新微信token" },
+                    { icon: 76, title: "#三角洲角色绑定 [token]", desc: "手动绑定token" }
                 ]
             },
             {
@@ -47,16 +48,19 @@ export class Help extends plugin {
                 list: [
                     { icon: 64, title: "#三角洲QQ登陆", desc: "通过QQ扫码登录" },
                     { icon: 63, title: "#三角洲微信登陆", desc: "通过微信扫码登录" },
-                    { icon: 62, title: "#三角洲WeGame登陆", desc: "通过WeGame扫码登录" },
+                    { icon: 62, title: "#三角洲WeGame登陆", desc: "通过qq扫码登陆wegame" },
+                    { icon: 76, title: "#三角洲wegame微信登陆", desc: "通过微信扫码登陆wegame" },
                     { icon: 61, title: "#三角洲安全中心登陆", desc: "通过安全中心扫码登录" },
-                    { icon: 76, title: "#三角洲角色绑定 [token]", desc: "手动绑定token" }
+                    { icon: 71, title: "#三角洲ck登陆", desc: "获取ck登陆帮助" },
+                    { icon: 80, title: "#三角洲ck登陆 [cookies]", desc: "通过cookie登陆" }
                 ]
             },
             {
                 group: "个人信息",
                 list: [
                     { icon: 78, title: "#三角洲信息", desc: "查询个人详细信息" },
-                    { icon: 71, title: "#三角洲UID", desc: "查询个人UID" }
+                    { icon: 71, title: "#三角洲UID", desc: "查询个人UID" },
+                    { icon: 61, title: "#三角洲ai锐评", desc: "使用AI锐评战绩等数据" }
                 ]
             },
             {
