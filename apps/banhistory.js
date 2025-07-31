@@ -15,39 +15,34 @@ export class BanHistory extends plugin {
         }
       ]
     })
-    this.e = e
     this.api = new Code(e)
   }
 
-  async getBanHistory () {
+  async getBanHistory (e) {
     // 优先获取QQ安全中心的token
-    const token = await utils.getAccount(this.e.user_id, 'qqsafe')
+    const token = await utils.getAccount(e.user_id, 'qqsafe')
     if (!token) {
-      await this.e.reply('您尚未绑定或激活QQ安全中心账号，请使用 #三角洲qqsafe登录 进行绑定。')
-      return true
+      return e.reply('您尚未绑定或激活QQ安全中心账号，请使用 #三角洲qqsafe登录 进行绑定。')
     }
 
-    await this.e.reply('正在查询违规记录，请稍候...')
+    await e.reply('正在查询违规记录，请稍候...')
 
     const res = await this.api.getBanHistory(token)
 
-    if (await utils.handleApiError(res, this.e)) return true
+    if (await utils.handleApiError(res, e)) return true
 
     if (!res.data || !Array.isArray(res.data)) {
-      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
-      return true
+      return e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`)
     }
     
     const banList = res.data;
     
     if (banList.length === 0) {
-      await this.e.reply('该账号暂无违规记录。')
-      return true
+      return e.reply('该账号暂无违规记录。')
     }
 
     // --- 构造转发消息 ---
     const forwardMsg = []
-    const bot = global.Bot
 
     // --- 数据处理函数 ---
     const formatDate = (timestamp) => {
@@ -77,16 +72,16 @@ export class BanHistory extends plugin {
       
       forwardMsg.push({
         message: msg.trim(),
-        nickname: bot.nickname,
-        user_id: bot.uin
+        nickname: e.sender.nickname,
+        user_id: e.user_id
       })
     })
     
     // 创建合并转发消息
-    const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+    const result = await e.reply(Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
 
     if (!result) {
-      await this.e.reply('生成转发消息失败，请联系管理员。')
+      await e.reply('生成转发消息失败，请联系管理员。')
     }
 
     return true
