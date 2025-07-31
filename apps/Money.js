@@ -1,11 +1,10 @@
-import plugin from '../../../lib/plugins/plugin.js'
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
 
 export class Money extends plugin {
     constructor (e) {
         super({
-            name: '三角洲货币',
+            name: '三角洲货币查询',
             dsc: '查询游戏内货币信息',
             event: 'message',
             priority: 100,

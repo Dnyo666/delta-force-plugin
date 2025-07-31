@@ -1,4 +1,3 @@
-import plugin from '../../../lib/plugins/plugin.js'
 import { createRequire } from 'module'
 import lodash from 'lodash'
 import { Restart } from '../../other/restart.js'

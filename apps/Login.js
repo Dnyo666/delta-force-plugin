@@ -1,4 +1,3 @@
-import plugin from '../../../lib/plugins/plugin.js'
 import fs from 'fs'
 import path from 'path'
 import Code from '../components/Code.js'

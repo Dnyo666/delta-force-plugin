@@ -1,4 +1,4 @@
-import plugin from '../../../lib/plugins/plugin.js'
+import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
 import utils from '../utils/utils.js'
 

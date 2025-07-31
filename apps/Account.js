@@ -1,7 +1,6 @@
-import plugin from '../../../lib/plugins/plugin.js'
+import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
 import Config from '../components/Config.js'
-import utils from '../utils/utils.js'
 
 function getClientID () {
   const clientID = Config.getConfig()?.delta_force?.clientID
