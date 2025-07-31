@@ -20,7 +20,7 @@ export class Weekly extends plugin {
     }
 
     async getWeeklyReport(e) {
-        const token = utils.getAccount(e.user_id)
+        const token = await utils.getAccount(e.user_id)
         if (!token) {
             await e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
             return true

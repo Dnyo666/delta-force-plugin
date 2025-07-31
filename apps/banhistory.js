@@ -20,7 +20,7 @@ export class BanHistory extends plugin {
 
   async getBanHistory (e) {
     // 优先获取QQ安全中心的token
-    const token = utils.getAccount(e.user_id, 'qqsafe')
+    const token = await utils.getAccount(e.user_id, 'qqsafe')
     if (!token) {
       return e.reply('您尚未绑定或激活QQ安全中心账号，请使用 #三角洲qqsafe登录 进行绑定。')
     }

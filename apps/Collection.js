@@ -19,7 +19,7 @@ export class Collection extends plugin {
   }
 
   async getCollection(e) {
-    const token = utils.getAccount(e.user_id)
+    const token = await utils.getAccount(e.user_id)
     if (!token) {
       return e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
     }
