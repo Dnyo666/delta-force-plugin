@@ -347,4 +347,8 @@ export default class Code {
   async getBanHistory(frameworkToken) {
     return this.request('/login/qqsafe/ban', { frameworkToken }, 'GET');
   }
+
+  async getPlaceStatus(frameworkToken) {
+    return this.request('/df/place/status', { frameworkToken }, 'GET');
+  }
 }

@@ -73,6 +73,18 @@ export function supportGuoba() {
             placeholder: '请输入QQ号后回车'
           },
         },
+        {
+          field: 'push_place_status.enabled',
+          label: '开启特勤处完成推送',
+          component: 'Switch',
+          bottomHelpMessage: '开启后，将根据下方Cron设置的时间定时检查所有用户的特勤处状态',
+        },
+        {
+          field: 'push_place_status.cron',
+          label: '特勤处检查频率',
+          component: 'EasyCron',
+          bottomHelpMessage: '设置主任务的执行频率，用于检查并设置生产完成提醒',
+        },
       ],
       getConfigData() {
         // 直接从文件读取最新的、未经缓存的配置
@@ -93,6 +105,14 @@ export function supportGuoba() {
               return srcValue;
             }
           }
+        );
+        
+        df.push_place_status = lodash.merge(
+          {
+            enabled: false,
+            cron: '*/5 * * * *', // 默认每5分钟检查一次
+          },
+          df.push_place_status
         );
 
         return df;

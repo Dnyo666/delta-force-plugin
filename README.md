@@ -54,7 +54,7 @@ pnpm install --filter=delta-force-plugin
 - [x] 战绩查询
 - [x] 藏品/资产查询
 - [x] 货币信息查询
-- [ ] 封号记录查询
+- [x] 封号记录查询
 - [ ] wegame每日领奖
 - [ ] wegame高校排名
 - [ ] wegame战区排名
@@ -69,7 +69,7 @@ pnpm install --filter=delta-force-plugin
 
 - [x] 开黑房间创建与管理
 - [x] 每日密码查询
-- [ ] 官方文章&公告
+- [x] 官方文章&公告
 - [ ] 改枪码
 - [ ] 官方比赛排名
 - [ ] 各种信息查询（干员、健康状态、特勤处）
