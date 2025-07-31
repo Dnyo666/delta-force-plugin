@@ -59,7 +59,7 @@ pnpm install --filter=delta-force-plugin
 - [ ] wegame高校排名
 - [ ] wegame战区排名
 - [ ] wegame个人排名
-- [ ] 特勤处状态
+- [x] 特勤处状态
 - [ ] 大红收藏海报
 - [ ] 日报/周报订阅推送
 - [ ] 小黑屋预测

@@ -1,6 +1,8 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
+import Config from '../components/Config.js';
+import lodash from 'lodash';
 
 export class PlaceStatus extends plugin {
   constructor (e) {
@@ -13,6 +15,10 @@ export class PlaceStatus extends plugin {
         {
           reg: '^(#三角洲|\\^)(特勤处状态|placestatus)$',
           fnc: 'getPlaceStatus'
+        },
+        {
+          reg: '^(#三角洲|\\^)(开启|关闭)特勤处推送$',
+          fnc: 'togglePlaceStatusPush',
         }
       ]
     })
@@ -92,5 +98,53 @@ export class PlaceStatus extends plugin {
     }
 
     return true
+  }
+  
+  async togglePlaceStatusPush() {
+    if (!this.e.isGroup) {
+      await this.e.reply('该指令只能在群聊中使用。');
+      return true;
+    }
+    
+    const action = this.e.msg.includes('开启') ? '开启' : '关闭';
+    const userId = String(this.e.user_id);
+    const groupId = String(this.e.group_id);
+    
+    const config = Config.loadYAML(Config.fileMaps.config) || {};
+    if (!config.delta_force) config.delta_force = {};
+    if (!config.delta_force.push_place_status) config.delta_force.push_place_status = {};
+
+    const userSettings = lodash.merge({
+      enabled: false,
+      push_to: { group: [] }
+    }, config.delta_force.push_place_status[userId]);
+
+    const pushGroups = userSettings.push_to.group.map(String);
+    const groupIndex = pushGroups.indexOf(groupId);
+
+    if (action === '开启') {
+      if (groupIndex > -1) {
+        return this.e.reply('本群已经开启了特勤处生产完成推送。');
+      }
+      pushGroups.push(groupId);
+      userSettings.enabled = true; // 只要有一个群开启，总开关就开启
+      await this.e.reply('已为你在本群开启特勤处生产完成推送！');
+    } else { // 关闭
+      if (groupIndex === -1) {
+        return this.e.reply('你尚未在本群开启特勤处生产完成推送。');
+      }
+      pushGroups.splice(groupIndex, 1);
+      if (pushGroups.length === 0) {
+        userSettings.enabled = false; // 如果所有群都关闭了，总开关也关闭
+      }
+      await this.e.reply('已为你在本群关闭特勤处生产完成推送。');
+    }
+    
+    userSettings.push_to.group = pushGroups;
+    config.delta_force.push_place_status[userId] = userSettings;
+    
+    Config.setConfig(config);
+    
+    return true;
   }
 } 
