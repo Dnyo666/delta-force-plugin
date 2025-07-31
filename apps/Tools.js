@@ -1,6 +1,5 @@
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
-import utils from '../utils/utils.js'
 
 export class Tools extends plugin {
   constructor (e) {
