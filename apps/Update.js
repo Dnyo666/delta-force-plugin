@@ -1,5 +1,5 @@
-import { pluginName } from "../model/path"
-import { update as Update } from '../../other/update.js'
+import { pluginName } from "../model/path.js"
+import { update as UpdatePlugin } from '../../other/update.js'
 
 export class Update extends plugin {
   constructor() {
@@ -24,18 +24,18 @@ export class Update extends plugin {
   async update(e) {
     if (e.at && !e.atme) return
     e.msg = `#${e.msg.includes('强制') ? '强制' : ''}更新${pluginName}`
-    const up = new Update(e)
+    const up = new UpdatePlugin(e)
     up.e = e
     return up.update()
   }
 
   async update_log() {
-    const UpdatePlugin = new Update()
-    UpdatePlugin.e = this.e
-    UpdatePlugin.reply = this.reply
+    const UpdateLog = new UpdatePlugin()
+    UpdateLog.e = this.e
+    UpdateLog.reply = this.reply
 
-    if (UpdatePlugin.getPlugin(pluginName)) {
-      this.e.reply(await UpdatePlugin.getLog(pluginName))
+    if (UpdateLog.getPlugin(pluginName)) {
+      this.e.reply(await UpdateLog.getLog(pluginName))
     }
     return true
   }
