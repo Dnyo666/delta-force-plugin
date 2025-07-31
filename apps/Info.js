@@ -80,8 +80,11 @@ export class Info extends plugin {
     
     // 账户信息
     msg += "--- 账户信息 ---\n";
+    const propCapital = parseFloat(roleInfo.propcapital) || 0;
+    const hafcoinNum = parseFloat(roleInfo.hafcoinnum) || 0;
+    const totalAssets = (propCapital + hafcoinNum) / 1000000;
     msg += `哈夫币: ${roleInfo.hafcoinnum?.toLocaleString() || '-'}\n`;
-    msg += `仓库总资产: ${roleInfo.propcapital?.toLocaleString() || '-'}\n`;
+    msg += `仓库流动资产: ${totalAssets > 0 ? totalAssets.toFixed(2) + 'M' : '-'}\n`;
     msg += `注册时间: ${formatDate(roleInfo.register_time)}\n`;
     msg += `上次登录: ${formatDate(roleInfo.lastlogintime)}\n`;
     msg += `登录渠道: ${channelMap[roleInfo.loginchannel] || roleInfo.loginchannel || '未知'}\n`;
