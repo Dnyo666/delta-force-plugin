@@ -38,7 +38,15 @@ export const helpList = [
         list: [
             { icon: 78, title: "#三角洲信息", desc: "查询个人详细信息" },
             { icon: 71, title: "#三角洲UID", desc: "查询个人UID" },
-            { icon: 61, title: "#三角洲ai锐评", desc: "使用AI锐评战绩等数据" }
+        ]
+    },
+    {
+        group: "实用工具",
+        list: [
+            { icon: 61, title: "#三角洲ai锐评", desc: "使用AI锐评战绩等数据" },
+            { icon: 41, title: "#三角洲违规记录", desc: "登陆QQ安全中心后可查询历史违规" },
+            { icon: 48, title: "#三角洲特勤处状态", desc: "查询特勤处制造状态"},
+            { icon: 86, title: "#三角洲开启特勤处推送", desc: "开启制造完成推送，需主人开启配置"}
         ]
     },
     {
@@ -75,6 +83,7 @@ export const helpList = [
         group: "其他/帮助",
         list: [
             { icon: 92, title: "#三角洲(强制)更新", desc: "更新三角洲插件" },
+            { icon: 92, title: "#三角洲更新日志", desc: "三角洲插件更新日志" },
             { icon: 85, title: "#三角洲帮助", desc: "显示本帮助菜单" }
         ]
     }
