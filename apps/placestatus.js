@@ -4,6 +4,8 @@ import Code from '../components/Code.js'
 import Config from '../components/Config.js';
 import lodash from 'lodash';
 
+const scheduledKeyPrefix = 'delta-force:place:scheduled:';
+
 export class PlaceStatus extends plugin {
   constructor (e) {
     super({
@@ -20,7 +22,7 @@ export class PlaceStatus extends plugin {
           reg: '^(#三角洲|\\^)(开启|关闭)特勤处推送$',
           fnc: 'togglePlaceStatusPush',
         }
-      ]
+       ]
     })
     this.e = e
     this.api = new Code(e)
@@ -111,6 +113,13 @@ export class PlaceStatus extends plugin {
     const groupId = String(this.e.group_id);
     
     const config = Config.loadYAML(Config.fileMaps.config) || {};
+    
+    // 检查总开关
+    if (!config?.delta_force?.push_place_status?.enabled) {
+      await this.e.reply('特勤处推送功能当前未由机器人主人开启，请联系主人在配置文件中开启。');
+      return true;
+    }
+
     if (!config.delta_force) config.delta_force = {};
     if (!config.delta_force.push_place_status) config.delta_force.push_place_status = {};
 
@@ -128,20 +137,39 @@ export class PlaceStatus extends plugin {
       }
       pushGroups.push(groupId);
       userSettings.enabled = true; // 只要有一个群开启，总开关就开启
+      userSettings.push_to.group = pushGroups;
+      config.delta_force.push_place_status[userId] = userSettings;
       await this.e.reply('已为你在本群开启特勤处生产完成推送！');
+
     } else { // 关闭
       if (groupIndex === -1) {
         return this.e.reply('你尚未在本群开启特勤处生产完成推送。');
       }
       pushGroups.splice(groupIndex, 1);
+
       if (pushGroups.length === 0) {
-        userSettings.enabled = false; // 如果所有群都关闭了，总开关也关闭
+        // 如果所有群都关闭了，直接删除该用户的配置项
+        delete config.delta_force.push_place_status[userId];
+        await this.e.reply('已为你关闭所有特勤处生产完成推送，配置已清除。');
+        
+        // 同时清理该用户在Redis中的所有待推送任务
+        try {
+            const keysToDelete = await redis.keys(`${scheduledKeyPrefix}${userId}:*`);
+            if (keysToDelete.length > 0) {
+                await redis.del(keysToDelete);
+                logger.mark(`[特勤处推送] 已清理用户 ${userId} 的 ${keysToDelete.length} 条待推送任务。`);
+            }
+        } catch(e) {
+            logger.error(`[特勤处推送] 清理用户 ${userId} 的Redis任务时出错: ${e.message}`);
+        }
+
+      } else {
+        // 否则，只更新群组列表
+        userSettings.push_to.group = pushGroups;
+        config.delta_force.push_place_status[userId] = userSettings;
+        await this.e.reply('已为你在本群关闭特勤处生产完成推送。');
       }
-      await this.e.reply('已为你在本群关闭特勤处生产完成推送。');
     }
-    
-    userSettings.push_to.group = pushGroups;
-    config.delta_force.push_place_status[userId] = userSettings;
     
     Config.setConfig(config);
     

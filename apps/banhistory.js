@@ -5,13 +5,13 @@ import Code from '../components/Code.js'
 export class BanHistory extends plugin {
   constructor (e) {
     super({
-      name: '三角洲封号记录',
-      dsc: '查询三角洲行动账号的封号记录',
+      name: '三角洲违规记录',
+      dsc: '查询三角洲行动账号的违规记录',
       event: 'message',
       priority: 100,
       rule: [
         {
-          reg: '^(#三角洲|\\^)(封号记录|banhistory)$',
+          reg: '^(#三角洲|\\^)(封号记录|违规记录|违规历史|封号历史)$',
           fnc: 'getBanHistory'
         }
       ]
@@ -24,11 +24,11 @@ export class BanHistory extends plugin {
     // 优先获取QQ安全中心的token
     const token = await utils.getAccount(this.e.user_id, 'qqsafe')
     if (!token) {
-      await this.e.reply('您尚未绑定或激活QQ安全中心账号，请使用 #三角洲登录qqsafe 进行绑定。')
+      await this.e.reply('您尚未绑定或激活QQ安全中心账号，请使用 #三角洲qqsafe登录 进行绑定。')
       return true
     }
 
-    await this.e.reply('正在查询封号记录，请稍候...')
+    await this.e.reply('正在查询违规记录，请稍候...')
 
     const res = await this.api.getBanHistory(token)
 
@@ -42,7 +42,7 @@ export class BanHistory extends plugin {
     const banList = res.data;
     
     if (banList.length === 0) {
-      await this.e.reply('该账号暂无封号记录。')
+      await this.e.reply('该账号暂无违规记录。')
       return true
     }
 
@@ -65,7 +65,7 @@ export class BanHistory extends plugin {
 
     // 添加每条封号记录到转发消息中
     banList.forEach((ban, index) => {
-      let msg = `--- 封号记录 ${index + 1} ---\n`;
+      let msg = `--- 违规记录 ${index + 1} ---\n`;
       msg += `游戏: ${ban.game_name} (${ban.zone})\n`;
       msg += `类型: ${ban.type}\n`;
       msg += `原因: ${ban.reason}\n`;
