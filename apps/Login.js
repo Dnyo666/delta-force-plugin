@@ -68,12 +68,12 @@ export class Login extends plugin {
 
   const qrMsg = await this.e.reply([
     segment.at(this.e.user_id),
-    `\n请使用另一台设备上的【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。`,
+    `\n请使用另一台设备上的【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。\n`,
     segment.image(qrImage),
     '\n\n【免责声明】',
-    '您将通过扫码授权本插件后端服务器获取您的游戏数据。',
-    '若您的账号因使用本插件出现封禁、被盗等问题，我方概不负责。',
-    '害怕风险请勿扫码！',
+    '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+    '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
+    '\n害怕风险请勿扫码！',
     '\n如果无法扫码，请私聊机器人发送【^ck登陆】获取Cookie登录教程。'
   ]);
   if (qrMsg?.message_id) messagesToRecall.push(qrMsg.message_id);
