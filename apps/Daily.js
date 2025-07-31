@@ -28,7 +28,7 @@ export class Daily extends plugin {
   async getDailyReport () {
     const token = await utils.getAccount(this.e.user_id)
     if (!token) {
-      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      await this.e.reply([segment.at(this.e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
       return true
     }
 
@@ -115,7 +115,7 @@ export class Daily extends plugin {
         msg += '--- 烽火地带 ---\n最近没有对局';
     }
 
-    await this.e.reply(msg.trim())
+    await this.e.reply([segment.at(this.e.user_id), msg.trim()])
     return true
   }
   
@@ -167,7 +167,7 @@ export class Daily extends plugin {
       msg += `${gainDate}总收益: ${recentGain?.toLocaleString()}`;
     }
     
-    await this.e.reply(msg.trim());
+    await this.e.reply([segment.at(this.e.user_id), msg.trim()]);
     return true;
   }
 } 

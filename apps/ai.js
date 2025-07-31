@@ -68,7 +68,7 @@ export class Ai extends plugin {
       if (fullAnswer.trim()) {
         // 成功，将CD延长至1小时
         await redis.expire(cdKey, 3600);
-        await this.e.reply(fullAnswer)
+        await this.e.reply([segment.at(this.e.user_id), fullAnswer])
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);

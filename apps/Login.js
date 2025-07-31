@@ -1,5 +1,4 @@
 import plugin from '../../../lib/plugins/plugin.js'
-import { segment } from 'oicq'
 import fs from 'fs'
 import path from 'path'
 import Code from '../components/Code.js'
@@ -179,8 +178,6 @@ export class Login extends plugin {
       });
 
       if (bindRes && (bindRes.code === 0 || bindRes.success)) {
-        // 提供基本的成功消息
-        await this.e.reply('登录成功，账号已自动绑定！');
 
         // 获取用户现有账号列表
         const listRes = await this.api.getUserList({ clientID, platformID: this.e.user_id, clientType: 'qq' });
@@ -272,14 +269,14 @@ export class Login extends plugin {
               const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
               const isAdult = adultstatus === '0' ? '否' : '是';
         
-              let charMsg = '角色信息已获取！\n';
+              let charMsg = '登录绑定成功并角色信息已获取！\n';
               charMsg += '--- 角色信息 ---\n';
               charMsg += `昵称: ${charac_name}\n`;
               charMsg += `烽火地带等级: ${level}\n`;
               charMsg += `全面战场等级: ${tdmlevel}\n`;
               charMsg += `防沉迷: ${isAdult}`;
               
-              await this.e.reply(charMsg);
+              await this.e.reply([segment.at(this.e.user_id), charMsg]);
             } else {
               const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
               await this.e.reply(`自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
@@ -369,7 +366,7 @@ export class Login extends plugin {
           charMsg += `烽火地带等级: ${level}\n`;
           charMsg += `全面战场等级: ${tdmlevel}\n`;
           charMsg += `防沉迷: ${isAdult}`;
-          await this.e.reply(charMsg);
+          await this.e.reply([segment.at(this.e.user_id), charMsg]);
         } else {
           const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
           await this.e.reply(`自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
@@ -414,7 +411,7 @@ export class Login extends plugin {
       msg += `全面战场等级: ${tdmlevel}\n`;
       msg += `防沉迷: ${isAdult}`;
       
-      await this.e.reply(msg);
+      await this.e.reply([segment.at(this.e.user_id), msg]);
     } else {
       const apiMsg = res?.msg || res?.message || '未知错误';
       await this.e.reply(`角色绑定失败: ${apiMsg}`);
