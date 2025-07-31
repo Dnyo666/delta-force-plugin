@@ -4,10 +4,6 @@ import { fileURLToPath } from 'url';
 import Init from './model/init.js';
 import DataManager from './utils/Data.js';
 
-if (!global.segment) {
-  global.segment = (await import("oicq")).segment;
-}
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const pluginRoot = __dirname;
@@ -24,7 +20,7 @@ let files = [];
 try {
   files = fs.readdirSync(appsDir).filter((file) => file.endsWith('.js'));
 } catch (e) {
-  logger.error(`插件加载失败，未找到 apps 目录：${appsDir}`);
+  logger.error(`[DELTA-FORCE-PLUGIN]插件加载失败，未找到 apps 目录：${appsDir}`);
   throw e;
 }
 
@@ -39,7 +35,7 @@ let apps = {};
 for (let i in files) {
   let name = files[i].replace('.js', '');
   if (ret[i].status !== 'fulfilled') {
-    logger.error(`载入插件错误：${logger.red(name)}`);
+    logger.error(`[DELTA-FORCE-PLUGIN]载入插件错误：${logger.red(name)}`);
     logger.error(ret[i].reason);
     continue;
   }
