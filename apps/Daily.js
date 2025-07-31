@@ -1,10 +1,9 @@
-import plugin from '../../../lib/plugins/plugin.js'
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
 import DataManager from '../utils/Data.js'
 
 export class Daily extends plugin {
-  constructor (e) {
+  constructor(e) {
     super({
       name: '三角洲日报',
       dsc: '查询三角洲行动日报数据',
@@ -21,18 +20,17 @@ export class Daily extends plugin {
         }
       ]
     })
-    this.e = e
     this.api = new Code(e)
   }
 
-  async getDailyReport () {
-    const token = await utils.getAccount(this.e.user_id)
+  async getDailyReport(e) {
+    const token = utils.getAccount(e.user_id)
     if (!token) {
-      await this.e.reply([segment.at(this.e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
+      await e.reply([segment.at(e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
       return true
     }
 
-    const match = this.e.msg.match(this.rule[0].reg)
+    const match = e.msg.match(this.rule[0].reg)
     const argString = match[3] ? match[3].trim() : ''
     let mode = ''
     if (['烽火', '烽火地带', 'sol', '摸金'].includes(argString)) {
@@ -41,35 +39,35 @@ export class Daily extends plugin {
       mode = 'mp'
     }
 
-    await this.e.reply('正在查询您的今日战报，请稍候...');
+    await e.reply('正在查询您的今日战报，请稍候...');
 
     // mode变量值作为type参数传递
     const res = await this.api.getDailyRecord(token, mode);
-    
-    if (await utils.handleApiError(res, this.e)) return true;
+
+    if (await utils.handleApiError(res, e)) return true;
 
     if (!res.data) {
-      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`);
+      await e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`);
       return true;
     }
 
     let solDetail, mpDetail;
 
     if (mode) { // 指定模式查询
-        const detailData = res.data?.data?.data;
-        if (mode === 'sol') {
-            solDetail = detailData?.solDetail;
-        } else if (mode === 'mp') {
-            mpDetail = detailData?.mpDetail;
-        }
+      const detailData = res.data?.data?.data;
+      if (mode === 'sol') {
+        solDetail = detailData?.solDetail;
+      } else if (mode === 'mp') {
+        mpDetail = detailData?.mpDetail;
+      }
     } else { // 查询全部
-        solDetail = res.data?.sol?.data?.data?.solDetail;
-        mpDetail = res.data?.mp?.data?.data?.mpDetail;
+      solDetail = res.data?.sol?.data?.data?.solDetail;
+      mpDetail = res.data?.mp?.data?.data?.mpDetail;
     }
 
 
     if (!solDetail && !mpDetail) {
-      await this.e.reply('暂无日报数据，不打两把吗？')
+      await e.reply('暂无日报数据，不打两把吗？')
       return true
     }
 
@@ -101,7 +99,7 @@ export class Daily extends plugin {
       msg += '--- 烽火地带 ---\n'
       msg += `日期: ${solDetail.recentGainDate}\n`
       msg += `最近带出总价值: ${solDetail.recentGain?.toLocaleString()}\n`
-      
+
       const topItems = solDetail.userCollectionTop?.list
       if (topItems && topItems.length > 0) {
         msg += '--- 近期高价值物资 ---\n'
@@ -111,54 +109,51 @@ export class Daily extends plugin {
         })
       }
     } else if (mode === 'sol' || !mode) {
-        if (mpDetail) msg += '\n';
-        msg += '--- 烽火地带 ---\n最近没有对局';
+      if (mpDetail) msg += '\n';
+      msg += '--- 烽火地带 ---\n最近没有对局';
     }
 
-    await this.e.reply([segment.at(this.e.user_id), msg.trim()])
-    return true
+    return e.reply([segment.at(e.user_id), msg.trim()])
   }
-  
-  async getYesterdayProfit() {
-    const token = await utils.getAccount(this.e.user_id)
+
+  async getYesterdayProfit(e) {
+    const token = utils.getAccount(e.user_id)
     if (!token) {
-      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      await e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
       return true
     }
-    
-    await this.e.reply('正在查询您的昨日收益数据，请稍候...');
-    
+
+    await e.reply('正在查询您的昨日收益数据，请稍候...');
+
     // 默认不传模式参数，查询全部数据
     const res = await this.api.getDailyRecord(token);
-    
-    if (await utils.handleApiError(res, this.e)) return true;
-    
+
+    if (await utils.handleApiError(res, e)) return true;
+
     if (!res.data) {
-      await this.e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`);
-      return true;
+      return e.reply(`查询失败: ${res.msg || 'API 返回数据格式不正确'}`);
     }
-    
+
     // 获取烽火地带数据
     const solDetail = res.data?.sol?.data?.data?.solDetail;
-    
+
     if (!solDetail || !solDetail.userCollectionTop || !solDetail.userCollectionTop.list) {
-      await this.e.reply('暂无昨日收益数据，快去摸金吧！');
-      return true;
+      return e.reply('暂无昨日收益数据，快去摸金吧！');
     }
-    
+
     const recentGain = solDetail.recentGain;
     const gainDate = solDetail.recentGainDate || '昨日';
     const topItems = solDetail.userCollectionTop.list;
-    
+
     let msg = `【${gainDate}收益TOP3物资】\n`;
-    
+
     // 处理并显示TOP物资
     if (topItems && topItems.length > 0) {
       topItems.forEach((item, index) => {
         const price = parseFloat(item.price).toLocaleString();
         msg += `${index + 1}. 【${item.objectName}*${item.count}】${price}\n`;
       });
-      
+
       // 添加总收益
       const gainPrefix = recentGain >= 0 ? '+' : '';
       msg += `\n${gainDate}总收益: ${gainPrefix}${recentGain?.toLocaleString()}`;
@@ -166,8 +161,7 @@ export class Daily extends plugin {
       msg += '昨日未带出任何高价值物资\n';
       msg += `${gainDate}总收益: ${recentGain?.toLocaleString()}`;
     }
-    
-    await this.e.reply([segment.at(this.e.user_id), msg.trim()]);
-    return true;
+
+    return e.reply([segment.at(e.user_id), msg.trim()]);
   }
 } 
