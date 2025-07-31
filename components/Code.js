@@ -343,4 +343,8 @@ export default class Code {
   async refreshLogin(platform, frameworkToken) {
     return this.request(`/login/${platform}/refresh`, { frameworkToken }, 'GET');
   }
+
+  async getBanHistory(frameworkToken) {
+    return this.request('/login/qqsafe/ban', { frameworkToken }, 'GET');
+  }
 }
