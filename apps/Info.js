@@ -52,10 +52,19 @@ export class Info extends plugin {
         if (!timestamp || isNaN(timestamp)) return '未知';
         return new Date(timestamp * 1000).toLocaleString();
     }
-    const formatDuration = (seconds) => {
-        if (!seconds || isNaN(seconds)) return '未知';
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
+    const formatDuration = (value, unit = 'seconds') => {
+        if (!value || isNaN(value)) return '未知';
+        const numValue = Number(value);
+        if (isNaN(numValue)) return '未知';
+
+        let totalMinutes;
+        if (unit === 'seconds') {
+            totalMinutes = Math.floor(numValue / 60);
+        } else { // minutes
+            totalMinutes = numValue;
+        }
+        const h = Math.floor(totalMinutes / 60);
+        const m = Math.floor(totalMinutes % 60);
         return `${h}小时${m}分钟`;
     }
     const channelMap = {
@@ -73,6 +82,9 @@ export class Info extends plugin {
     if (picUrl && /^[0-9]+$/.test(picUrl)) {
       picUrl = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${picUrl}.webp`;
     }
+    const isBanUser = roleInfo.isbanuser === '1' ? '封禁' : '正常';
+    const isBanSpeak = roleInfo.isbanspeak === '1' ? '禁言' : '正常';
+    const isAdult = roleInfo.adultstatus === '0' ? '已成年' : '未成年';
 
     // --- 消息拼接 ---
     let msg = `【${nickName}的个人信息】\n`;
@@ -87,6 +99,7 @@ export class Info extends plugin {
     msg += `注册时间: ${formatDate(roleInfo.register_time)}\n`;
     msg += `上次登录: ${formatDate(roleInfo.lastlogintime)}\n`;
     msg += `登录渠道: ${channelMap[roleInfo.loginchannel] || roleInfo.loginchannel || '未知'}\n`;
+    msg += `账号封禁: ${isBanUser} | 禁言: ${isBanSpeak} | 防沉迷: ${isAdult}\n`;
     
     // 烽火地带生涯
     msg += "\n--- 烽火地带信息 ---\n";
@@ -100,7 +113,7 @@ export class Info extends plugin {
     msg += `等级: ${roleInfo.tdmlevel || '-'} | 排位分: ${careerData.tdmrankpoint || '-'}\n`;
     msg += `总对局: ${careerData.tdmtotalfight || '-'} | 总胜利: ${careerData.totalwin || '-'}\n`;
     msg += `胜率: ${careerData.tdmsuccessratio || '-'} | 总击杀: ${careerData.tdmtotalkill || '-'}\n`;
-    msg += `游玩时长: ${formatDuration(careerData.tdmduration)}`;
+    msg += `游玩时长: ${formatDuration(careerData.tdmduration, 'minutes')}`;
 
 
     // 发送头像和文本信息
