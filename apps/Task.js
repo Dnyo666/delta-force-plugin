@@ -2,8 +2,7 @@ import Code from '../components/Code.js';
 import lodash from 'lodash';
 import Config from '../components/Config.js';
 
-const config = Config.loadYAML(Config.fileMaps.config) || {};
-
+const config = Config.getConfig() || {};
 
 // --- 插件主体，用于处理指令 ---
 export class Task extends plugin {
