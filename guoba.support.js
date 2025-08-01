@@ -59,10 +59,10 @@ export function supportGuoba() {
         {
           field: 'push_daily_keyword.push_to.group',
           label: '推送群号',
-          component: 'GTags',
+          component: 'GSelectGroup',
           bottomHelpMessage: '也可以在群里使用 #三角洲开启每日密码推送 来添加',
           componentProps: {
-            placeholder: '请输入群号后回车'
+            placeholder: '点击选择要推送的群'
           },
         },
         {
