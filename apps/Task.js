@@ -21,13 +21,15 @@ export class Task extends plugin {
       ]
     });
     this.task = [];
-    if (config.delta_force.push_daily_keyword.enabled) {
-      this.task.push({
-        name: '[DELTA FORCE PLUGIN] 每日密码推送',
-        cron: normalizeCronExpression(config.delta_force.push_daily_keyword.cron),
-        fnc: () => this.pushDailyKeyword()
-      })
-    }
+    const dailyKeywordConfig = config?.delta_force?.push_daily_keyword || {};
+
+    // 无条件注册任务，在执行时再检查是否启用
+    this.task.push({
+      name: '[DELTA FORCE PLUGIN] 每日密码推送',
+      // 添加默认cron防止配置不存在时报错
+      cron: normalizeCronExpression(dailyKeywordConfig.cron || '0 8 * * *'),
+      fnc: () => this.pushDailyKeyword()
+    });
   }
 
   async toggleDailyKeywordPush(e) {
@@ -81,9 +83,16 @@ export class Task extends plugin {
    * 执行每日密码推送
    */
   async pushDailyKeyword() {
-    if (!config.delta_force.push_daily_keyword.enabled) {
-      return;
+    // 1. 在执行时加载最新配置
+    const currentConfig = Config.loadYAML(Config.fileMaps.config) || {};
+    const dailyKeywordConfig = currentConfig?.delta_force?.push_daily_keyword || {};
+
+    // 2. 检查任务是否已在最新配置中启用
+    if (!dailyKeywordConfig.enabled) {
+      return; // 如果禁用，则不执行任何操作
     }
+
+    // 3. 执行推送逻辑
     const api = new Code();
     const res = await api.getDailyKeyword();
 
@@ -91,9 +100,6 @@ export class Task extends plugin {
       logger.error('[DELTA FORCE PLUGIN] 推送每日密码失败：API请求出错');
       return;
     }
-
-    const config = Config.loadYAML(Config.fileMaps.config) || {};
-    const dailyKeywordConfig = config?.delta_force?.push_daily_keyword || {};
 
     if (res.data?.list?.length > 0) {
       let msg = '【每日密码】\n';
@@ -108,7 +114,7 @@ export class Task extends plugin {
           try {
             await Bot.pickGroup(Number(groupId)).sendMsg(msg.trim());
             logger.debug(`[DELTA FORCE PLUGIN] 推送每日密码到群 ${groupId} 成功`);
-            await Bot.sleep(1000);
+            await new Promise(resolve => setTimeout(resolve, 1000));
           } catch (e) {
             logger.error(`[DELTA FORCE PLUGIN] 推送每日密码到群 ${groupId} 失败: ${e.message}`);
           }
@@ -120,7 +126,7 @@ export class Task extends plugin {
           try {
             await Bot.pickUser(Number(userId)).sendMsg(msg.trim());
             logger.debug(`[DELTA FORCE PLUGIN] 推送每日密码到用户 ${userId} 成功`);
-            await Bot.sleep(1000);
+            await new Promise(resolve => setTimeout(resolve, 1000));
           } catch (e) {
             logger.error(`[DELTA FORCE PLUGIN] 推送每日密码到用户 ${userId} 失败: ${e.message}`);
           }

@@ -116,19 +116,19 @@ async function fetchAndCache(dataType) {
 
 export default {
     async init() {
-        logger.info('[Delta-Force 数据管理器] 正在初始化数据缓存...');
+        logger.mark('[Delta-Force 数据管理器] 正在初始化数据缓存...');
         
         // 先尝试加载本地数据作为初始数据
         const localMaps = loadLocalData(localMapsFile);
         if (localMaps && localMaps.size > 0) {
             mapData = localMaps;
-            logger.info(`[Delta-Force 数据管理器] 已从本地加载地图数据 (${localMaps.size}条记录)`);
+            logger.mark(`[Delta-Force 数据管理器] 已从本地加载地图数据 (${localMaps.size}条记录)`);
         }
         
         const localOperators = loadLocalData(localOperatorsFile);
         if (localOperators && localOperators.size > 0) {
             operatorData = localOperators;
-            logger.info(`[Delta-Force 数据管理器] 已从本地加载干员数据 (${localOperators.size}条记录)`);
+            logger.mark(`[Delta-Force 数据管理器] 已从本地加载干员数据 (${localOperators.size}条记录)`);
         }
         
         // 然后尝试从API获取最新数据

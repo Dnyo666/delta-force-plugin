@@ -9,13 +9,3 @@ delta_force:
     push_to: # 推送目标
       group: [] # 群号列表
       private: [] # QQ号列表
-
-# ---------- 通用配置 ----------
-# 是否开启成功日志输出
-enable_log: false
-# 代理地址
-proxy_url: ''
-# 图片渲染精度
-render_scale: 100
-# 接口并发量
-limit: 10
