@@ -101,7 +101,8 @@ export class Task extends plugin {
         for (const groupId of pushTo.group) {
           try {
             await Bot.pickGroup(Number(groupId)).sendMsg(msg.trim());
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            logger.debug(`[DELTA FORCE PLUGIN] 推送每日密码到群 ${groupId} 成功`);
+            await Bot.sleep(1000);
           } catch (e) {
             logger.error(`[DELTA FORCE PLUGIN] 推送每日密码到群 ${groupId} 失败: ${e.message}`);
           }
@@ -112,7 +113,8 @@ export class Task extends plugin {
         for (const userId of pushTo.private) {
           try {
             await Bot.pickUser(Number(userId)).sendMsg(msg.trim());
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            logger.debug(`[DELTA FORCE PLUGIN] 推送每日密码到用户 ${userId} 成功`);
+            await Bot.sleep(1000);
           } catch (e) {
             logger.error(`[DELTA FORCE PLUGIN] 推送每日密码到用户 ${userId} 失败: ${e.message}`);
           }
