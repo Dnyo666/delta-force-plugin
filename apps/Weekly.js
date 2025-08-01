@@ -73,6 +73,30 @@ export class Weekly extends plugin {
             return e.reply('暂无周报数据，不打两把吗？')
         }
 
+        // --- 提取所有队友的OpenID并获取昵称 ---
+        const allTeammateOpenIDs = new Set();
+        if (solData?.teammates) {
+            solData.teammates.forEach(t => allTeammateOpenIDs.add(t.friend_openid));
+        }
+        if (mpData?.teammates) {
+            mpData.teammates.forEach(t => allTeammateOpenIDs.add(t.friend_openid));
+        }
+
+        const nicknameMap = new Map();
+        if (allTeammateOpenIDs.size > 0) {
+            const promises = Array.from(allTeammateOpenIDs).map(openid => 
+                this.api.getFriendInfo(token, openid)
+            );
+            const results = await Promise.allSettled(promises);
+            
+            results.forEach((result, index) => {
+                const openid = Array.from(allTeammateOpenIDs)[index];
+                if (result.status === 'fulfilled' && result.value?.success && result.value.data?.charac_name) {
+                    nicknameMap.set(openid, result.value.data.charac_name);
+                }
+            });
+        }
+
         // --- 数据解析和渲染 ---
         const parseAndGetName = (dataStr, idKey, countKey, dataManagerFunc) => {
             if (!dataStr || typeof dataStr !== 'string') return '无';
@@ -248,8 +272,8 @@ export class Weekly extends plugin {
             if (active_sol_teammates.length > 0) {
                 let teammatesMsg = '--- 本周烽火队友协作 ---\n';
                 active_sol_teammates.forEach((t, i) => {
-                    const openid_masked = `...${t.friend_openid.slice(-6)}`;
-                    teammatesMsg += `\n[队友 ${i + 1} (${openid_masked})]\n`;
+                    const teammateName = nicknameMap.get(t.friend_openid) || `...${t.friend_openid.slice(-6)}`;
+                    teammatesMsg += `\n[队友 ${i + 1} (${teammateName})]\n`;
                     teammatesMsg += `  总览: ${t.Friend_total_sol_num}场 | ${t.Friend_is_Escape1_num}撤离/${t.Friend_is_Escape2_num}失败 | ${t.Friend_total_sol_KillPlayer}击杀 | ${t.Friend_total_sol_DeathCount}死亡\n`;
                 
                     // 确保正确读取带出金额 - 直接读取字段并转换为数字
@@ -359,8 +383,8 @@ export class Weekly extends plugin {
             if (active_mp_teammates.length > 0) {
                 let teammatesMsg = '--- 本周战场队友协作 ---\n';
                 active_mp_teammates.forEach((t, i) => {
-                    const openid_masked = `...${t.friend_openid.slice(-6)}`;
-                    teammatesMsg += `\n[队友 ${i + 1} (${openid_masked})]\n`;
+                    const teammateName = nicknameMap.get(t.friend_openid) || `...${t.friend_openid.slice(-6)}`;
+                    teammatesMsg += `\n[队友 ${i + 1} (${teammateName})]\n`;
                     const total_mp_games = t.Friend_mp_total_num || 0;
                     const win_mp_games = t.Friend_mp_win_num || 0;
                     const mp_win_rate = total_mp_games > 0 ? `${((win_mp_games / total_mp_games) * 100).toFixed(1)}%` : '0%';

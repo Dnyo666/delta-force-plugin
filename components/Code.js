@@ -351,4 +351,13 @@ export default class Code {
   async getPlaceStatus(frameworkToken) {
     return this.request('/df/place/status', { frameworkToken }, 'GET');
   }
+
+  /**
+   * 获取好友信息
+   * @param {string} frameworkToken - 用户绑定的token
+   * @param {string} openid - 好友的openid
+   */
+  async getFriendInfo(frameworkToken, openid) {
+    return this.request('/df/person/friendinfo', { frameworkToken, openid }, 'GET');
+  }
 }
