@@ -2,7 +2,7 @@ import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
 
 export class Ai extends plugin {
-  constructor (e) {
+  constructor () {
     super({
       name: '三角洲AI锐评',
       dsc: '使用AI锐评战绩',
@@ -15,10 +15,10 @@ export class Ai extends plugin {
         }
       ]
     })
-    this.api = new Code(e)
   }
 
   async getAiCommentary (e) {
+    const api = new Code(e);
     const cdKey = `delta-force:ai-cd:${e.user_id}`;
     const cd = await redis.ttl(cdKey);
     if (cd > 0) {
@@ -27,9 +27,9 @@ export class Ai extends plugin {
         return true;
     }
 
-    const token = await utils.getAccount(e.user_id, 'sol')
+    const token = await utils.getAccount(e.user_id, 'qq_wechat')
     if (!token) {
-      await e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      await e.reply('您尚未绑定任何QQ/微信账号，请使用 #三角洲登录 进行绑定。')
       return true
     }
 
@@ -39,7 +39,7 @@ export class Ai extends plugin {
     await e.reply('正在分析您的近期战绩，请耐心等待...')
 
     try {
-      const res = await this.api.getAiCommentary(token, 'sol')
+      const res = await api.getAiCommentary(token, 'sol')
 
       if (!res || !res.success || !res.data) {
         throw new Error(res.msg || res.message || '请求AI接口失败或未返回有效数据')
@@ -75,7 +75,7 @@ export class Ai extends plugin {
     } catch (error) {
       // 任何错误都应立即删除CD
       await redis.del(cdKey);
-      await this.e.reply(`AI锐评出错了: ${error.message}`)
+      await e.reply(`AI锐评出错了: ${error.message}`)
     }
 
     return true
