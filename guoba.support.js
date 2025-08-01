@@ -85,6 +85,28 @@ export function supportGuoba() {
           component: 'EasyCron',
           bottomHelpMessage: '设置主任务的执行频率，用于检查并设置生产完成提醒',
         },
+        {
+          field: 'push_daily_report.enabled',
+          label: '开启每日战报推送',
+          component: 'Switch',
+        },
+        {
+          field: 'push_daily_report.cron',
+          label: '日报推送时间',
+          component: 'EasyCron',
+          bottomHelpMessage: '设置每日战报的推送时间',
+        },
+        {
+          field: 'push_weekly_report.enabled',
+          label: '开启每周战报推送',
+          component: 'Switch',
+        },
+        {
+          field: 'push_weekly_report.cron',
+          label: '周报推送时间',
+          component: 'EasyCron',
+          bottomHelpMessage: '设置每周战报的推送时间 (通常为周一)',
+        },
       ],
       getConfigData() {
         // 直接从文件读取最新的、未经缓存的配置
@@ -113,6 +135,22 @@ export function supportGuoba() {
             cron: '*/5 * * * *', // 默认每5分钟检查一次
           },
           df.push_place_status
+        );
+
+        df.push_daily_report = lodash.merge(
+          {
+            enabled: true,
+            cron: '0 0 10 * * ?',
+          },
+          df.push_daily_report
+        );
+
+        df.push_weekly_report = lodash.merge(
+          {
+            enabled: true,
+            cron: '0 0 10 * * 1',
+          },
+          df.push_weekly_report
         );
 
         return df;

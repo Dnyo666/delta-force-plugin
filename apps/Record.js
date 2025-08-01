@@ -27,8 +27,8 @@ export class Record extends plugin {
     this.api = new Code(e)
   }
 
-  async getRecord () {
-    const match = this.e.msg.match(/^(#三角洲|\^)战绩\s*(.*)$/);
+  async getRecord (e) {
+    const match = e.msg.match(/^(#三角洲|\^)战绩\s*(.*)$/);
     const argStr = match ? match[2].trim() : '';
     const args = argStr.split(/\s+/).filter(Boolean);
 
@@ -50,34 +50,34 @@ export class Record extends plugin {
 
     const typeId = mode === 'sol' ? 4 : 5
 
-    const token = await utils.getAccount(this.e.user_id)
+    const token = await utils.getAccount(e.user_id)
     if (!token) {
-      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
+      await e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
       return true
     }
     
-    await this.e.reply(`正在查询 ${modeName} 的战绩 (第${page}页)，请稍候...`);
+    await e.reply(`正在查询 ${modeName} 的战绩 (第${page}页)，请稍候...`);
 
     const res = await this.api.getRecord(token, typeId, page);
 
-    if (await utils.handleApiError(res, this.e)) return true;
+    if (await utils.handleApiError(res, e)) return true;
 
     if (!res.data || !Array.isArray(res.data)) {
-      await this.e.reply(`查询失败: API 返回的数据格式不正确或战绩列表为空。`);
+      await e.reply(`查询失败: API 返回的数据格式不正确或战绩列表为空。`);
       return true;
     }
 
     const records = res.data;
     
     if (records.length === 0) {
-      await this.e.reply(`您在 ${modeName} (第${page}页) 没有更多战绩记录。`);
+      await e.reply(`您在 ${modeName} (第${page}页) 没有更多战绩记录。`);
       return true;
     }
 
     // --- 构造转发消息 ---
     const userInfo = {
-      user_id: this.e.user_id,
-      nickname: this.e.sender.nickname
+      user_id: e.user_id,
+      nickname: e.sender.nickname
     };
     
     let forwardMsg = [];
@@ -139,6 +139,6 @@ export class Record extends plugin {
       }
     }
 
-    return e.reply(Bot.makeForwardMsg(forwardMsg))
+    return e.reply(await Bot.makeForwardMsg(forwardMsg))
   }
 } 

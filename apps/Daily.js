@@ -1,6 +1,8 @@
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
 import DataManager from '../utils/Data.js'
+import lodash from 'lodash'
+import Config from '../components/Config.js'
 
 export class Daily extends plugin {
   constructor(e) {
@@ -17,6 +19,10 @@ export class Daily extends plugin {
         {
           reg: '^(#三角洲|\\^)(昨日收益|昨日物资)\\s*(.*)$',
           fnc: 'getYesterdayProfit'
+        },
+        {
+          reg: '^(#三角洲|\\^)(开启|关闭)日报推送$',
+          fnc: 'toggleDailyPush',
         }
       ]
     })
@@ -163,5 +169,71 @@ export class Daily extends plugin {
     }
 
     return e.reply([segment.at(e.user_id), msg.trim()]);
+  }
+
+  async toggleDailyPush(e) {
+    if (!e.isGroup) {
+      return e.reply('该指令只能在群聊中使用。');
+    }
+    
+    const action = e.msg.includes('开启') ? '开启' : '关闭';
+    const userId = String(e.user_id);
+    const groupId = String(e.group_id);
+    
+    const config = Config.getConfig() || {};
+    
+    if (!config?.delta_force?.push_daily_report?.enabled) {
+      return e.reply('日报推送功能当前未由机器人主人开启。');
+    }
+
+    if (!config.delta_force) config.delta_force = {};
+    if (!config.delta_force.push_daily_report) config.delta_force.push_daily_report = {};
+
+    const userSettings = lodash.merge({
+      enabled: false,
+      push_to: { group: [] }
+    }, config.delta_force.push_daily_report[userId]);
+
+    const pushGroups = userSettings.push_to.group.map(String);
+    const groupIndex = pushGroups.indexOf(groupId);
+
+    if (action === '开启') {
+      if (groupIndex > -1) {
+        return e.reply('本群已经为您开启了日报推送。');
+      }
+      pushGroups.push(groupId);
+      userSettings.enabled = true;
+      userSettings.nickname = e.sender.card || e.sender.nickname;
+      userSettings.push_to.group = pushGroups;
+      config.delta_force.push_daily_report[userId] = userSettings;
+
+      const cron = config.delta_force.push_daily_report.cron || '';
+      let timeInfo = '';
+      if (cron) {
+          const parts = cron.split(' ');
+          if (parts.length >= 3 && !isNaN(parts[1]) && !isNaN(parts[2])) {
+              timeInfo = ` (每日${parts[2]}:${parts[1].padStart(2, '0')})`;
+          }
+      }
+      await e.reply(`已为您在本群开启日报推送！${timeInfo}`);
+
+    } else { // 关闭
+      if (groupIndex === -1) {
+        return e.reply('您尚未在本群开启日报推送。');
+      }
+      pushGroups.splice(groupIndex, 1);
+
+      if (pushGroups.length === 0) {
+        delete config.delta_force.push_daily_report[userId];
+        await e.reply('已为您关闭所有日报推送。');
+      } else {
+        userSettings.push_to.group = pushGroups;
+        config.delta_force.push_daily_report[userId] = userSettings;
+        await e.reply('已为您在本群关闭日报推送。');
+      }
+    }
+    
+    Config.setConfig(config);
+    return true;
   }
 } 
