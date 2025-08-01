@@ -2,7 +2,7 @@ import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
 
 export class Ai extends plugin {
-  constructor () {
+  constructor (e) {
     super({
       name: '三角洲AI锐评',
       dsc: '使用AI锐评战绩',

@@ -139,17 +139,6 @@ export class Record extends plugin {
       }
     }
 
-    // 尝试以转发消息形式发送
-    let msgToSend = forwardMsg.join('\n\n');
-    if (this.e.group?.raw?.makeForwardMsg) {
-      msgToSend = await this.e.group.raw.makeForwardMsg(forwardMsg);
-    } else if (this.e.group?.makeForwardMsg) {
-      msgToSend = await this.e.group.makeForwardMsg(forwardMsg);
-    } else if (this.e.friend?.makeForwardMsg) {
-      msgToSend = await this.e.friend.makeForwardMsg(forwardMsg);
-    }
-    
-    await this.e.reply(msgToSend);
-    return true
+    return e.reply(Bot.makeForwardMsg(forwardMsg))
   }
 } 
