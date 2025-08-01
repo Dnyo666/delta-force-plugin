@@ -18,14 +18,21 @@
 
 ## 安装插件
 
-#### 1. 克隆仓库
+### 1. 克隆仓库
+
+#### Github
 
 ```
 git clone https://github.com/dnyo666/delta-force-plugin.git ./plugins/delta-force-plugin
 ```
 
+#### Gitee
 
-#### 2. 安装依赖
+```
+git clone https://gitee.com/Dnyo666/delta-force-plugin.git ./plugins/delta-force-plugin
+```
+
+### 2. 安装依赖
 
 ```
 pnpm install --filter=delta-force-plugin
@@ -62,7 +69,7 @@ pnpm install --filter=delta-force-plugin
 - [x] 特勤处状态
 - [x] 特勤处制造完成推送
 - [ ] 大红收藏海报
-- [ ] 日报/周报订阅推送
+- [x] 日报/周报订阅推送
 - [ ] 小黑屋预测
 - [x] AI锐评战绩（已支持烽火地带）
 
@@ -118,7 +125,7 @@ pnpm install --filter=delta-force-plugin
 
 ## 支持与贡献
 
-如果你喜欢这个项目，请不妨点个 Star🌟，这是对开发者最大的动力。当然，你也可以通过 [爱发电](https://afdian.net/) 赞助我们。
+如果你喜欢这个项目，请不妨点个 Star🌟，这是对开发者最大的动力。
 
 有意见或者建议也欢迎提交 [Issues](https://github.com/dnyo666/delta-force-plugin/issues) 和 [Pull requests](https://github.com/dnyo666/delta-force-plugin/pulls)。
 
