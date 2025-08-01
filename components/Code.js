@@ -360,4 +360,28 @@ export default class Code {
   async getFriendInfo(frameworkToken, openid) {
     return this.request('/df/person/friendinfo', { frameworkToken, openid }, 'GET');
   }
+
+  /**
+   * 获取物品列表
+   * @param {string} primary 一级分类
+   * @param {string} second 二级分类
+   */
+  async getObjectList(primary = '', second = '') {
+    const params = {};
+    if (primary) params.primary = primary;
+    if (second) params.second = second;
+    return this.request('/df/object/list', params, 'GET');
+  }
+
+  /**
+   * 搜索物品
+   * @param {string} name 物品名称
+   * @param {string} ids 物品ID (逗号分隔)
+   */
+  async searchObject(name = '', ids = '') {
+    const params = {};
+    if (name) params.name = name;
+    if (ids) params.id = ids;
+    return this.request('/df/object/search', params, 'GET');
+  }
 }
