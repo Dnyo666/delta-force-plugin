@@ -1,5 +1,6 @@
 import Code from '../components/Code.js';
 import lodash from 'lodash';
+import { normalizeCronExpression } from '../utils/cron.js';
 import Config from '../components/Config.js';
 
 const config = Config.getConfig() || {};
@@ -22,7 +23,7 @@ export class Task extends plugin {
     this.task = [];
     this.task.push({
       name: '[DELTA FORCE PLUGIN] 每日密码推送',
-      cron: config.delta_force.push_daily_keyword.cron,
+      cron: normalizeCronExpression(config.delta_force.push_daily_keyword.cron),
       fnc: () => this.pushDailyKeyword()
     })
   }
