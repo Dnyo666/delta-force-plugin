@@ -94,11 +94,12 @@ export class Record extends plugin {
         const status = escapeReason[r.EscapeFailReason] || '撤离失败'
         const duration = utils.formatDuration(r.DurationS, 'seconds')
         const value = Number(r.FinalPrice).toLocaleString()
+        const income = r.flowCalGainedPrice ? Number(r.flowCalGainedPrice).toLocaleString() : '未知'
 
         msg += `#${recordNum}: ${r.dtEventTime}\n`
         msg += `地图: ${mapName} | 干员: ${operator}\n`
         msg += `状态: ${status} | 存活: ${duration}\n`
-        msg += `带出价值: ${value}\n`
+        msg += `带出价值: ${value} | 净收益: ${income}\n`
         msg += `击杀: 干员(${r.KillCount || 0}) / AI玩家(${r.KillPlayerAICount || 0}) / 其他AI(${r.KillAICount || 0})`
         
         forwardMsg.push({ ...userInfo, message: msg.trim() });
