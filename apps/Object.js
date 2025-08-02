@@ -58,8 +58,8 @@ export class Object extends plugin {
 
     if (await utils.handleApiError(res, e)) return true
 
-    // 根据格式，物品列表在 res.data.list
-    const items = res?.data?.list
+    // 根据API返回结构，物品列表在 res.data.keywords
+    const items = res?.data?.keywords
 
     if (!Array.isArray(items)) {
       return e.reply('获取物品列表失败: API返回数据格式异常或列表为空')
@@ -83,8 +83,9 @@ export class Object extends plugin {
     paginatedItems.forEach(item => {
       let msg = ''
       msg += `名称: ${item.objectName} (ID: ${item.objectID || item.id})\n`
-      msg += `分类: ${item.primaryClassification || item.primaryClass} / ${item.secondClassCN || item.secondaryClassification}\n`
-      msg += `价格: ${item.price?.toLocaleString() || item.avgPrice?.toLocaleString() || '未知'}`
+      msg += `分类: ${item.primaryClass} / ${item.secondClass}\n`
+      msg += `价格: ${item.price?.toLocaleString() || item.avgPrice?.toLocaleString() || '未知'} | 重量: ${item.weight} | 稀有度: ${item.grade}\n`
+      msg += `描述: ${item.desc}\n`
       forwardMsg.push({ ...userInfo, message: msg })
     })
 
