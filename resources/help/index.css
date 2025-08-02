@@ -1,10 +1,10 @@
 body {
   transform: scale(1);
   width: 830px;
-  background: url("../common/theme/bg-01.jpg");
+  background: url("./imgs/bg.jpg");
 }
 .container {
-  background: url(../common/theme/main-01.png) top left no-repeat;
+  background: url("./imgs/bg.jpg") top left no-repeat;
   background-size: 100% auto;
   width: 830px;
 }
