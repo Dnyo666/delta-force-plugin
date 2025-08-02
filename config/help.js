@@ -47,6 +47,7 @@ export const helpList = [
             { icon: 41, title: "#三角洲违规记录", desc: "登陆QQ安全中心后可查询历史违规" },
             { icon: 48, title: "#三角洲特勤处状态", desc: "查询特勤处制造状态"},
             { icon: 86, title: "#三角洲开启特勤处推送", desc: "开启制造完成推送，需主人开启配置"},
+            { icon: 71, title: "#三角洲物品列表 [一级分类] [二级分类] [页码]", desc: "获取物品列表，默认props/collection"},
             { icon: 86, title: "#三角洲物品搜索 名称/ID", desc: "搜索游戏内物品"},
         ]
     },
