@@ -384,4 +384,187 @@ export default class Code {
     if (ids) params.id = ids;
     return this.request('/df/object/search', params, 'GET');
   }
+
+  // --- 改枪方案 V2 ---
+
+  /**
+   * 上传改枪方案
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} solutionCode - 改枪码
+   * @param {string} desc - 描述
+   * @param {boolean} isPublic - 是否公开
+   * @param {string} type - 游戏模式 (sol/mp)
+   * @param {string} weaponId - 武器ID (可选)
+   * @param {string} accessory - 配件信息 (可选)
+   */
+  async uploadSolution(frameworkToken, clientID, solutionCode, desc = '', isPublic = false, type = 'sol', weaponId = '', accessory = '') {
+    const data = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken,
+      solutionCode,
+      desc,
+      isPublic,
+      type
+    };
+    if (weaponId) data.weaponId = weaponId;
+    if (accessory) data.Accessory = accessory;
+    return this.request('/df/tools/solution/v2/upload', data, 'POST');
+  }
+
+  /**
+   * 获取方案列表
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} weaponId - 武器ID筛选 (可选)
+   * @param {string} weaponName - 武器名称筛选 (可选)
+   * @param {string} priceRange - 价格范围筛选 (可选)
+   * @param {string} authorPlatformID - 按作者筛选 (可选)
+   * @param {string} type - 游戏模式筛选 (可选)
+   */
+  async getSolutionList(frameworkToken, clientID, weaponId = '', weaponName = '', priceRange = '', authorPlatformID = '', type = '') {
+    const params = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken
+    };
+    if (weaponId) params.weaponId = weaponId;
+    if (weaponName) params.weaponName = weaponName;
+    if (priceRange) params.priceRange = priceRange;
+    if (authorPlatformID) params.authorPlatformID = authorPlatformID;
+    if (type) params.type = type;
+    return this.request('/df/tools/solution/v2/list', params, 'GET');
+  }
+
+  /**
+   * 获取方案详情
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} solutionId - 方案ID
+   */
+  async getSolutionDetail(frameworkToken, clientID, solutionId) {
+    const params = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken,
+      solutionId
+    };
+    return this.request('/df/tools/solution/v2/detail', params, 'GET');
+  }
+
+  /**
+   * 投票
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} solutionId - 方案ID
+   * @param {string} voteType - 投票类型 (like/dislike)
+   */
+  async voteSolution(frameworkToken, clientID, solutionId, voteType) {
+    const data = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken,
+      solutionId,
+      voteType
+    };
+    return this.request('/df/tools/solution/v2/vote', data, 'POST');
+  }
+
+  /**
+   * 更新方案
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} solutionId - 方案ID
+   * @param {string} solutionCode - 新的改枪码 (可选)
+   * @param {string} desc - 新的描述 (可选)
+   * @param {boolean} isPublic - 是否公开 (可选)
+   * @param {string} type - 游戏模式 (可选)
+   * @param {string} accessory - 新的配件数组 (可选)
+   */
+  async updateSolution(frameworkToken, clientID, solutionId, solutionCode = '', desc = '', isPublic = null, type = '', accessory = '') {
+    const data = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken,
+      solutionId
+    };
+    if (solutionCode) data.solutionCode = solutionCode;
+    if (desc) data.desc = desc;
+    if (isPublic !== null) data.isPublic = isPublic;
+    if (type) data.type = type;
+    if (accessory) data.Accessory = accessory;
+    return this.request('/df/tools/solution/v2/update', data, 'POST');
+  }
+
+  /**
+   * 删除方案
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} solutionId - 方案ID
+   */
+  async deleteSolution(frameworkToken, clientID, solutionId) {
+    const data = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken,
+      solutionId
+    };
+    return this.request('/df/tools/solution/v2/delete', data, 'POST');
+  }
+
+  /**
+   * 收藏方案
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} solutionId - 方案ID
+   */
+  async collectSolution(frameworkToken, clientID, solutionId) {
+    const data = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken,
+      solutionId
+    };
+    return this.request('/df/tools/solution/v2/collect', data, 'POST');
+  }
+
+  /**
+   * 取消收藏
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   * @param {string} solutionId - 方案ID
+   */
+  async discollectSolution(frameworkToken, clientID, solutionId) {
+    const data = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken,
+      solutionId
+    };
+    return this.request('/df/tools/solution/v2/discollect', data, 'POST');
+  }
+
+  /**
+   * 收藏列表
+   * @param {string} frameworkToken - 用户token
+   * @param {string} clientID - 客户端ID
+   */
+  async getCollectList(frameworkToken, clientID) {
+    const params = {
+      clientID,
+      clientType: 'qq',
+      platformID: this.e.user_id,
+      frameworkToken
+    };
+    return this.request('/df/tools/solution/v2/collectlist', params, 'GET');
+  }
 }

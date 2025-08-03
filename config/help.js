@@ -84,6 +84,19 @@ export const helpList = [
         ]
     },
     {
+        group: "社区改枪码",
+        list: [
+            { icon: 86, title: "^改枪码上传 [改枪码] [描述] [模式] [是否公开] [配件信息]", desc: "上传改枪方案" },
+            { icon: 86, title: "^改枪码列表 [武器名] ", desc: "查询改枪方案列表" },
+            { icon: 86, title: "^改枪码详情 [方案ID]", desc: "查询改枪方案详情" },
+            { icon: 86, title: "^改枪码点赞 [方案ID]", desc: "点赞改枪方案" },
+            { icon: 86, title: "^改枪码点踩 [方案ID]", desc: "点踩改枪方案" },
+            { icon: 86, title: "^改枪码收藏 [方案ID]", desc: "收藏改枪方案" },
+            { icon: 86, title: "^改枪码删除 [方案ID]", desc: "删除改枪方案" },
+            { icon: 78, tilte: "网站上传修改", desc: "https://df.cduestc.fun/solutions"}
+        ]
+    },
+    {
         group: "其他/帮助",
         list: [
             { icon: 92, title: "#三角洲(强制)更新", desc: "更新三角洲插件" },

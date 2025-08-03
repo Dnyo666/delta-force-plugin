@@ -51,14 +51,26 @@ async function handleApiError(res, e) {
   }
 
   // Case 2: frameworkToken not found or invalid
-  if (res.success === false && (res.message?.includes('未找到有效token') || res.message?.includes('缺少frameworkToken参数'))) {
+  if (res.success == false && (res.message?.includes('未找到有效token') || res.message?.includes('缺少frameworkToken参数'))) {
     logger.mark(`[API Error Handler] Token无效或缺失。Response: ${resString}`);
     await e.reply('当前激活的账号无效，请重新登陆账号或使用 #三角洲账号切换 切换有效账号。');
     return true;
   }
   
   // Generic failure catch-all
-  if (res.success === false) {
+  if (res.success == false) {
+    // 特殊处理：某些成功消息可能被错误标记为 success: false
+    if (res.message && (
+      res.message.includes('上传成功') || 
+      res.message.includes('查询成功') ||
+      res.message.includes('操作成功') ||
+      res.message.includes('删除成功') ||
+      res.message.includes('更新成功')
+    )) {
+      logger.info(`[API Error Handler] 检测到成功消息但标记为失败，忽略错误处理: ${res.message}`);
+      return false; // 不处理为错误
+    }
+    
     logger.mark(`[API Error Handler] 捕获到通用API失败。Response: ${resString}`);
     await e.reply(`操作失败：${res.message || res.msg || res.error || '未知错误，请查看日志'}`);
     return true;
