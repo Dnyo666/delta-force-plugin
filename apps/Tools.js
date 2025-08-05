@@ -116,9 +116,7 @@ export class Tools extends plugin {
     });
 
     // 发送转发消息
-    let msgToSend = Bot.forwardMsg(forwardMsg);
-
-    await e.reply(msgToSend);
+    await e.reply(await Bot.makeForwardMsg(forwardMsg));
     return true;
   }
 
@@ -237,9 +235,7 @@ export class Tools extends plugin {
     }
 
     // 发送转发消息
-    let msgToSend = Bot.makeForwardMsg(forwardMsg);
-
-    await e.reply(msgToSend);
+    await e.reply(await Bot.makeForwardMsg(forwardMsg));
     return true;
   }
 } 
