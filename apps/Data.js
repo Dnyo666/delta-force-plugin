@@ -1,5 +1,6 @@
 import utils from '../utils/utils.js'
 import Code from '../components/Code.js'
+import DataManager from '../utils/Data.js'
 
 export class Data extends plugin {
   constructor (e) {
