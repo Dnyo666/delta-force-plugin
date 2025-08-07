@@ -103,9 +103,10 @@ export class Data extends plugin {
     if ((!mode || mode === 'sol') && solDetail) {
         solDetail.totalGameTime = formatDuration(solDetail.totalGameTime);
         const kdString = `KD: ${formatKd(solDetail.lowKillDeathRatio)} | ${formatKd(solDetail.medKillDeathRatio)} | ${formatKd(solDetail.highKillDeathRatio)}`;
+        const solRank = solDetail.levelScore ? DataManager.getRankByScore(solDetail.levelScore, 'sol') : '-';
 
         msg += '--- 烽火地带 ---\n'
-        msg += `排位分: ${solDetail.levelScore || '-'}\n`
+        msg += `段位: ${solRank}\n`
         msg += `总对局: ${solDetail.totalFight || '-'} | 总撤离: ${solDetail.totalEscape || '-'}\n`
         msg += `总击杀 (干员): ${solDetail.totalKill || '-'}\n`
         msg += `总带出价值: ${formatGainedPrice(solDetail.totalGainedPrice)}\n`
@@ -118,9 +119,10 @@ export class Data extends plugin {
 
     if ((!mode || mode === 'mp') && mpDetail) {
         mpDetail.totalGameTime = formatDuration(mpDetail.totalGameTime * 60); // 文档中是秒，但示例像分钟，保持转换
+        const mpRank = mpDetail.levelScore ? DataManager.getRankByScore(mpDetail.levelScore, 'tdm') : '-';
         if (solDetail && !mode) msg += '\n'; // 如果前面有烽火数据且是查询全部，加个换行
         msg += '--- 全面战场 ---\n'
-        msg += `排位分: ${mpDetail.levelScore || '-'}\n`
+        msg += `段位: ${mpRank}\n`
         msg += `总对局: ${mpDetail.totalFight || '-'} | 总胜场: ${mpDetail.totalWin || '-'}\n`
         msg += `胜率: ${mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}\n`
         msg += `分均击杀: ${mpDetail.avgKillPerMinute ? (parseFloat(mpDetail.avgKillPerMinute) / 100).toFixed(2) : '-'}\n`

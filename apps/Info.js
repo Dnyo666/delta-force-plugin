@@ -103,14 +103,16 @@ export class Info extends plugin {
     
     // 烽火地带生涯
     msg += "\n--- 烽火地带信息 ---\n";
-    msg += `等级: ${roleInfo.level || '-'} | 排位分: ${careerData.rankpoint || '-'}\n`;
+    const fhRank = careerData.rankpoint ? DataManager.getRankByScore(careerData.rankpoint, 'sol') : '-';
+    msg += `等级: ${roleInfo.level || '-'} | 段位: ${fhRank}\n`;
     msg += `总对局: ${careerData.soltotalfght || '-'} | 总撤离: ${careerData.solttotalescape || '-'}\n`;
     msg += `撤离率: ${careerData.solescaperatio || '-'} | 总击杀: ${careerData.soltotalkill || '-'}\n`;
     msg += `游玩时长: ${formatDuration(careerData.solduration)}`;
 
     // 全面战场生涯
     msg += "\n--- 全面战场信息 ---\n";
-    msg += `等级: ${roleInfo.tdmlevel || '-'} | 排位分: ${careerData.tdmrankpoint || '-'}\n`;
+    const tdRank = careerData.tdmrankpoint ? DataManager.getRankByScore(careerData.tdmrankpoint, 'tdm') : '-';
+    msg += `等级: ${roleInfo.tdmlevel || '-'} | 段位: ${tdRank}\n`;
     msg += `总对局: ${careerData.tdmtotalfight || '-'} | 总胜利: ${careerData.totalwin || '-'}\n`;
     msg += `胜率: ${careerData.tdmsuccessratio || '-'} | 总击杀: ${careerData.tdmtotalkill || '-'}\n`;
     msg += `游玩时长: ${formatDuration(careerData.tdmduration, 'minutes')}`;

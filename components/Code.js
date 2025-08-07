@@ -334,6 +334,10 @@ export default class Code {
   async getTags() {
     return await this.request('/df/tools/Room/tags', {}, 'get');
   }
+
+  async getRankScore() {
+    return await this.request('/df/object/rankscore', {}, 'get');
+  }
   
   /**
    * 刷新登录状态

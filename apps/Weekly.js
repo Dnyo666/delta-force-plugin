@@ -147,7 +147,8 @@ export class Weekly extends plugin {
             let solMsg = '--- 烽火地带 ---\n';
             solMsg += `总览: ${solData.total_sol_num || 0}场 | ${solData.total_exacuation_num || 0}撤离 | ${solData.GainedPrice_overmillion_num || 0}次百万撤离 | ${solData.total_Death_Count || 0}死亡\n`;
             solMsg += `击杀: ${solData.total_Kill_Player || 0}玩家 | ${solData.total_Kill_AI || 0}AI | ${solData.total_Kill_Boss || 0}BOSS\n`;
-            solMsg += `排位分: ${solData.Rank_Score || 0}\n`;
+            const solRank = solData.Rank_Score ? DataManager.getRankByScore(solData.Rank_Score, 'sol') : '-';
+            solMsg += `段位: ${solRank}\n`;
             solMsg += `资产净增: ${solData.rise_Price?.toLocaleString() || 0} (总收益 ${solData.Gained_Price?.toLocaleString() || 0} / 总消费 ${solData.consume_Price?.toLocaleString() || 0})\n`;
 
             // 添加战损比
@@ -313,7 +314,8 @@ export class Weekly extends plugin {
             let mpMsg = '--- 全面战场 ---\n';
             const winRate = mpData.total_num > 0 ? (mpData.win_num / mpData.total_num * 100).toFixed(1) + '%' : '0%';
             mpMsg += `总览: ${mpData.total_num || 0}场 | ${mpData.win_num || 0}胜 | ${winRate}胜率\n`;
-            mpMsg += `排位分: ${mpData.Rank_Match_Score || 0}\n`;
+            const mpRank = mpData.Rank_Match_Score ? DataManager.getRankByScore(mpData.Rank_Match_Score, 'tdm') : '-';
+            mpMsg += `段位: ${mpRank}\n`;
             mpMsg += `数据: ${mpData.Kill_Num || 0}击杀 | ${mpData.continuous_Kill_Num || 0}最高连杀 | ${mpData.total_score?.toLocaleString() || 0}总分\n`;
             const hitRate = mpData.Consume_Bullet_Num > 0 ? (mpData.Hit_Bullet_Num / mpData.Consume_Bullet_Num * 100).toFixed(1) + '%' : '0%';
             mpMsg += `命中率: ${hitRate} (${mpData.Hit_Bullet_Num || 0}/${mpData.Consume_Bullet_Num || 0})\n`;
