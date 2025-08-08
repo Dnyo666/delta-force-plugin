@@ -101,7 +101,8 @@ export const helpList = [
         list: [
             { icon: 92, title: "#三角洲(强制)更新", desc: "更新三角洲插件" },
             { icon: 92, title: "#三角洲更新日志", desc: "三角洲插件更新日志" },
-            { icon: 85, title: "#三角洲帮助", desc: "显示本帮助菜单" }
+            { icon: 85, title: "#三角洲帮助", desc: "显示本帮助菜单" },
+            { icon: 92, title: "#三角洲服务器状态", desc: "查询后端服务器运行状态和集群信息"},
         ]
     }
 ]
