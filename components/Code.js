@@ -571,4 +571,30 @@ export default class Code {
     };
     return this.request('/df/tools/solution/v2/collectlist', params, 'GET');
   }
+
+  /**
+   * 获取藏品解锁记录列表
+   * @param {string} frameworkToken - 框架Token
+   * @returns {Promise<object>} - API响应
+   */
+  async getRedList(frameworkToken) {
+    const params = {
+      frameworkToken
+    };
+    return this.request('/df/person/redlist', params, 'GET');
+  }
+
+  /**
+   * 获取指定藏品的详细记录
+   * @param {string} frameworkToken - 框架Token
+   * @param {string} objectid - 物品ID
+   * @returns {Promise<object>} - API响应
+   */
+  async getRedRecord(frameworkToken, objectid) {
+    const params = {
+      frameworkToken,
+      objectid
+    };
+    return this.request('/df/person/redone', params, 'GET');
+  }
 }

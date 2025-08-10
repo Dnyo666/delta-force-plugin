@@ -772,6 +772,82 @@ GET /df/person/title?frameworkToken=xxxx
 GET /df/person/friendinfo?frameworkToken=xxxx
 ```
 
+### 藏品解锁记录列表
+```http
+GET /df/person/redlist?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
+```
+**参数说明**
+- `frameworkToken`：框架Token（必填）
+
+**功能说明**：查询用户所有藏品的解锁记录列表，包含解锁时间、物品ID、地图ID、数量和描述等信息。
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "data": {
+    "records": {
+      "total": 43,
+      "list": [
+        {
+          "time": "2025-06-06 20:15:10",
+          "itemId": "15080050014",
+          "mapid": 3902,
+          "num": 1,
+          "des": "打开它，仿佛能看见过去的战场"
+        }
+      ]
+    },
+    "currentTime": "2025-01-15 10:30:25",
+    "amsSerial": "AMS-DFM-11510302-ABC123",
+    "loginInfo": {
+      "type": "qc",
+      "openid": "D7AF10F0E80DD74A6844FB54A131C95D"
+    }
+  },
+  "message": "获取藏品解锁记录成功"
+}
+```
+
+### 具体某藏品记录
+```http
+GET /df/person/redone?frameworkToken=xxxxx&objectid=15080050058
+```
+**参数说明**
+- `frameworkToken`：框架Token（必填）
+- `objectid`：物品ID/藏品ID（必填）
+
+**功能说明**：查询指定藏品的详细解锁历史记录，包含该藏品的所有获取记录、时间和地图信息。
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "data": {
+    "objectId": "15080050058",
+    "itemData": {
+      "total": 2,
+      "des": "嘀~救队友速度翻倍",
+      "list": [
+        {
+          "num": 1,
+          "time": "2025-06-20 12:39:39",
+          "mapid": 3902
+        },
+        {
+          "num": 1,
+          "time": "2025-06-20 14:01:53",
+          "mapid": 3902
+        }
+      ]
+    },
+    "currentTime": "2025-01-15 10:30:25",
+    "amsSerial": "AMS-DFM-11510302-ABC123"
+  },
+  "message": "获取藏品记录成功，共2条记录"
+}
+```
+
 ### AI战绩点评
 ```http
 POST /df/person/ai

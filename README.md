@@ -66,9 +66,13 @@ pnpm install --filter=delta-force-plugin
 - [ ] wegame高校排名
 - [ ] wegame战区排名
 - [ ] wegame个人排名
+- [ ] wegame战绩列表&详情
+- [ ] wegame获取30日数据
+- [ ] wegame获取地图表现
 - [x] 特勤处状态
 - [x] 特勤处制造完成推送
 - [ ] 大红收藏海报
+- [x] 大红收藏记录列表
 - [x] 日报/周报订阅推送
 - [ ] 小黑屋预测
 - [x] AI锐评战绩（已支持烽火地带）
@@ -88,6 +92,11 @@ pnpm install --filter=delta-force-plugin
 - [ ] 特勤处利润（当前和最佳）
 - [ ] 特勤处制造材料价格
 - [x] 每日密码定时推送
+
+### 娱乐类功能
+
+- [] 摸金模拟器
+- [] 对局模拟器
 
 ## 命令示例
 
