@@ -28,7 +28,7 @@ export function supportGuoba() {
         {
           field: "api_key",
           label: "API 密钥",
-          bottomHelpMessage: "用于 API 认证的密钥，在https://df.cduestc.fun/api-keys 获取",
+          bottomHelpMessage: "用于 API 认证的密钥，在https://df.shallow.ink/api-keys 获取",
           component: "Input",
           required: true,
           componentProps: {
@@ -38,7 +38,7 @@ export function supportGuoba() {
         {
           field: "clientID",
           label: "客户端 ID",
-          bottomHelpMessage: "用于标识客户端的 ID，在https://df.cduestc.fun/profile 获取（用户id就是）",
+          bottomHelpMessage: "用于标识客户端的 ID，在https://df.shallow.ink/profile 获取（用户id就是）",
           component: "Input",
           required: true,
           componentProps: {

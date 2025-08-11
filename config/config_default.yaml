@@ -1,7 +1,7 @@
 # ---------- Delta Force（三角洲行动）API 配置 ----------
 delta_force:
   api_key: "sk-xxxxxxx" # 在管理网页创建
-  base_url: "https://df-api.cduestc.fun" # 后端API地址
+  base_url: "https://df-api.shallow.ink" # 后端API地址
   clientID: "xxxxxx" # 从管理网页复制用户ID
   push_daily_keyword:
     enabled: true # 是否开启每日密码定时推送

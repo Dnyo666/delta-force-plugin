@@ -2,19 +2,22 @@
 
 <img decoding="async" align=right src="resources/readme/hz.png" width="35%">
 
-# Delta-Force-Plugin 公测中 加群 936712625
+# Delta-Force-Plugin
 
 - 一个适用于 [Yunzai 系列机器人框架](https://github.com/yhArcadia/Yunzai-Bot-plugins-index) 的三角洲行动游戏数据查询和娱乐功能插件
 
 - 支持QQ/微信扫码登录或Token手动绑定，支持查询个人信息、日报、周报、战绩等游戏数据
 
-- **使用中遇到问题请加QQ群咨询：936712625 | 303104111**
+- **使用中遇到问题请加QQ群咨询：936712625**
 
 > [!TIP]
 > 三角洲行动是一款由腾讯琳琅天上工作室开发的FPS游戏，本插件旨在帮助玩家更方便地查询游戏数据，提升游戏体验。支持烽火地带和全面战场两种模式的数据查询。
 
 > [!TIP]
->  插件当前处于公测阶段，欢迎加入[936712625](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=Mfzr7wwnHN48dES-CeS6s72eJs1wCqou&authKey=IMLLBEBLxs%2F6t%2Bp9G41GiImLqN2XQ8idVnOcgPrI4a5Rbu6%2F1S3Ft66aqD5B30Yh&noverify=0&group_code=936712625)交流反馈，同时也欢迎各位提交ISSUE
+>  插件当前处于正式运营阶段，欢迎加入[936712625](http://qm.qq.com/cgi-bin/qm/qr?_wv=1027&k=Mfzr7wwnHN48dES-CeS6s72eJs1wCqou&authKey=IMLLBEBLxs%2F6t%2Bp9G41GiImLqN2XQ8idVnOcgPrI4a5Rbu6%2F1S3Ft66aqD5B30Yh&noverify=0&group_code=936712625)交流反馈，同时也欢迎各位提交ISSUE
+
+> [!TIP]
+>  插件采用统一后端处理，使用插件请前往管理页面进行注册登陆并获取apikey，如果需要部分功能，可选择订阅专业版（4.5元/月），费用仅供服务器维护
 
 ## 安装插件
 
@@ -44,8 +47,9 @@ pnpm install --filter=delta-force-plugin
 > 非常不建议手动修改配置文件，本插件已兼容 [Guoba-plugin](https://github.com/guoba-yunzai/guoba-plugin) ，请使用锅巴插件对配置项进行修改
 > 
 > 配置项说明：
-> - `api_key`: API密钥，在[管理页面](https://df.cduestc.fun/api-keys)创建
-> - `clientID`: 客户端ID，在[管理页面](https://df.cduestc.fun/)的个人信息获取（用户id）
+> - `api_key`: API密钥，在[管理页面](https://df.shallow.ink/api-keys)创建
+> - `clientID`: 客户端ID，在[管理页面](https://df.shallow.ink/)的个人信息获取（用户id）
+> - `base_url`：如果默认的无法使用，请尝试替换为https://df-api.eo.shallow.ink
 
 ## 功能列表
 

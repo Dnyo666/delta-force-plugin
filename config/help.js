@@ -95,7 +95,7 @@ export const helpList = [
             { icon: 86, title: "^改枪码点踩 [方案ID]", desc: "点踩改枪方案" },
             { icon: 86, title: "^改枪码收藏 [方案ID]", desc: "收藏改枪方案" },
             { icon: 86, title: "^改枪码删除 [方案ID]", desc: "删除改枪方案" },
-            { icon: 78, tilte: "网站上传修改", desc: "https://df.cduestc.fun/solutions"}
+            { icon: 78, tilte: "网站上传修改", desc: "https://df.shallow.ink/solutions"}
         ]
     },
     {
