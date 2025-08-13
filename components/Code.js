@@ -597,4 +597,70 @@ export default class Code {
     };
     return this.request('/df/person/redone', params, 'GET');
   }
+
+  // ==================== 价格相关接口 ====================
+
+  /**
+   * 获取物品历史均价 (V1接口)
+   * @param {string} id - 物品ID (单个ID)
+   * @returns {Promise<object>} - API响应
+   */
+  async getPriceHistoryV1(id) {
+    return this.request('/df/object/price/history/v1', { id }, 'GET');
+  }
+
+  /**
+   * 获取物品历史价格 (V2接口，半小时精度)
+   * @param {string|Array} objectId - 物品ID (支持数组)
+   * @returns {Promise<object>} - API响应
+   */
+  async getPriceHistoryV2(objectId) {
+    return this.request('/df/object/price/history/v2', { objectId }, 'GET');
+  }
+
+  /**
+   * 获取物品当前均价
+   * @param {string|Array} id - 物品ID (支持数组)
+   * @returns {Promise<object>} - API响应
+   */
+  async getCurrentPrice(id) {
+    return this.request('/df/object/price/latest', { id }, 'GET');
+  }
+
+  /**
+   * 获取制造材料最低价格
+   * @param {string} id - 物品ID (可选，不传则返回所有材料)
+   * @returns {Promise<object>} - API响应
+   */
+  async getMaterialPrice(id = null) {
+    const params = id ? { id } : {};
+    return this.request('/df/place/materialPrice', params, 'GET');
+  }
+
+  /**
+   * 获取利润历史
+   * @param {object} params - 查询参数 {objectId?, objectName?, place?}
+   * @returns {Promise<object>} - API响应
+   */
+  async getProfitHistory(params) {
+    return this.request('/df/place/profitHistory', params, 'GET');
+  }
+
+  /**
+   * 获取利润排行榜 V1
+   * @param {object} params - 查询参数 {type, place?, limit?, timestamp?}
+   * @returns {Promise<object>} - API响应
+   */
+  async getProfitRankV1(params) {
+    return this.request('/df/place/profitRank/v1', params, 'GET');
+  }
+
+  /**
+   * 获取利润排行榜 V2 (最高利润)
+   * @param {object} params - 查询参数 {type, place?, id?}
+   * @returns {Promise<object>} - API响应
+   */
+  async getProfitRankV2(params) {
+    return this.request('/df/place/profitRank/v2', params, 'GET');
+  }
 }
