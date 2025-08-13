@@ -3,7 +3,7 @@ import Config from './Config.js'
 
 function scale(pct = 1, customScale = 1) {
   const renderScale = (Config.getConfig())?.render_scale || 10
-  const baseScale = Math.min(2, Math.max(0.5, renderScale))
+  const baseScale = Math.max(2, renderScale)
   pct = pct * baseScale * customScale
   return `style=transform:scale(${pct})`
 }
