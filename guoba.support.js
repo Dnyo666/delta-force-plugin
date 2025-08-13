@@ -14,7 +14,7 @@ export function supportGuoba() {
       isV3: true,
       isV2: false,
       showInMenu: true,
-      description: '基于 Yunzai 的三角洲行动游戏数据查询插件（公测中）',
+      description: '基于 Yunzai 的三角洲行动游戏数据查询插件',
       // 显示图标，此为个性化配置
       // 图标可在 https://icon-sets.iconify.design 这里进行搜索
       //icon: 'token-branded:bat',

@@ -3,6 +3,7 @@ import Code from '../components/Code.js';
 import utils from '../utils/utils.js';
 
 const scheduledKeyPrefix = 'delta-force:place:scheduled:'; // Redis中待推送任务的前缀
+const expireNotifiedKeyPrefix = 'delta-force:place:expire-notified:'; // Redis中已通知过期的用户前缀
 
 export class PlaceTask extends plugin {
   constructor() {
@@ -81,8 +82,27 @@ export class PlaceTask extends plugin {
 
       try {
         const apiResponse = await api.getPlaceStatus(token);
-        if (!apiResponse || !apiResponse.success || !apiResponse.data || !apiResponse.data.places) {
-          logger.warn(`[特勤处调度器] 用户 ${userId} API数据异常，跳过`);
+        
+        // 检查是否为token过期错误
+        if (!apiResponse || !apiResponse.success) {
+          // 检查是否为登录失效错误 (ret: 101)
+          if (apiResponse?.data?.ret === 101 || 
+              apiResponse?.error?.includes('请先完成QQ或微信登录') || 
+              apiResponse?.message?.includes('请先登录') ||
+              apiResponse?.message?.includes('没有找到对应的有效登录数据')) {
+            
+            await this.handleTokenExpired(userId, userConfig.push_to.group);
+          } else {
+            logger.warn(`[特勤处调度器] 用户 ${userId} API数据异常，跳过`);
+          }
+          continue;
+        }
+        
+        // 如果API调用成功，清除过期通知标记
+        await this.clearExpireNotification(userId);
+        
+        if (!apiResponse.data || !apiResponse.data.places) {
+          logger.warn(`[特勤处调度器] 用户 ${userId} API数据格式异常，跳过`);
           continue;
         }
 
@@ -165,6 +185,53 @@ export class PlaceTask extends plugin {
         logger.error(`[特勤处推送器] 处理任务 ${key} 时出错: ${e.message}`);
         await redis.del(key);
       }
+    }
+  }
+
+  /**
+   * 处理token过期，发送通知给用户
+   * @param {string} userId - 用户ID
+   * @param {Array} pushToGroups - 推送群组列表
+   */
+  async handleTokenExpired(userId, pushToGroups) {
+    const expireKey = `${expireNotifiedKeyPrefix}${userId}`;
+    
+    // 检查是否已经通知过
+    const hasNotified = await redis.get(expireKey);
+    if (hasNotified) {
+      logger.debug(`[特勤处调度器] 用户 ${userId} 已通知过token过期，跳过重复通知`);
+      return;
+    }
+    
+    // 设置通知标记，24小时后过期
+    await redis.set(expireKey, '1', { EX: 86400 }); // 24小时 = 86400秒
+    
+    logger.mark(`[特勤处调度器] 检测到用户 ${userId} token过期，发送通知`);
+    
+    // 发送通知到所有推送群
+    const msg = '您的三角洲行动登录已过期，特勤处推送功能已暂停。\n请使用 #三角洲登录 重新登录以恢复推送功能。';
+    
+    for (const groupId of pushToGroups) {
+      try {
+        const group = await Bot.pickGroup(Number(groupId));
+        await group.sendMsg([segment.at(Number(userId)), ` ${msg}`]);
+        logger.mark(`[特勤处调度器] 已向群 ${groupId} 发送token过期通知`);
+      } catch (e) {
+        logger.error(`[特勤处调度器] 向群 ${groupId} 发送token过期通知失败: ${e.message}`);
+      }
+    }
+  }
+
+  /**
+   * 清除过期通知标记
+   * @param {string} userId - 用户ID
+   */
+  async clearExpireNotification(userId) {
+    const expireKey = `${expireNotifiedKeyPrefix}${userId}`;
+    const existed = await redis.get(expireKey);
+    if (existed) {
+      await redis.del(expireKey);
+      logger.debug(`[特勤处调度器] 清除用户 ${userId} 的过期通知标记`);
     }
   }
 }

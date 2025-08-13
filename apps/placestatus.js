@@ -4,6 +4,7 @@ import Config from '../components/Config.js';
 import lodash from 'lodash';
 
 const scheduledKeyPrefix = 'delta-force:place:scheduled:';
+const expireNotifiedKeyPrefix = 'delta-force:place:expire-notified:';
 
 export class PlaceStatus extends plugin {
   constructor (e) {
@@ -111,6 +112,31 @@ export class PlaceStatus extends plugin {
     const userId = String(this.e.user_id);
     const groupId = String(this.e.group_id);
     
+    // 如果是开启操作，检查用户登录状态
+    if (action === '开启') {
+      const token = await utils.getAccount(this.e.user_id);
+      if (!token) {
+        await this.e.reply([segment.at(this.e.user_id), ' 您尚未绑定账号，请先使用 #三角洲登录 进行绑定后再开启特勤处推送。']);
+        return true;
+      }
+      
+      // 验证token是否有效
+      const testResponse = await this.api.getPlaceStatus(token);
+      if (!testResponse || !testResponse.success) {
+        // 检查是否为登录失效错误
+        if (testResponse?.data?.ret === 101 || 
+            testResponse?.error?.includes('请先完成QQ或微信登录') || 
+            testResponse?.message?.includes('请先登录') ||
+            testResponse?.message?.includes('没有找到对应的有效登录数据')) {
+          await this.e.reply([segment.at(this.e.user_id), ' 您的登录已过期，请先使用 #三角洲登录 重新登录后再开启特勤处推送。']);
+          return true;
+        }
+        // 其他API错误也阻止开启
+        await this.e.reply([segment.at(this.e.user_id), ' 检测到您的账号状态异常，请先确保能正常查询特勤处状态后再开启推送。']);
+        return true;
+      }
+    }
+    
     const config = Config.loadYAML(Config.fileMaps.config) || {};
     
     // 检查总开关
@@ -151,15 +177,23 @@ export class PlaceStatus extends plugin {
         delete config.delta_force.push_place_status[userId];
         await this.e.reply('已为你关闭所有特勤处生产完成推送，配置已清除。');
         
-        // 同时清理该用户在Redis中的所有待推送任务
+        // 同时清理该用户在Redis中的所有待推送任务和过期通知标记
         try {
             const keysToDelete = await redis.keys(`${scheduledKeyPrefix}${userId}:*`);
             if (keysToDelete.length > 0) {
                 await redis.del(keysToDelete);
                 logger.mark(`[特勤处推送] 已清理用户 ${userId} 的 ${keysToDelete.length} 条待推送任务。`);
             }
+            
+            // 清理过期通知标记
+            const expireKey = `${expireNotifiedKeyPrefix}${userId}`;
+            const expireKeyExists = await redis.get(expireKey);
+            if (expireKeyExists) {
+                await redis.del(expireKey);
+                logger.mark(`[特勤处推送] 已清理用户 ${userId} 的过期通知标记。`);
+            }
         } catch(e) {
-            logger.error(`[特勤处推送] 清理用户 ${userId} 的Redis任务时出错: ${e.message}`);
+            logger.error(`[特勤处推送] 清理用户 ${userId} 的Redis数据时出错: ${e.message}`);
         }
 
       } else {
