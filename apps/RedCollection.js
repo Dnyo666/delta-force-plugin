@@ -92,8 +92,8 @@ export class RedCollection extends plugin {
             let userRank = '未知段位'
             if (careerData?.rankpoint) {
                 const fullRank = DataManager.getRankByScore(careerData.rankpoint, 'sol')
-                // 移除分数部分，只保留段位名称
-                userRank = fullRank.replace(/\s*\(\d+\)/, '').split(' ')[0]
+                // 移除分数部分，保留完整段位名称（如"铂金II"）
+                userRank = fullRank.replace(/\s*\(\d+\)/, '')
             }
 
             // 解析个人数据结构（参考Data.js的解析逻辑）
