@@ -171,7 +171,7 @@ export default class Code {
    */
   async getPersonalData (frameworkToken, type = '', seasonid = 5) {
     const params = { frameworkToken }
-    if (type) {
+    if (type && type.trim() !== '') {
       params.type = type
     }
     // 如果 seasonid 不是 'all'，则添加到参数中
@@ -215,6 +215,14 @@ export default class Code {
    */
   async getCollection (frameworkToken) {
     return this.request('/df/person/collection', { frameworkToken }, 'GET')
+  }
+
+  /**
+   * 获取大红称号
+   * @param {string} frameworkToken - 用户绑定的token
+   */
+  async getTitle (frameworkToken) {
+    return this.request('/df/person/title', { frameworkToken }, 'GET')
   }
 
   /**

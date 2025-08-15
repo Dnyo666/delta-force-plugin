@@ -4,3 +4,4 @@ resources/Alias/custom/*.yaml
 .idea/
 
 /参考/*
+/UI-TEST/*
