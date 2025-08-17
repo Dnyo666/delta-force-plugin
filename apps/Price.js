@@ -56,24 +56,38 @@ export class Price extends plugin {
     await this.e.reply('正在查询物品历史价格，请稍候...');
 
     try {
-      // 先尝试按名称搜索物品获取ID
       let objectId = null;
+      let objectName = query;
       
       // 如果输入的是纯数字，直接当作ID使用
       if (/^\d+$/.test(query)) {
         objectId = query;
+        objectName = `物品ID: ${objectId}`;
       } else {
-        // 否则先搜索物品获取ID
-        const searchRes = await this.api.searchObject('', query);
+        // 物品名查询：先搜索物品获取ID
+        const searchRes = await this.api.searchObject(query, '');
         if (await utils.handleApiError(searchRes, this.e)) return true;
         
-        if (!searchRes.data || searchRes.data.length === 0) {
+        // 检查搜索结果（参考Object.js的数据结构处理）
+        const items = searchRes?.data?.keywords;
+        
+        if (!Array.isArray(items) || items.length === 0) {
           await this.e.reply(`未找到名称包含"${query}"的物品，请检查物品名称。`);
           return true;
         }
         
-        // 使用第一个搜索结果的ID
-        objectId = searchRes.data[0].id;
+        // 使用第一个搜索结果
+        const firstItem = items[0];
+        objectId = firstItem.objectID;
+        objectName = firstItem.objectName;
+        
+        if (!objectId) {
+          logger.error('[Price] 搜索结果中未找到有效的objectID:', firstItem);
+          await this.e.reply('搜索结果数据格式异常，请稍后重试。');
+          return true;
+        }
+        
+        logger.info(`[Price] 找到物品: ${objectName}, ID: ${objectId}`);
       }
 
       // 调用历史价格API (使用v2接口，支持半小时精度)
@@ -87,7 +101,6 @@ export class Price extends plugin {
       }
 
       const { objectID, history, stats } = res.data;
-      const objectName = `物品ID: ${objectID}`;
 
       // 构建转发消息
       const userInfo = {
@@ -118,7 +131,7 @@ export class Price extends plugin {
           message: statsMsg
         });
 
-        // 历史价格详情 (显示最近20条，数据太多时使用转发消息)
+        // 历史价格详情 (显示最近20条)
         const recentHistory = history.slice(-20);
         let historyMsg = '--- 最近价格变化 ---\n';
         
@@ -138,6 +151,7 @@ export class Price extends plugin {
 
     } catch (error) {
       logger.error(`[Price] 查询历史价格失败: ${error.message}`);
+      logger.error(`[Price] 错误堆栈:`, error.stack);
       await this.e.reply('查询历史价格时发生错误，请稍后重试。');
       return true;
     }
@@ -160,22 +174,34 @@ export class Price extends plugin {
 
     try {
       let objectIds = [];
+      let itemNames = [];
       
       // 如果输入的是数字ID列表 (支持逗号分隔)
       if (/^[\d,\s]+$/.test(query)) {
         objectIds = query.split(/[,\s]+/).filter(id => id.trim());
+        itemNames = objectIds.map(id => `物品ID: ${id}`);
       } else {
-        // 否则按名称搜索
-        const searchRes = await this.api.searchObject('', query);
+        // 物品名查询：先搜索物品获取ID
+        const searchRes = await this.api.searchObject(query, '');
         if (await utils.handleApiError(searchRes, this.e)) return true;
         
-        if (!searchRes.data || searchRes.data.length === 0) {
+        // 检查搜索结果（参考Object.js的数据结构处理）
+        const items = searchRes?.data?.keywords;
+        
+        if (!Array.isArray(items) || items.length === 0) {
           await this.e.reply(`未找到名称包含"${query}"的物品，请检查物品名称。`);
           return true;
         }
         
         // 取前5个搜索结果
-        objectIds = searchRes.data.slice(0, 5).map(item => item.id);
+        const selectedItems = items.slice(0, 5);
+        objectIds = selectedItems.map(item => item.objectID).filter(Boolean);
+        itemNames = selectedItems.map(item => item.objectName);
+        
+        if (objectIds.length === 0) {
+          await this.e.reply('搜索结果中未找到有效的物品ID，请稍后重试。');
+          return true;
+        }
       }
 
       // 调用当前价格API
@@ -195,10 +221,11 @@ export class Price extends plugin {
         // 单个物品直接回复
         const item = prices[0];
         const price = parseFloat(item.avgPrice).toLocaleString();
+        const itemName = itemNames[0] || `物品ID: ${item.objectID}`;
         
-        let msg = `【物品ID: ${item.objectID}】\n`;
+        let msg = `【${itemName}】\n`;
         msg += `当前均价: ${price}\n`;
-        msg += `更新时间: ${res.data.currentTime}`;
+        msg += `更新时间: ${res.data.currentTime || '未知'}`;
         
         await this.e.reply(msg);
       } else {
@@ -214,12 +241,13 @@ export class Price extends plugin {
           message: '【物品当前价格查询结果】'
         });
 
-        prices.forEach(item => {
+        prices.forEach((item, index) => {
           const price = parseFloat(item.avgPrice).toLocaleString();
+          const itemName = itemNames[index] || `物品ID: ${item.objectID}`;
           
-          let msg = `--- 物品ID: ${item.objectID} ---\n`;
+          let msg = `--- ${itemName} ---\n`;
           msg += `当前均价: ${price}\n`;
-          msg += `更新时间: ${res.data.currentTime}`;
+          msg += `更新时间: ${res.data.currentTime || '未知'}`;
           
           forwardMsg.push({
             ...userInfo,
@@ -232,6 +260,7 @@ export class Price extends plugin {
 
     } catch (error) {
       logger.error(`[Price] 查询当前价格失败: ${error.message}`);
+      logger.error(`[Price] 错误堆栈:`, error.stack);
       await this.e.reply('查询当前价格时发生错误，请稍后重试。');
       return true;
     }
