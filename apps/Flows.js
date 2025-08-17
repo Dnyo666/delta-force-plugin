@@ -58,10 +58,13 @@ export class Flows extends plugin {
             case 1: // 设备 (Login)
                 if (res.data[0]?.LoginArr) {
                     msg += `玩家：${res.data[0]?.vRoleName || '未知'}\n`
-                    msg += `等级：${res.data[0]?.Level || '未知'}\n\n`
+                    msg += `等级：${res.data[0]?.Level || '未知'}\n`
+                    msg += `登录天数：${res.data[0]?.loginDay || '未知'}\n\n`
                     res.data[0].LoginArr.forEach((r, i) => {
                         msg += `[${i + 1}] 登录: ${r.indtEventTime}\n`
                         msg += `    登出: ${r.outdtEventTime}\n`
+                        msg += `    IP地址: ${r.vClientIP || '未知'}\n`
+                        msg += `    设备: ${r.SystemHardware || '未知'}\n`
                     })
                 } else {
                     msg += '未查询到设备流水信息。'
