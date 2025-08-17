@@ -313,4 +313,68 @@ export default {
         return `${lowestRank} (${numScore})`;
     },
     
+    /**
+     * 根据段位名称和模式获取段位图片路径
+     * @param {string} rankName - 段位名称（如"铂金 II"）
+     * @param {string} mode - 模式 ('sol' 或 'tdm'/'mp')
+     * @returns {string} - 段位图片路径
+     */
+    getRankImagePath(rankName, mode = 'sol') {
+        if (!rankName || rankName.includes('分数无效') || rankName.includes('未知')) {
+            return null;
+        }
+
+        // 清理段位名称，移除分数和星级信息
+        const cleanRankName = rankName.replace(/\s*\(\d+\)/, '').replace(/\d+星/, '').trim();
+        
+        // 段位映射表
+        const rankMappings = {
+            'sol': {
+                '青铜 V': '1_5', '青铜 IV': '1_4', '青铜 III': '1_3', '青铜 II': '1_2', '青铜 I': '1_1',
+                '白银 V': '2_5', '白银 IV': '2_4', '白银 III': '2_3', '白银 II': '2_2', '白银 I': '2_1',
+                '黄金 V': '3_5', '黄金 IV': '3_4', '黄金 III': '3_3', '黄金 II': '3_2', '黄金 I': '3_1',
+                '铂金 V': '4_5', '铂金 IV': '4_4', '铂金 III': '4_3', '铂金 II': '4_2', '铂金 I': '4_1',
+                '钻石 V': '5_5', '钻石 IV': '5_4', '钻石 III': '5_3', '钻石 II': '5_2', '钻石 I': '5_1',
+                '黑鹰 V': '6_5', '黑鹰 IV': '6_4', '黑鹰 III': '6_3', '黑鹰 II': '6_2', '黑鹰 I': '6_1',
+                '三角洲巅峰': '7'
+            },
+            'mp': {
+                '列兵 V': '1_5', '列兵 IV': '1_4', '列兵 III': '1_3', '列兵 II': '1_2', '列兵 I': '1_1',
+                '上等兵 V': '2_5', '上等兵 IV': '2_4', '上等兵 III': '2_3', '上等兵 II': '2_2', '上等兵 I': '2_1',
+                '军士长 V': '3_5', '军士长 IV': '3_4', '军士长 III': '3_3', '军士长 II': '3_2', '军士长 I': '3_1',
+                '尉官 V': '4_5', '尉官 IV': '4_4', '尉官 III': '4_3', '尉官 II': '4_2', '尉官 I': '4_1',
+                '校官 V': '5_5', '校官 IV': '5_4', '校官 III': '5_3', '校官 II': '5_2', '校官 I': '5_1',
+                '将军 V': '6_5', '将军 IV': '6_4', '将军 III': '6_3', '将军 II': '6_2', '将军 I': '6_1',
+                '统帅': '7'
+            }
+        };
+
+        // 统一模式名称
+        const modeKey = mode === 'tdm' ? 'mp' : mode;
+        const mappings = rankMappings[modeKey];
+        
+        if (!mappings) {
+            logger.warn(`[Delta-Force 数据管理器] 未知的游戏模式: ${mode}`);
+            return null;
+        }
+
+        const rankCode = mappings[cleanRankName];
+        if (!rankCode) {
+            logger.warn(`[Delta-Force 数据管理器] 未找到段位映射: ${cleanRankName} (模式: ${modeKey})`);
+            return null;
+        }
+
+        return `rank/${modeKey}/${rankCode}.webp`;
+    },
+
+    /**
+     * 随机选择一张背景图片
+     * @returns {string} - 背景图片路径
+     */
+    getRandomBackground() {
+        const backgrounds = ['bg2-1.webp', 'bg2-2.webp', 'bg2-3.webp', 'bg2-4.webp', 'bg2-5.webp', 'bg2-6.webp'];
+        const randomIndex = Math.floor(Math.random() * backgrounds.length);
+        return `background/${backgrounds[randomIndex]}`;
+    },
+    
 }; 

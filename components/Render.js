@@ -1,7 +1,7 @@
 import { pluginRoot } from '../model/path.js'
 
 function scale(pct = 1, customScale = 1) {
-  const baseScale = 1 // 默认最佳缩放比例
+  const baseScale = 1 // 不使用额外缩放
   pct = pct * baseScale * customScale
   return `style=transform:scale(${pct})`
 }
@@ -14,36 +14,43 @@ const Render = {
       return false
     }
 
+    if (!e.runtime) {
+      logger.error('[Delta-Force Render] 未找到e.runtime，请升级至最新版Yunzai')
+      return false
+    }
+
     try {
+      // 构建渲染配置
+      const renderOptions = {
+        retType: cfg.retType || 'default'
+      }
+
+      // 如果有renderCfg配置，添加到options中
+      if (cfg.renderCfg) {
+        renderOptions.renderCfg = cfg.renderCfg
+      }
+
       return await e.runtime.render('delta-force-plugin', path, params, {
-        retType: cfg.retType || 'default',
-        renderCfg: cfg.renderCfg || {},
+        ...renderOptions,
         beforeRender({ data }) {
           const resPath = data.pluResPath
           const layoutPath = `${pluginRoot}/resources/common/layout/`
           const saveId = (cfg.saveId || e?.user_id || data.saveId || 'unknown') +
             '_' + Math.random().toString().slice(-6)
 
-          const customScale = cfg.scale || cfg.renderCfg?.scale || 1
+          const customScale = cfg.scale || 1
 
           return {
             ...data,
             saveId,
             _res_path: resPath + '/',
+            _layout_path: layoutPath,
             defaultLayout: layoutPath + 'default.html',
             elemLayout: layoutPath + 'elem.html',
             sys: {
               scale: scale(1, customScale)
             },
-            copyright: `Created By Yunzai-Bot & Delta-Force-Plugin`,
-            pageGotoParams: {
-              waitUntil: 'networkidle2',
-              timeout: 60000, // 60秒超时
-              viewport: cfg.renderCfg?.viewPort || cfg.viewport || {
-                width: 1200,
-                height: 'auto'
-              }
-            }
+            copyright: `Created By Yunzai-Bot & Delta-Force-Plugin`
           }
         }
       })

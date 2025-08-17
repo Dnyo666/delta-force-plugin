@@ -6,41 +6,105 @@
 
 {{block 'main'}}
 <div class="container">
-    <div class="header">
-        {{if userData && roleInfo}}
-        <img class="avatar" src="{{userData.picurl}}" alt="avatar" />
-        <div class="user-info">
-            <div class="username">{{roleInfo.charac_name}}</div>
-            <div class="level">Lv. {{roleInfo.level}}</div>
-            <div class="uid">UID: {{roleInfo.uid}}</div>
-        </div>
+    <!-- 背景图片 -->
+    <img style="width: 1365px; height: 640px; left: 0px; top: 0px; position: absolute" 
+         src="{{_res_path}}{{backgroundImage}}" />
+    
+    <!-- 装饰线条 -->
+    <div class="decor-line" style="width: 5px; height: 88px; left: 45px; top: 46px; position: absolute"></div>
+    
+    <!-- 用户基础信息区域 -->
+    <div class="user-header" style="width: 384px; height: 88px; left: 53px; top: 46px; position: absolute">
+        {{if userAvatar}}
+        <img class="user-avatar" style="width: 88px; height: 88px; left: 0px; top: 0px; position: absolute" 
+             src="{{userAvatar}}" alt="头像" />
+        {{else}}
+        <div class="user-avatar-placeholder" style="width: 88px; height: 88px; left: 0px; top: 0px; position: absolute"></div>
         {{/if}}
+        
+        <div class="user-name" style="width: 294px; height: 40px; left: 112px; top: 0px; position: absolute">{{userName}}</div>
+        <div class="user-register-time" style="width: 294px; height: 24px; left: 112px; top: 40px; position: absolute">注册时间: {{registerTime}}</div>
+        <div class="user-last-login" style="width: 294px; height: 24px; left: 112px; top: 64px; position: absolute">上次登录: {{lastLoginTime}}</div>
     </div>
-
-    {{if careerData}}
-    <div class="stats-grid">
-        <div class="stat-card">
-            <h3>烽火地带</h3>
-            <p><strong>排位分:</strong> <span>{{careerData.rankpoint || '-'}}</span></p>
-            <p><strong>总对局:</strong> <span>{{careerData.soltotalfght || '-'}}</span></p>
-            <p><strong>总撤离:</strong> <span>{{careerData.solttotalescape || '-'}}</span></p>
-            <p><strong>撤离率:</strong> <span>{{careerData.solescaperatio || '-'}}</span></p>
-            <p><strong>总击杀:</strong> <span>{{careerData.soltotalkill || '-'}}</span></p>
-            <p><strong>游戏时长:</strong> <span>{{careerData.solduration || '-'}}</span></p>
+    
+    <!-- 账号状态信息 -->
+    <div class="account-status" style="width: 418px; height: 30px; left: 45px; top: 134px; position: absolute">{{accountStatus}}</div>
+    
+    <!-- 烽火地带信息卡片 -->
+    <div class="game-mode-card" style="width: 347px; height: 446px; left: 34px; top: 183px; position: absolute">
+        <!-- 模式标题区域 -->
+        <div class="mode-title-container" style="width: 169px; height: 37px; left: 0px; top: 16px; position: absolute">
+            <img class="mode-title-bg" style="width: 169px; height: 37px; left: 0px; top: 0px; position: absolute" 
+                 src="{{_res_path}}others/member-bg.webp" />
+            <div class="mode-title" style="width: 170px; height: 51px; left: 3px; top: -6px; position: absolute">烽火地带</div>
         </div>
-        <div class="stat-card">
-            <h3>全面战场</h3>
-            <p><strong>排位分:</strong> <span>{{careerData.tdmrankpoint || '-'}}</span></p>
-            <p><strong>总对局:</strong> <span>{{careerData.tdmtotalfight || '-'}}</span></p>
-            <p><strong>总胜场:</strong> <span>{{careerData.totalwin || '-'}}</span></p>
-            <p><strong>胜率:</strong> <span>{{careerData.tdmsuccessratio || '-'}}</span></p>
-            <p><strong>总击杀:</strong> <span>{{careerData.tdmtotalkill || '-'}}</span></p>
-            <p><strong>游戏时长:</strong> <span>{{careerData.tdmduration || '-'}}</span></p>
+        
+        <!-- 等级和段位 -->
+        <div class="level-info" style="width: 127px; height: 45px; left: 180px; top: 12px; position: absolute">LV{{solLevel}}</div>
+        <div class="rank-info" style="width: 150px; height: 50px; left: 11px; top: 65px; position: absolute">{{solRankName}}</div>
+        
+        <!-- 段位图标 -->
+        {{if solRankImage}}
+        <img class="rank-icon" style="width: 55px; height: 55px; left: 165px; top: 65px; position: absolute" 
+             src="{{_res_path}}{{solRankImage}}" alt="段位" />
+        {{/if}}
+        
+        <!-- 游戏统计数据 -->
+        <div class="stats-row" style="width: 336px; height: 75px; left: 10px; top: 110px; position: absolute">
+            <div class="stat-item" style="width: 159px; height: 76px; left: 0px; top: 0px; position: absolute">总对局: {{solTotalFight}}</div>
+            <div class="stat-divider" style="width: 8px; height: 76px; left: 151px; top: 0px; position: absolute">|</div>
+            <div class="stat-item" style="width: 159px; height: 76px; left: 177px; top: 0px; position: absolute">总撤离: {{solTotalEscape}}</div>
         </div>
+        
+        <div class="stats-row" style="width: 336px; height: 75px; left: 10px; top: 175px; position: absolute">
+            <div class="stat-item" style="width: 159px; height: 75px; left: 0px; top: 0px; position: absolute">撤离率: {{solEscapeRatio}}</div>
+            <div class="stat-divider" style="width: 8px; height: 76px; left: 151px; top: 0px; position: absolute">|</div>
+            <div class="stat-item" style="width: 159px; height: 75px; left: 177px; top: 0px; position: absolute">总击杀: {{solTotalKill}}</div>
+        </div>
+        
+        <div class="stat-item" style="width: 336px; height: 75px; left: 10px; top: 240px; position: absolute">游玩时长: {{solDuration}}</div>
+        
+        <!-- 资产信息 -->
+        <div class="asset-info" style="width: 336px; height: 35px; left: 11px; top: 315px; position: absolute">哈夫币: {{hafCoin}}</div>
+        <div class="asset-info" style="width: 336px; height: 35px; left: 11px; top: 365px; position: absolute">仓库流动: {{totalAssets}}</div>
     </div>
-    {{/if}}
-    <div class="footer">
-        由 DeltaForce-Plugin-Yunzai 强力驱动
+    
+    <!-- 全面战场信息卡片 -->
+    <div class="game-mode-card" style="width: 347px; height: 446px; left: 381px; top: 183px; position: absolute">
+        <!-- 模式标题区域 -->
+        <div class="mode-title-container" style="width: 169px; height: 37px; left: 0px; top: 16px; position: absolute">
+            <img class="mode-title-bg" style="width: 169px; height: 37px; left: 0px; top: 0px; position: absolute" 
+                 src="{{_res_path}}others/member-bg.webp" />
+            <div class="mode-title" style="width: 170px; height: 51px; left: 3px; top: -6px; position: absolute">全面战场</div>
+        </div>
+        
+        <!-- 等级和段位 -->
+        <div class="level-info" style="width: 127px; height: 45px; left: 180px; top: 12px; position: absolute">LV{{tdmLevel}}</div>
+        <div class="rank-info" style="width: 150px; height: 50px; left: 11px; top: 65px; position: absolute">{{tdmRankName}}</div>
+        
+        <!-- 段位图标 -->
+        {{if tdmRankImage}}
+        <img class="rank-icon" style="width: 55px; height: 55px; left: 165px; top: 65px; position: absolute" 
+             src="{{_res_path}}{{tdmRankImage}}" alt="段位" />
+        {{/if}}
+        
+        <!-- 游戏统计数据 -->
+        <div class="stats-row" style="width: 336px; height: 75px; left: 5px; top: 110px; position: absolute">
+            <div class="stat-item" style="width: 159px; height: 76px; left: 0px; top: 0px; position: absolute">总对局: {{tdmTotalFight}}</div>
+            <div class="stat-divider" style="width: 8px; height: 76px; left: 151px; top: 0px; position: absolute">|</div>
+            <div class="stat-item" style="width: 159px; height: 76px; left: 177px; top: 0px; position: absolute">总胜场: {{tdmTotalWin}}</div>
+        </div>
+        
+        <div class="stats-row" style="width: 336px; height: 75px; left: 5px; top: 175px; position: absolute">
+            <div class="stat-item" style="width: 159px; height: 75px; left: 0px; top: 1px; position: absolute">胜率: {{tdmWinRatio}}</div>
+            <div class="stat-divider" style="width: 8px; height: 76px; left: 151px; top: 1px; position: absolute">|</div>
+            <div class="stat-item" style="width: 159px; height: 75px; left: 177px; top: 0px; position: absolute">总击杀: {{tdmTotalKill}}</div>
+        </div>
+        
+        <div class="stat-item" style="width: 336px; height: 75px; left: 5px; top: 240px; position: absolute">游玩时长: {{tdmDuration}}</div>
     </div>
+    
+    <!-- 插件水印 -->
+    <div class="plugin-watermark" style="width: 350px; height: 24px; left: 507px; top: 600px; position: absolute">Delta-Force-Plugin</div>
 </div>
 {{/block}} 
