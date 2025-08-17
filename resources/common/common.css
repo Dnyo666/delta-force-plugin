@@ -1,35 +1,14 @@
-/* 性能优化 */
-* {
-  /* GPU加速 */
-  -webkit-transform: translateZ(0);
-  -moz-transform: translateZ(0);
-  -ms-transform: translateZ(0);
-  -o-transform: translateZ(0);
-  transform: translateZ(0);
-  
-  /* 优化渲染 */
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-  -webkit-perspective: 1000;
-  perspective: 1000;
-}
-
-/* 字体预加载优化 - 使用正确的fonts目录 */
-
 @font-face {
   font-family: 'Number';
   src: url("../fonts/Guruwords.ttf") format('truetype');
-  font-display: swap; /* 优化字体加载 */
 }
 @font-face {
   font-family: 'NZBZ';
   src: url("../fonts/Guruwords.ttf") format('truetype');
-  font-display: swap; /* 优化字体加载 */
 }
 @font-face {
   font-family: 'YS';
   src: url("../fonts/Guruwords.ttf") format('truetype');
-  font-display: swap; /* 优化字体加载 */
 }
 .font-YS {
   font-family: Number, "汉仪文黑-65W", YS, PingFangSC-Medium, "PingFang SC", sans-serif;
@@ -37,17 +16,20 @@
 .font-NZBZ {
   font-family: Number, "印品南征北战NZBZ体", NZBZ, "汉仪文黑-65W", YS, PingFangSC-Medium, "PingFang SC", sans-serif;
 }
-body {
-  font-size: 18px;
-  color: #1e1f20;
-  font-family: Number, "汉仪文黑-65W", YS, PingFangSC-Medium, "PingFang SC", sans-serif;
-  width: 600px;
+* {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-user-select: none;
   user-select: none;
-  /* 移除固定缩放，让渲染器自行处理 */
+}
+body {
+  font-size: 18px;
+  color: #1e1f20;
+  font-family: Number, "汉仪文黑-65W", YS, PingFangSC-Medium, "PingFang SC", sans-serif;
+  transform: scale(1.4);
+  transform-origin: 0 0;
+  width: 600px;
 }
 .container {
   width: 600px;
