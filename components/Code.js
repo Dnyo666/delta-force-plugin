@@ -671,4 +671,13 @@ export default class Code {
   async getProfitRankV2(params) {
     return this.request('/df/place/profitRank/v2', params, 'GET');
   }
+
+  /**
+   * 获取用户统计信息
+   * @param {string} clientID - 客户端ID
+   * @returns {Promise<object>} - API响应
+   */
+  async getUserStats(clientID) {
+    return this.request('/stats/users', { clientID }, 'GET');
+  }
 }
