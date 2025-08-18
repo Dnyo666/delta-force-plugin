@@ -41,66 +41,161 @@ export class Price extends plugin {
   }
 
   /**
+   * 通用方法：将物品名称或ID查询转换为物品ID列表和名称映射
+   * @param {string} query - 查询字符串，支持ID、名称、逗号分隔的混合查询
+   * @param {number} maxResults - 最大返回结果数，默认5
+   * @returns {Promise<{objectIds: string[], idToNameMap: Map<string, string>}>}
+   */
+  async parseItemQuery(query, maxResults = 5) {
+    let objectIds = [];
+    let items = [];
+
+    // 检查是否包含逗号分隔的多个查询
+    const queries = query.split(/[,，]/).map(q => q.trim()).filter(Boolean);
+    
+    if (queries.length > 1) {
+      // 多个查询项：分别处理每个查询
+      for (const singleQuery of queries) {
+        if (/^\d+$/.test(singleQuery)) {
+          // 纯数字，当作ID处理
+          objectIds.push(singleQuery);
+          const searchRes = await this.api.searchObject('', singleQuery);
+          if (searchRes?.data?.keywords?.length > 0) {
+            items.push(...searchRes.data.keywords);
+          } else {
+            // 如果搜索失败，创建默认项
+            items.push({
+              objectID: singleQuery,
+              objectName: `物品ID: ${singleQuery}`
+            });
+          }
+        } else {
+          // 名称查询
+          const searchRes = await this.api.searchObject(singleQuery, '');
+          if (searchRes?.data?.keywords?.length > 0) {
+            // 对于名称查询，只取第一个最匹配的结果
+            const firstMatch = searchRes.data.keywords[0];
+            objectIds.push(String(firstMatch.objectID));
+            items.push(firstMatch);
+          }
+        }
+      }
+    } else {
+      // 单个查询项
+      const singleQuery = queries[0];
+      
+      if (/^\d+$/.test(singleQuery)) {
+        // 纯数字ID
+        objectIds = [singleQuery];
+        const searchRes = await this.api.searchObject('', singleQuery);
+        if (searchRes?.data?.keywords?.length > 0) {
+          items = searchRes.data.keywords;
+        } else {
+          items = [{
+            objectID: singleQuery,
+            objectName: `物品ID: ${singleQuery}`
+          }];
+        }
+      } else {
+        // 名称模糊搜索
+        const searchRes = await this.api.searchObject(singleQuery, '');
+        if (searchRes?.data?.keywords?.length > 0) {
+          // 取前maxResults个结果
+          const selectedItems = searchRes.data.keywords.slice(0, maxResults);
+          objectIds = selectedItems.map(item => String(item.objectID));
+          items = selectedItems;
+        }
+      }
+    }
+
+    // 创建ID到名称的映射
+    const idToNameMap = new Map();
+    items.forEach(item => {
+      if (item.objectID && item.objectName) {
+        idToNameMap.set(String(item.objectID), item.objectName);
+      }
+    });
+
+    return { objectIds, idToNameMap };
+  }
+
+  /**
+   * 按天分组价格数据
+   * @param {Array} history - 历史价格数据数组
+   * @returns {Object} - 按日期分组的数据对象
+   */
+  groupPriceDataByDay(history) {
+    const grouped = {};
+    
+    history.forEach(item => {
+      const date = new Date(item.timestamp);
+      const dateKey = date.toLocaleDateString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      });
+      
+      if (!grouped[dateKey]) {
+        grouped[dateKey] = [];
+      }
+      grouped[dateKey].push(item);
+    });
+    
+    return grouped;
+  }
+
+  /**
+   * 计算单日价格统计数据
+   * @param {Array} dayData - 单日价格数据
+   * @returns {Object} - 统计数据对象
+   */
+  calculateDayStats(dayData) {
+    if (!dayData || dayData.length === 0) return {};
+    
+    const prices = dayData.map(item => parseFloat(item.avgPrice)).filter(price => !isNaN(price));
+    if (prices.length === 0) return {};
+    
+    const open = prices[prices.length - 1]; // 最早的价格（开盘）
+    const close = prices[0]; // 最新的价格（收盘）
+    const high = Math.max(...prices);
+    const low = Math.min(...prices);
+    const avg = prices.reduce((sum, price) => sum + price, 0) / prices.length;
+    const range = high - low;
+    
+    return {
+      open: Math.round(open),
+      close: Math.round(close),
+      high: Math.round(high),
+      low: Math.round(low),
+      avg: Math.round(avg),
+      range: Math.round(range)
+    };
+  }
+
+  /**
    * 获取物品历史价格
    * 命令: #三角洲价格历史 物品名称/ID
+   * 支持多物品: #三角洲价格历史 低级燃料,燃料电池
    */
   async getPriceHistory() {
     const match = this.e.msg.match(this.rule[0].reg);
     const query = match[3].trim();
     
     if (!query) {
-      await this.e.reply('请输入要查询的物品名称或ID\n示例: #三角洲价格历史 M4A1突击步枪');
+      await this.e.reply('请输入要查询的物品名称或ID\n示例: #三角洲价格历史 M4A1突击步枪\n支持多物品: #三角洲价格历史 低级燃料,燃料电池');
       return true;
     }
 
     await this.e.reply('正在查询物品历史价格，请稍候...');
 
     try {
-      let objectId = null;
-      let objectName = query;
+      // 使用通用方法解析查询
+      const { objectIds, idToNameMap } = await this.parseItemQuery(query, 3);
       
-      // 如果输入的是纯数字，直接当作ID使用
-      if (/^\d+$/.test(query)) {
-        objectId = query;
-        objectName = `物品ID: ${objectId}`;
-      } else {
-        // 物品名查询：先搜索物品获取ID
-        const searchRes = await this.api.searchObject(query, '');
-        if (await utils.handleApiError(searchRes, this.e)) return true;
-        
-        // 检查搜索结果（参考Object.js的数据结构处理）
-        const items = searchRes?.data?.keywords;
-        
-        if (!Array.isArray(items) || items.length === 0) {
-          await this.e.reply(`未找到名称包含"${query}"的物品，请检查物品名称。`);
-          return true;
-        }
-        
-        // 使用第一个搜索结果
-        const firstItem = items[0];
-        objectId = firstItem.objectID;
-        objectName = firstItem.objectName;
-        
-        if (!objectId) {
-          logger.error('[Price] 搜索结果中未找到有效的objectID:', firstItem);
-          await this.e.reply('搜索结果数据格式异常，请稍后重试。');
-          return true;
-        }
-        
-        logger.info(`[Price] 找到物品: ${objectName}, ID: ${objectId}`);
-      }
-
-      // 调用历史价格API (使用v2接口，支持半小时精度)
-      const res = await this.api.getPriceHistoryV2(objectId);
-      
-      if (await utils.handleApiError(res, this.e)) return true;
-
-      if (!res.data || !res.data.history) {
-        await this.e.reply('未获取到该物品的历史价格数据。');
+      if (objectIds.length === 0) {
+        await this.e.reply(`未找到相关物品，请检查物品名称。`);
         return true;
       }
-
-      const { objectID, history, stats } = res.data;
 
       // 构建转发消息
       const userInfo = {
@@ -111,40 +206,97 @@ export class Price extends plugin {
       let forwardMsg = [];
       
       // 标题
+      const titleText = objectIds.length > 1 ? `物品历史价格查询 (${objectIds.length}个物品)` : 
+                       `${idToNameMap.get(objectIds[0]) || `物品ID: ${objectIds[0]}`} - 历史价格`;
       forwardMsg.push({
         ...userInfo,
-        message: `【${objectName} - 历史价格】`
+        message: `【${titleText}】`
       });
 
-      // 价格趋势统计 (使用API提供的stats数据)
-      if (stats && history.length > 0) {
-        let statsMsg = '--- 价格统计 ---\n';
-        statsMsg += `当前价格: ${stats.latestPrice?.toLocaleString()}\n`;
-        statsMsg += `平均价格: ${stats.avgPrice?.toLocaleString()}\n`;
-        statsMsg += `最高价格: ${stats.maxPrice?.toLocaleString()}\n`;
-        statsMsg += `最低价格: ${stats.minPrice?.toLocaleString()}\n`;
-        statsMsg += `价格波动: ${stats.priceRange?.toLocaleString()}\n`;
-        statsMsg += `数据点数: ${stats.count}`;
-
-        forwardMsg.push({
-          ...userInfo,
-          message: statsMsg
-        });
-
-        // 历史价格详情 (显示最近20条)
-        const recentHistory = history.slice(-20);
-        let historyMsg = '--- 最近价格变化 ---\n';
+      // 查询每个物品的历史价格
+      for (const objectId of objectIds) {
+        const objectName = idToNameMap.get(objectId) || `物品ID: ${objectId}`;
         
-        recentHistory.forEach((item, index) => {
-          const time = new Date(item.timestamp).toLocaleString();
-          const price = parseFloat(item.avgPrice).toLocaleString();
-          historyMsg += `${time}: ${price}\n`;
-        });
+        try {
+          // 调用历史价格API (使用v2接口，支持半小时精度)
+          const res = await this.api.getPriceHistoryV2(objectId);
+          
+          if (await utils.handleApiError(res, this.e, false)) {
+            forwardMsg.push({
+              ...userInfo,
+              message: `${objectName}: 获取数据失败`
+            });
+            continue;
+          }
 
-        forwardMsg.push({
-          ...userInfo,
-          message: historyMsg.trim()
-        });
+          if (!res.data || !res.data.history) {
+            forwardMsg.push({
+              ...userInfo,
+              message: `${objectName}: 暂无历史价格数据`
+            });
+            continue;
+          }
+
+          const { history, stats } = res.data;
+
+                      // 价格趋势统计
+            if (stats && history.length > 0) {
+              let statsMsg = `--- ${objectName} ---\n`;
+              statsMsg += `数据期间: 7天 (每半小时记录)\n`;
+              statsMsg += `数据点数: ${history.length}个\n`;
+              statsMsg += `当前价格: ${stats.latestPrice?.toLocaleString()}\n`;
+              statsMsg += `平均价格: ${stats.avgPrice?.toLocaleString()}\n`;
+              statsMsg += `最高价格: ${stats.maxPrice?.toLocaleString()}\n`;
+              statsMsg += `最低价格: ${stats.minPrice?.toLocaleString()}\n`;
+              statsMsg += `价格波动: ${stats.priceRange?.toLocaleString()}`;
+
+              forwardMsg.push({
+                ...userInfo,
+                message: statsMsg
+              });
+
+              // 按天分组显示历史价格数据
+              const groupedByDay = this.groupPriceDataByDay(history);
+              
+              Object.keys(groupedByDay).forEach((date, dayIndex) => {
+                const dayData = groupedByDay[date];
+                const dayStats = this.calculateDayStats(dayData);
+                
+                let dayMsg = `--- ${date} (${dayData.length}条记录) ---\n`;
+                dayMsg += `开盘: ${dayStats.open?.toLocaleString()} | 收盘: ${dayStats.close?.toLocaleString()}\n`;
+                dayMsg += `最高: ${dayStats.high?.toLocaleString()} | 最低: ${dayStats.low?.toLocaleString()}\n`;
+                dayMsg += `平均: ${dayStats.avg?.toLocaleString()} | 波动: ${dayStats.range?.toLocaleString()}\n\n`;
+                
+                // 显示当天的详细数据（每4小时显示一次，减少数据量）
+                const sampledData = dayData.filter((_, index) => index % 8 === 0 || index === dayData.length - 1);
+                sampledData.forEach(item => {
+                  const time = new Date(item.timestamp).toLocaleTimeString('zh-CN', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                  });
+                  const price = parseFloat(item.avgPrice).toLocaleString();
+                  dayMsg += `${time}: ${price}\n`;
+                });
+
+                forwardMsg.push({
+                  ...userInfo,
+                  message: dayMsg.trim()
+                });
+              });
+              
+              // 添加完整数据说明
+              forwardMsg.push({
+                ...userInfo,
+                message: `--- 数据说明 ---\n完整数据包含7天内每半小时的价格记录\n以上显示为按天汇总，每天采样显示部分数据点\n如需查看完整数据，请访问游戏内交易所`
+              });
+            }
+        } catch (error) {
+          logger.error(`[Price] 查询物品 ${objectId} 历史价格失败:`, error);
+          forwardMsg.push({
+            ...userInfo,
+            message: `${objectName}: 查询过程中发生错误`
+          });
+        }
       }
 
       return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
@@ -166,42 +318,19 @@ export class Price extends plugin {
     const query = match[3].trim();
     
     if (!query) {
-      await this.e.reply('请输入要查询的物品名称或ID\n示例: #三角洲当前价格 M4A1突击步枪');
+      await this.e.reply('请输入要查询的物品名称或ID\n示例: #三角洲当前价格 M4A1突击步枪\n支持多物品: #三角洲当前价格 低级燃料,燃料电池');
       return true;
     }
 
     await this.e.reply('正在查询物品当前价格，请稍候...');
 
     try {
-      let objectIds = [];
-      let itemNames = [];
+      // 使用通用方法解析查询
+      const { objectIds, idToNameMap } = await this.parseItemQuery(query, 5);
       
-      // 如果输入的是数字ID列表 (支持逗号分隔)
-      if (/^[\d,\s]+$/.test(query)) {
-        objectIds = query.split(/[,\s]+/).filter(id => id.trim());
-        itemNames = objectIds.map(id => `物品ID: ${id}`);
-      } else {
-        // 物品名查询：先搜索物品获取ID
-        const searchRes = await this.api.searchObject(query, '');
-        if (await utils.handleApiError(searchRes, this.e)) return true;
-        
-        // 检查搜索结果（参考Object.js的数据结构处理）
-        const items = searchRes?.data?.keywords;
-        
-        if (!Array.isArray(items) || items.length === 0) {
-          await this.e.reply(`未找到名称包含"${query}"的物品，请检查物品名称。`);
-          return true;
-        }
-        
-        // 取前5个搜索结果
-        const selectedItems = items.slice(0, 5);
-        objectIds = selectedItems.map(item => item.objectID).filter(Boolean);
-        itemNames = selectedItems.map(item => item.objectName);
-        
-        if (objectIds.length === 0) {
-          await this.e.reply('搜索结果中未找到有效的物品ID，请稍后重试。');
-          return true;
-        }
+      if (objectIds.length === 0) {
+        await this.e.reply(`未找到相关物品，请检查物品名称。`);
+        return true;
       }
 
       // 调用当前价格API
@@ -214,18 +343,17 @@ export class Price extends plugin {
         return true;
       }
 
-      // 构建回复消息 (根据API返回的数据结构调整)
+      // 构建回复消息
       const prices = res.data.prices || res.data;
       
       if (prices.length === 1) {
         // 单个物品直接回复
         const item = prices[0];
         const price = parseFloat(item.avgPrice).toLocaleString();
-        const itemName = itemNames[0] || `物品ID: ${item.objectID}`;
+        const itemName = idToNameMap.get(String(item.objectID)) || `物品ID: ${item.objectID}`;
         
         let msg = `【${itemName}】\n`;
-        msg += `当前均价: ${price}\n`;
-        msg += `更新时间: ${res.data.currentTime || '未知'}`;
+        msg += `当前均价: ${price}`;
         
         await this.e.reply(msg);
       } else {
@@ -241,13 +369,12 @@ export class Price extends plugin {
           message: '【物品当前价格查询结果】'
         });
 
-        prices.forEach((item, index) => {
+        prices.forEach((item) => {
           const price = parseFloat(item.avgPrice).toLocaleString();
-          const itemName = itemNames[index] || `物品ID: ${item.objectID}`;
+          const itemName = idToNameMap.get(String(item.objectID)) || `物品ID: ${item.objectID}`;
           
           let msg = `--- ${itemName} ---\n`;
-          msg += `当前均价: ${price}\n`;
-          msg += `更新时间: ${res.data.currentTime || '未知'}`;
+          msg += `当前均价: ${price}`;
           
           forwardMsg.push({
             ...userInfo,
@@ -268,7 +395,8 @@ export class Price extends plugin {
 
   /**
    * 获取制造材料价格
-   * 命令: #三角洲材料价格 [物品ID]
+   * 命令: #三角洲材料价格 [物品名称/ID]
+   * 支持多物品: #三角洲材料价格 低级燃料,燃料电池
    */
   async getMaterialPrice() {
     const match = this.e.msg.match(this.rule[2].reg);
@@ -277,57 +405,130 @@ export class Price extends plugin {
     await this.e.reply('正在查询制造材料价格，请稍候...');
 
     try {
-      let objectId = null;
-      if (query && /^\d+$/.test(query)) {
-        objectId = query;
+      let objectIds = [];
+      let idToNameMap = new Map();
+      
+      if (query) {
+        // 使用通用方法解析查询
+        const result = await this.parseItemQuery(query, 5);
+        objectIds = result.objectIds;
+        idToNameMap = result.idToNameMap;
+        
+        if (objectIds.length === 0) {
+          await this.e.reply(`未找到相关物品，请检查物品名称。`);
+          return true;
+        }
       }
 
-      const res = await this.api.getMaterialPrice(objectId);
-      
-      if (await utils.handleApiError(res, this.e)) return true;
-
-      if (!res.data || !res.data.materials || res.data.materials.length === 0) {
-        await this.e.reply('未获取到制造材料价格数据。');
-        return true;
-      }
-
-      const materials = res.data.materials;
-      
-      // 由于材料数据很多(58条)，直接使用转发消息
+      // 构建转发消息
       const userInfo = {
         user_id: this.e.user_id,
         nickname: this.e.sender.nickname
       };
 
       let forwardMsg = [];
-      
-      const title = objectId ? `【物品ID ${objectId} 制造材料价格】` : `【制造材料最低价格】(共${materials.length}种)`;
-      forwardMsg.push({
-        ...userInfo,
-        message: title
-      });
 
-      // 分批显示材料，每个消息显示10种材料
-      const batchSize = 10;
-      for (let i = 0; i < materials.length; i += batchSize) {
-        const batch = materials.slice(i, i + batchSize);
-        let msg = `--- 材料 ${i + 1}-${Math.min(i + batchSize, materials.length)} ---\n`;
-        
-        batch.forEach(material => {
-          const price = parseFloat(material.minPrice).toLocaleString();
-          const time = new Date(material.minPriceTime).toLocaleString();
-          const usedCount = material.usedBy ? material.usedBy.length : 0;
+      if (objectIds.length > 0) {
+        // 查询指定物品的材料价格
+        for (const objectId of objectIds) {
+          const objectName = idToNameMap.get(objectId) || `物品ID: ${objectId}`;
           
-          msg += `${material.objectName}:\n`;
-          msg += `  最低价格: ${price}\n`;
-          msg += `  用于制造: ${usedCount}种物品\n`;
-          msg += `  最低价时间: ${time}\n\n`;
-        });
+          try {
+            const res = await this.api.getMaterialPrice(objectId);
+            
+            if (await utils.handleApiError(res, this.e, false)) {
+              forwardMsg.push({
+                ...userInfo,
+                message: `${objectName}: 获取材料价格失败`
+              });
+              continue;
+            }
+
+            if (!res.data || !res.data.materials || res.data.materials.length === 0) {
+              forwardMsg.push({
+                ...userInfo,
+                message: `${objectName}: 暂无材料价格数据`
+              });
+              continue;
+            }
+
+            const materials = res.data.materials;
+            
+            forwardMsg.push({
+              ...userInfo,
+              message: `【${objectName} 制造材料价格】(共${materials.length}种)`
+            });
+
+            // 分批显示材料，每个消息显示8种材料
+            const batchSize = 8;
+            for (let i = 0; i < materials.length; i += batchSize) {
+              const batch = materials.slice(i, i + batchSize);
+              let msg = `--- ${objectName} 材料 ${i + 1}-${Math.min(i + batchSize, materials.length)} ---\n`;
+              
+              batch.forEach(material => {
+                const price = parseFloat(material.minPrice).toLocaleString();
+                const time = new Date(material.minPriceTime).toLocaleString();
+                const usedCount = material.usedBy ? material.usedBy.length : 0;
+                
+                msg += `${material.objectName}:\n`;
+                msg += `  最低价格: ${price}\n`;
+                msg += `  用于制造: ${usedCount}种物品\n`;
+                msg += `  最低价时间: ${time}\n\n`;
+              });
+              
+              forwardMsg.push({
+                ...userInfo,
+                message: msg.trim()
+              });
+            }
+          } catch (error) {
+            logger.error(`[Price] 查询物品 ${objectId} 材料价格失败:`, error);
+            forwardMsg.push({
+              ...userInfo,
+              message: `${objectName}: 查询过程中发生错误`
+            });
+          }
+        }
+      } else {
+        // 查询所有材料价格
+        const res = await this.api.getMaterialPrice();
+        
+        if (await utils.handleApiError(res, this.e)) return true;
+
+        if (!res.data || !res.data.materials || res.data.materials.length === 0) {
+          await this.e.reply('未获取到制造材料价格数据。');
+          return true;
+        }
+
+        const materials = res.data.materials;
         
         forwardMsg.push({
           ...userInfo,
-          message: msg.trim()
+          message: `【制造材料最低价格】(共${materials.length}种)`
         });
+
+        // 分批显示材料，每个消息显示10种材料
+        const batchSize = 10;
+        for (let i = 0; i < materials.length; i += batchSize) {
+          const batch = materials.slice(i, i + batchSize);
+          let msg = `--- 材料 ${i + 1}-${Math.min(i + batchSize, materials.length)} ---\n`;
+          
+          batch.forEach(material => {
+            const price = parseFloat(material.minPrice).toLocaleString();
+            const time = new Date(material.minPriceTime).toLocaleString();
+            const usedCount = material.usedBy ? material.usedBy.length : 0;
+            
+            msg += `${material.objectName}:\n`;
+            msg += `  最低价格: ${price}\n`;
+            msg += `  用于制造: ${usedCount}种物品\n`;
+            msg += `  最低价时间: ${time}\n\n`;
+          });
+          
+          forwardMsg.push({
+            ...userInfo,
+            message: msg.trim()
+          });
+        }
       }
 
       return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
@@ -342,13 +543,14 @@ export class Price extends plugin {
   /**
    * 获取利润历史
    * 命令: #三角洲利润历史 物品名称/ID/场所
+   * 支持多物品: #三角洲利润历史 低级燃料,燃料电池
    */
   async getProfitHistory() {
     const match = this.e.msg.match(this.rule[3].reg);
     const query = match[3].trim();
     
     if (!query) {
-      await this.e.reply('请输入要查询的物品名称、ID或制造场所\n示例: #三角洲利润历史 M4A1突击步枪\n或: #三角洲利润历史 tech');
+      await this.e.reply('请输入要查询的物品名称、ID或制造场所\n示例: #三角洲利润历史 M4A1突击步枪\n支持多物品: #三角洲利润历史 低级燃料,燃料电池\n制造场所: #三角洲利润历史 tech');
       return true;
     }
 
@@ -356,17 +558,102 @@ export class Price extends plugin {
 
     try {
       let params = {};
+      let queryByItems = false;
       
       // 判断查询类型
-      if (/^\d+$/.test(query)) {
-        // 纯数字当作物品ID
-        params.objectId = query;
-      } else if (['tech', 'workbench', 'pharmacy', 'armory', 'storage', 'control', 'shoot', 'training'].includes(query.toLowerCase())) {
+      if (['tech', 'workbench', 'pharmacy', 'armory', 'storage', 'control', 'shoot', 'training'].includes(query.toLowerCase())) {
         // 制造场所
         params.place = query.toLowerCase();
+      } else if (/^\d+$/.test(query)) {
+        // 纯数字当作物品ID
+        params.objectId = query;
+      } else if (query.includes(',') || query.includes('，')) {
+        // 包含逗号，处理为多物品查询
+        queryByItems = true;
       } else {
         // 物品名称模糊搜索
         params.objectName = query;
+      }
+
+      if (queryByItems) {
+        // 多物品查询：使用通用方法解析
+        const { objectIds, idToNameMap } = await this.parseItemQuery(query, 10);
+        
+        if (objectIds.length === 0) {
+          await this.e.reply(`未找到相关物品，请检查物品名称。`);
+          return true;
+        }
+
+        // 构建转发消息
+        const userInfo = {
+          user_id: this.e.user_id,
+          nickname: this.e.sender.nickname
+        };
+
+        let forwardMsg = [];
+        
+        forwardMsg.push({
+          ...userInfo,
+          message: `【多物品利润历史查询 (${objectIds.length}个物品)】`
+        });
+
+        // 查询每个物品的利润历史
+        for (const objectId of objectIds) {
+          const objectName = idToNameMap.get(objectId) || `物品ID: ${objectId}`;
+          
+          try {
+            const res = await this.api.getProfitHistory({ objectId });
+            
+            if (await utils.handleApiError(res, this.e, false)) {
+              forwardMsg.push({
+                ...userInfo,
+                message: `${objectName}: 获取利润数据失败`
+              });
+              continue;
+            }
+
+            if (!res.data || !res.data.items || res.data.items.length === 0) {
+              forwardMsg.push({
+                ...userInfo,
+                message: `${objectName}: 暂无利润历史数据`
+              });
+              continue;
+            }
+
+            // 显示该物品的利润数据 (只显示第一个结果，避免消息过长)
+            const item = res.data.items[0];
+            let msg = `--- ${objectName} ---\n`;
+            msg += `制造场所: ${item.placeName} (Lv.${item.level})\n`;
+            msg += `制造周期: ${item.period}小时\n`;
+            msg += `每次产量: ${item.perCount}\n\n`;
+
+            // 最新数据
+            if (item.latestData) {
+              const latest = item.latestData;
+              const time = new Date(latest.timestamp).toLocaleString();
+              msg += `【最新数据】\n`;
+              msg += `时间: ${time}\n`;
+              msg += `销售价: ${latest.salePrice?.toLocaleString()}\n`;
+              msg += `成本价: ${latest.costPrice?.toLocaleString()}\n`;
+              msg += `利润: ${latest.profit?.toLocaleString()}\n`;
+              msg += `利润率: ${latest.profitRate?.toFixed(2)}%\n`;
+              msg += `小时利润: ${latest.hourProfit?.toLocaleString()}\n`;
+            }
+
+            forwardMsg.push({
+              ...userInfo,
+              message: msg.trim()
+            });
+          } catch (error) {
+            logger.error(`[Price] 查询物品 ${objectId} 利润历史失败:`, error);
+            forwardMsg.push({
+              ...userInfo,
+              message: `${objectName}: 查询过程中发生错误`
+            });
+          }
+        }
+
+        return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
       }
 
       const res = await this.api.getProfitHistory(params);

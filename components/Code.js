@@ -48,7 +48,17 @@ export default class Code {
 
     if (upperCaseMethod === 'GET') {
       if (params) {
-        const queryString = new URLSearchParams(params).toString()
+        // 特殊处理数组参数，特别是id参数
+        const processedParams = new URLSearchParams()
+        for (const [key, value] of Object.entries(params)) {
+          if (Array.isArray(value)) {
+            // 对于数组参数，将其转换为JSON字符串格式：[id1,id2,id3]
+            processedParams.append(key, JSON.stringify(value))
+          } else if (value !== null && value !== undefined) {
+            processedParams.append(key, value)
+          }
+        }
+        const queryString = processedParams.toString()
         fullUrl += `?${queryString}`
       }
     } else if (upperCaseMethod === 'POST') {
