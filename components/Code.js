@@ -126,6 +126,42 @@ export default class Code {
   }
 
   /**
+   * QQ Link登录 - 获取授权链接和frameworkToken
+   * @returns {Promise<object>} - 包含login_url和frameworkToken的响应
+   */
+  async getQqLinkAuth() {
+    return this.request('/login/qq/link', {}, 'GET');
+  }
+
+  /**
+   * QQ Link登录 - 提交授权码完成登录
+   * @param {string} frameworkToken - 第一步获取的frameworkToken
+   * @param {string} authCode - 从授权链接中提取的code参数
+   * @returns {Promise<object>} - 登录结果
+   */
+  async submitQqLinkAuth(frameworkToken, authCode) {
+    return this.request('/login/qq/link', { frameworkToken, authCode }, 'POST');
+  }
+
+  /**
+   * 获取QQ Link登录状态
+   * @param {string} frameworkToken - frameworkToken
+   * @returns {Promise<object>} - 登录状态响应
+   */
+  async getQqLinkStatus(frameworkToken) {
+    return this.request('/login/qq/link/status', { frameworkToken }, 'GET');
+  }
+
+  /**
+   * 获取平台登录状态 - 用于网页登录轮询
+   * @param {string} platformID - 平台用户ID (QQ号)
+   * @returns {Promise<object>} - 平台登录状态响应
+   */
+  async getPlatformLoginStatus(platformID) {
+    return this.request('/login/qq/link/platform-status', { platformID }, 'GET');
+  }
+
+  /**
    * 获取AI战绩锐评（流式）
    * @param {string} frameworkToken - 用户token
    * @param {string} type - 模式 (e.g., 'sol')

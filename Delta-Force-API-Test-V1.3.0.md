@@ -57,7 +57,7 @@ GET /login/qq/token?token=frameworkToken
 
 #### 1. CK 登录
 ```http
-GET /login/qq/ck
+POST /login/qq/ck
 ```
 
 #### 2. 轮询CK状态
@@ -68,6 +68,30 @@ GET /login/qq/ck/status
 #### 3. 查看CK token状态
 ```http
 GET /login/qq/ck/token
+```
+
+### QQ Link 登录
+
+#### 1. Link登录 获取frameworkToken
+```http
+GET /login/qq/link
+```
+#### 2. Link登录 提交信息
+```http
+POST /login/qq/link
+```
+**请求体说明**(application/x-www-form-urlencoded)
+- frameworkToken
+- authCode
+
+#### 3. 轮询Link状态
+```http
+GET /login/qq/link/status
+```
+
+#### 4. 查看Link token状态
+```http
+GET /login/qq/link/token
 ```
 
 ### QQ 安全登录
