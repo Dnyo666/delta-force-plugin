@@ -98,6 +98,7 @@ pnpm install --filter=delta-force-plugin
 - [x] 特勤处利润（当前和最佳）
 - [x] 特勤处制造材料价格
 - [x] 每日密码定时推送
+- [x] 三角洲计算器（伤害、维修计算）
 
 ### 娱乐类功能
 
@@ -139,6 +140,7 @@ pnpm install --filter=delta-force-plugin
   - [Yunzai-Bot](https://github.com/yoimiya-kokomi/Miao-Yunzai)：Miao-Yunzai机器人框架
   - [三角洲行动官方](https://df.qq.com)：感谢官方的数据（）
   - [白狼安雅](https://www.pixiv.net/users/22723243)：授权提供readme中的麦晓雯Q版图
+  - [繁星攻略组](https://space.bilibili.com/3546853731731919)：授权提供计算器算法和数据
 
 ## 支持与贡献
 

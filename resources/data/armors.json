@@ -1,0 +1,918 @@
+{
+  "armors": {
+    "body_armor": [
+      {
+        "name": "摩托马甲",
+        "protectionLevel": 1,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 2.44,
+        "initialMax": 20,
+        "firstRepairMax": 17,
+        "repairLoss": 0.15,
+        "repairPrice": 55,
+        "repairEfficiencies": {
+          "3": 8.8,
+          "6": 8.8,
+          "8": 10.9,
+          "9": 13.0
+        }
+      },
+      {
+        "name": "尼龙防弹衣",
+        "protectionLevel": 1,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 1.7,
+        "initialMax": 25,
+        "firstRepairMax": 22.75,
+        "repairLoss": 0.09,
+        "repairPrice": 44,
+        "repairEfficiencies": {
+          "3": 8.8,
+          "6": 8.8,
+          "8": 10.9,
+          "9": 13.0
+        }
+      },
+      {
+        "name": "轻型防弹衣",
+        "protectionLevel": 1,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 3.07,
+        "initialMax": 30,
+        "firstRepairMax": 28.2,
+        "repairLoss": 0.06,
+        "repairPrice": 37,
+        "repairEfficiencies": {
+          "3": 8.8,
+          "6": 8.8,
+          "8": 10.9,
+          "9": 13.0
+        }
+      },
+      {
+        "name": "安保防弹衣",
+        "protectionLevel": 1,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 2.44,
+        "initialMax": 20,
+        "firstRepairMax": 17.6,
+        "repairLoss": 0.12,
+        "repairPrice": 55,
+        "repairEfficiencies": {
+          "3": 8.8,
+          "6": 8.8,
+          "8": 10.9,
+          "9": 13.0
+        }
+      },
+      {
+        "name": "简易防刺服",
+        "protectionLevel": 2,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 2.74,
+        "initialMax": 30,
+        "firstRepairMax": 25.5,
+        "repairLoss": 0.15,
+        "repairPrice": 101,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "4": 8.8,
+          "6": 10.9,
+          "7": 13.0
+        }
+      },
+      {
+        "name": "TG战术防弹衣",
+        "protectionLevel": 2,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 4.04,
+        "initialMax": 40,
+        "firstRepairMax": 36.4,
+        "repairLoss": 0.09,
+        "repairPrice": 84,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "4": 8.8,
+          "6": 10.9,
+          "7": 13.0
+        }
+      },
+      {
+        "name": "通用战术背心",
+        "protectionLevel": 2,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 4.19,
+        "initialMax": 50,
+        "firstRepairMax": 47,
+        "repairLoss": 0.06,
+        "repairPrice": 71,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "4": 8.8,
+          "6": 10.9,
+          "7": 13.0
+        }
+      },
+      {
+        "name": "HT战术背心",
+        "protectionLevel": 2,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 3.38,
+        "initialMax": 35,
+        "firstRepairMax": 30.8,
+        "repairLoss": 0.12,
+        "repairPrice": 91,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "4": 8.8,
+          "6": 10.9,
+          "7": 13.0
+        }
+      },
+      {
+        "name": "制式防弹背心",
+        "protectionLevel": 3,
+        "type": "半甲",
+        "aimingPenalty": -0.01,
+        "movementPenalty": 0,
+        "weight": 2.45,
+        "initialMax": 50,
+        "firstRepairMax": 47.5,
+        "repairLoss": 0.05,
+        "repairPrice": 145,
+        "repairEfficiencies": {
+          "1.55": 8.8,
+          "2.5": 8.8,
+          "3.91": 10.9,
+          "5.86": 13.0
+        }
+      },
+      {
+        "name": "TG-H防弹衣",
+        "protectionLevel": 3,
+        "type": "全甲",
+        "aimingPenalty": -0.03,
+        "movementPenalty": -0.01,
+        "weight": 4.5,
+        "initialMax": 75,
+        "firstRepairMax": 68.3,
+        "repairLoss": 0.09,
+        "repairPrice": 112,
+        "repairEfficiencies": {
+          "1.95": 8.8,
+          "2.6": 8.8,
+          "4.06": 10.9,
+          "6.09": 13.0
+        }
+      },
+      {
+        "name": "射手战术背心",
+        "protectionLevel": 3,
+        "type": "全甲",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.02,
+        "weight": 6.43,
+        "initialMax": 85,
+        "firstRepairMax": 79.1,
+        "repairLoss": 0.07,
+        "repairPrice": 138,
+        "repairEfficiencies": {
+          "1.58": 8.8,
+          "2.11": 8.8,
+          "3.29": 10.9,
+          "4.94": 13.0
+        }
+      },
+      {
+        "name": "Hvk快拆防弹衣",
+        "protectionLevel": 3,
+        "type": "半甲",
+        "aimingPenalty": -0.01,
+        "movementPenalty": -0.01,
+        "weight": 3.23,
+        "initialMax": 60,
+        "firstRepairMax": 57.6,
+        "repairLoss": 0.04,
+        "repairPrice": 140,
+        "repairEfficiencies": {
+          "1.56": 8.8,
+          "2.08": 8.8,
+          "3.25": 10.9,
+          "4.88": 13.0
+        }
+      },
+      {
+        "name": "武士防弹背心",
+        "protectionLevel": 4,
+        "type": "半甲",
+        "aimingPenalty": -0.05,
+        "movementPenalty": -0.05,
+        "weight": 7.12,
+        "initialMax": 80,
+        "firstRepairMax": 75.2,
+        "repairLoss": 0.06,
+        "repairPrice": 168,
+        "repairEfficiencies": {
+          "0.5": 8.8,
+          "1.86": 8.8,
+          "2.92": 10.9,
+          "4.38": 13.0
+        }
+      },
+      {
+        "name": "DT-AVS防弹衣",
+        "protectionLevel": 4,
+        "type": "全甲",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.03,
+        "weight": 8.34,
+        "initialMax": 100,
+        "firstRepairMax": 90,
+        "repairLoss": 0.1,
+        "repairPrice": 221,
+        "repairEfficiencies": {
+          "0.5": 8.8,
+          "1.26": 8.8,
+          "1.97": 10.9,
+          "2.95": 13.0
+        }
+      },
+      {
+        "name": "MK-2战术背心",
+        "protectionLevel": 4,
+        "type": "全甲",
+        "aimingPenalty": -0.05,
+        "movementPenalty": -0.05,
+        "weight": 9.84,
+        "initialMax": 110,
+        "firstRepairMax": 100.1,
+        "repairLoss": 0.09,
+        "repairPrice": 233,
+        "repairEfficiencies": {
+          "0.41": 8.8,
+          "1.41": 8.8,
+          "2.21": 10.9,
+          "3.31": 13.0
+        }
+      },
+      {
+        "name": "突击手防弹背心",
+        "protectionLevel": 4,
+        "type": "全甲",
+        "aimingPenalty": -0.02,
+        "movementPenalty": -0.01,
+        "weight": 5.64,
+        "initialMax": 90,
+        "firstRepairMax": 73.8,
+        "repairLoss": 0.18,
+        "repairPrice": 248,
+        "repairEfficiencies": {
+          "0.24": 8.8,
+          "1.19": 8.8,
+          "1.87": 10.9,
+          "2.8": 13.0
+        }
+      },
+      {
+        "name": "HMP特勤防弹衣",
+        "protectionLevel": 4,
+        "type": "半甲",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 3.88,
+        "initialMax": 80,
+        "firstRepairMax": 72,
+        "repairLoss": 0.1,
+        "repairPrice": 262,
+        "repairEfficiencies": {
+          "0.2": 8.8,
+          "1.35": 8.8,
+          "2.11": 10.9,
+          "3.16": 13.0
+        }
+      },
+      {
+        "name": "精英防弹背心",
+        "protectionLevel": 5,
+        "type": "全甲",
+        "aimingPenalty": 0,
+        "movementPenalty": -0.01,
+        "weight": 4.85,
+        "initialMax": 95,
+        "firstRepairMax": 83.6,
+        "repairLoss": 0.12,
+        "repairPrice": 394,
+        "repairEfficiencies": {
+          "0.19": 8.8,
+          "0.32": 8.8,
+          "1.19": 10.9,
+          "1.78": 13.0
+        }
+      },
+      {
+        "name": "FS复合防弹衣",
+        "protectionLevel": 5,
+        "type": "全甲",
+        "aimingPenalty": -0.05,
+        "movementPenalty": -0.03,
+        "weight": 7.12,
+        "initialMax": 105,
+        "firstRepairMax": 95.55,
+        "repairLoss": 0.09,
+        "repairPrice": 587,
+        "repairEfficiencies": {
+          "0.18": 8.8,
+          "0.29": 8.8,
+          "0.81": 10.9,
+          "1.21": 13.0
+        }
+      },
+      {
+        "name": "重型防弹背心",
+        "protectionLevel": 5,
+        "type": "重甲",
+        "aimingPenalty": -0.1,
+        "movementPenalty": -0.05,
+        "weight": 9.83,
+        "initialMax": 125,
+        "firstRepairMax": 112.5,
+        "repairLoss": 0.1,
+        "repairPrice": 374,
+        "repairEfficiencies": {
+          "0.15": 8.8,
+          "0.25": 8.8,
+          "1.25": 10.9,
+          "1.88": 13.0
+        }
+      },
+      {
+        "name": "Hvk-2 防弹衣",
+        "protectionLevel": 5,
+        "type": "重甲",
+        "aimingPenalty": -0.08,
+        "movementPenalty": -0.07,
+        "weight": 10.33,
+        "initialMax": 115,
+        "firstRepairMax": 98.9,
+        "repairLoss": 0.14,
+        "repairPrice": 325,
+        "repairEfficiencies": {
+          "0.16": 8.8,
+          "0.27": 8.8,
+          "1.44": 10.9,
+          "2.16": 13.0
+        }
+      },
+      {
+        "name": "金刚防弹衣",
+        "protectionLevel": 6,
+        "type": "重甲",
+        "aimingPenalty": -0.08,
+        "movementPenalty": -0.07,
+        "weight": 13.68,
+        "initialMax": 140,
+        "firstRepairMax": 119,
+        "repairLoss": 0.15,
+        "repairPrice": 757,
+        "repairEfficiencies": {
+          "0.1": 8.8,
+          "0.17": 8.8,
+          "0.27": 10.9,
+          "0.81": 13.0
+        }
+      },
+      {
+        "name": "特里克MAS2.0装甲",
+        "protectionLevel": 6,
+        "type": "重甲",
+        "aimingPenalty": -0.06,
+        "movementPenalty": -0.05,
+        "weight": 9.39,
+        "initialMax": 125,
+        "firstRepairMax": 117.5,
+        "repairLoss": 0.06,
+        "repairPrice": 1038,
+        "repairEfficiencies": {
+          "0.1": 8.8,
+          "0.17": 8.8,
+          "0.27": 10.9,
+          "0.59": 13.0
+        }
+      },
+      {
+        "name": "泰坦防弹装甲",
+        "protectionLevel": 6,
+        "type": "重甲",
+        "aimingPenalty": -0.12,
+        "movementPenalty": -0.08,
+        "weight": 12.04,
+        "initialMax": 150,
+        "firstRepairMax": 136.5,
+        "repairLoss": 0.09,
+        "repairPrice": 677,
+        "repairEfficiencies": {
+          "0.1": 8.8,
+          "0.17": 8.8,
+          "0.26": 10.9,
+          "0.9": 13.0
+        }
+      },
+      {
+        "name": "HA-2重型防弹衣",
+        "protectionLevel": 6,
+        "type": "重甲",
+        "aimingPenalty": -0.01,
+        "movementPenalty": -0.03,
+        "weight": 6.86,
+        "initialMax": 115,
+        "firstRepairMax": 102.35,
+        "repairLoss": 0.11,
+        "repairPrice": 1039,
+        "repairEfficiencies": {
+          "0.12": 8.8,
+          "0.19": 8.8,
+          "0.3": 10.9,
+          "0.59": 13.0
+        }
+      }
+    ],
+    "helmets": [
+      {
+        "name": "老式钢盔",
+        "protectionLevel": 1,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 1.01,
+        "initialMax": 10,
+        "firstRepairMax": 8.5,
+        "repairLoss": 0.15,
+        "repairPrice": 87,
+        "repairEfficiencies": {
+          "4": 8.8,
+          "6": 10.9,
+          "8": 13.0
+        }
+      },
+      {
+        "name": "奔尼帽",
+        "protectionLevel": 1,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 0.37,
+        "initialMax": 10,
+        "firstRepairMax": 9.2,
+        "repairLoss": 0.08,
+        "repairPrice": 87,
+        "repairEfficiencies": {
+          "4": 8.8,
+          "6": 10.9,
+          "8": 13.0
+        }
+      },
+      {
+        "name": "户外棒球帽",
+        "protectionLevel": 1,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 0.41,
+        "initialMax": 12,
+        "firstRepairMax": 11.28,
+        "repairLoss": 0.06,
+        "repairPrice": 72,
+        "repairEfficiencies": {
+          "4": 8.8,
+          "6": 10.9,
+          "8": 13.0
+        }
+      },
+      {
+        "name": "安保头盔",
+        "protectionLevel": 1,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 0.55,
+        "initialMax": 10,
+        "firstRepairMax": 8.8,
+        "repairLoss": 0.12,
+        "repairPrice": 87,
+        "repairEfficiencies": {
+          "4": 8.8,
+          "6": 10.9,
+          "8": 13.0
+        }
+      },
+      {
+        "name": "复古摩托头盔",
+        "protectionLevel": 2,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 1.63,
+        "initialMax": 18,
+        "firstRepairMax": 15.3,
+        "repairLoss": 0.15,
+        "repairPrice": 153,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "3": 10.9,
+          "4": 13.0
+        }
+      },
+      {
+        "name": "DRO 战术头盔",
+        "protectionLevel": 2,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 1.54,
+        "initialMax": 15,
+        "firstRepairMax": 13.8,
+        "repairLoss": 0.08,
+        "repairPrice": 172,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "3": 10.9,
+          "4": 13.0
+        }
+      },
+      {
+        "name": "MC 防弹头盔",
+        "protectionLevel": 2,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 1.69,
+        "initialMax": 20,
+        "firstRepairMax": 18.8,
+        "repairLoss": 0.06,
+        "repairPrice": 143,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "3": 10.9,
+          "4": 13.0
+        }
+      },
+      {
+        "name": "H01  战术头盔",
+        "protectionLevel": 2,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 0.75,
+        "initialMax": 12,
+        "firstRepairMax": 10.6,
+        "repairLoss": 0.12,
+        "repairPrice": 202,
+        "repairEfficiencies": {
+          "2": 8.8,
+          "3": 10.9,
+          "4": 13.0
+        }
+      },
+      {
+        "name": "防暴头盔",
+        "protectionLevel": 3,
+        "type": "无",
+        "aimingPenalty": -0.03,
+        "movementPenalty": -0.01,
+        "weight": 1.88,
+        "initialMax": 28,
+        "firstRepairMax": 26.32,
+        "repairLoss": 0.06,
+        "repairPrice": 200,
+        "repairEfficiencies": {
+          "1.59": 8.8,
+          "2.38": 8.8,
+          "3.97": 10.9,
+          "7.44": 13.0
+        }
+      },
+      {
+        "name": "DAS防弹头盔",
+        "protectionLevel": 3,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 1.38,
+        "initialMax": 40,
+        "firstRepairMax": 36.4,
+        "repairLoss": 0.09,
+        "repairPrice": 220,
+        "repairEfficiencies": {
+          "1.44": 8.8,
+          "2.16": 8.8,
+          "3.6": 10.9,
+          "6.75": 13.0
+        }
+      },
+      {
+        "name": "MC201头盔",
+        "protectionLevel": 3,
+        "type": "无",
+        "aimingPenalty": -0.01,
+        "movementPenalty": -0.01,
+        "weight": 1.32,
+        "initialMax": 34,
+        "firstRepairMax": 29.58,
+        "repairLoss": 0.13,
+        "repairPrice": 248,
+        "repairEfficiencies": {
+          "1.28": 8.8,
+          "1.92": 8.8,
+          "3.2": 10.9,
+          "6": 13.0
+        }
+      },
+      {
+        "name": "H07战术头盔",
+        "protectionLevel": 3,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": 0,
+        "weight": 0.9,
+        "initialMax": 20,
+        "firstRepairMax": 18,
+        "repairLoss": 0.1,
+        "repairPrice": 276,
+        "repairEfficiencies": {
+          "1.15": 8.8,
+          "1.73": 8.8,
+          "2.88": 10.9,
+          "5.39": 13.0
+        }
+      },
+      {
+        "name": "D6战术头盔",
+        "protectionLevel": 4,
+        "type": "有",
+        "aimingPenalty": -0.06,
+        "movementPenalty": -0.04,
+        "weight": 3.59,
+        "initialMax": 55,
+        "firstRepairMax": 50.6,
+        "repairLoss": 0.08,
+        "repairPrice": 238,
+        "repairEfficiencies": {
+          "0.21": 8.8,
+          "1.47": 8.8,
+          "2.45": 10.9,
+          "4.59": 13.0
+        }
+      },
+      {
+        "name": "DICH训练头盔",
+        "protectionLevel": 4,
+        "type": "无",
+        "aimingPenalty": 0,
+        "movementPenalty": -0.02,
+        "weight": 1.13,
+        "initialMax": 35,
+        "firstRepairMax": 29.75,
+        "repairLoss": 0.15,
+        "repairPrice": 587,
+        "repairEfficiencies": {
+          "0.11": 8.8,
+          "0.6": 8.8,
+          "1": 10.9,
+          "1.88": 13.0
+        }
+      },
+      {
+        "name": "GT1战术头盔",
+        "protectionLevel": 4,
+        "type": "有",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.04,
+        "weight": 4.05,
+        "initialMax": 48,
+        "firstRepairMax": 43.2,
+        "repairLoss": 0.1,
+        "repairPrice": 404,
+        "repairEfficiencies": {
+          "0.12": 8.8,
+          "0.88": 8.8,
+          "1.47": 10.9,
+          "2.76": 13.0
+        }
+      },
+      {
+        "name": "MHS战术头盔",
+        "protectionLevel": 4,
+        "type": "无",
+        "aimingPenalty": -0.03,
+        "movementPenalty": -0.01,
+        "weight": 2.24,
+        "initialMax": 30,
+        "firstRepairMax": 26.4,
+        "repairLoss": 0.12,
+        "repairPrice": 448,
+        "repairEfficiencies": {
+          "0.12": 8.8,
+          "0.78": 8.8,
+          "1.3": 10.9,
+          "2.44": 13.0
+        }
+      },
+      {
+        "name": "Mask-1 铁壁头盔",
+        "protectionLevel": 5,
+        "type": "有",
+        "aimingPenalty": -0.06,
+        "movementPenalty": -0.05,
+        "weight": 3.89,
+        "initialMax": 75,
+        "firstRepairMax": 69.75,
+        "repairLoss": 0.07,
+        "repairPrice": 366,
+        "repairEfficiencies": {
+          "0.11": 8.8,
+          "0.17": 8.8,
+          "1.4": 10.9,
+          "2.63": 13.0
+        }
+      },
+      {
+        "name": "DICH-1战术头盔",
+        "protectionLevel": 5,
+        "type": "无",
+        "aimingPenalty": -0.01,
+        "movementPenalty": -0.01,
+        "weight": 1.71,
+        "initialMax": 40,
+        "firstRepairMax": 33.6,
+        "repairLoss": 0.16,
+        "repairPrice": 1144,
+        "repairEfficiencies": {
+          "0.05": 8.8,
+          "0.07": 8.8,
+          "0.45": 10.9,
+          "0.85": 13.0
+        }
+      },
+      {
+        "name": "GN重型头盔",
+        "protectionLevel": 5,
+        "type": "有",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.03,
+        "weight": 3.63,
+        "initialMax": 50,
+        "firstRepairMax": 46.5,
+        "repairLoss": 0.07,
+        "repairPrice": 826,
+        "repairEfficiencies": {
+          "0.05": 8.8,
+          "0.08": 8.8,
+          "0.63": 10.9,
+          "1.18": 13.0
+        }
+      },
+      {
+        "name": "GN久战重型夜视头盔",
+        "protectionLevel": 5,
+        "type": "有",
+        "aimingPenalty": 0,
+        "movementPenalty": -0.03,
+        "weight": 3.6,
+        "initialMax": 20,
+        "firstRepairMax": 18.6,
+        "repairLoss": 0.07,
+        "repairPrice": 826,
+        "repairEfficiencies": {
+          "0.05": 8.8,
+          "0.08": 8.8,
+          "0.63": 10.9,
+          "1.18": 13.0
+        }
+      },
+      {
+        "name": "GN重型夜视头盔",
+        "protectionLevel": 5,
+        "type": "有",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.03,
+        "weight": 3.8,
+        "initialMax": 50,
+        "firstRepairMax": 46.5,
+        "repairLoss": 0.07,
+        "repairPrice": 826,
+        "repairEfficiencies": {
+          "0.05": 8.8,
+          "0.08": 8.8,
+          "0.63": 10.9,
+          "1.18": 13.0
+        }
+      },
+      {
+        "name": "H09防暴头盔",
+        "protectionLevel": 5,
+        "type": "有",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.03,
+        "weight": 2.3,
+        "initialMax": 45,
+        "firstRepairMax": 37.8,
+        "repairLoss": 0.16,
+        "repairPrice": 657,
+        "repairEfficiencies": {
+          "0.06": 8.8,
+          "0.09": 8.8,
+          "0.78": 10.9,
+          "1.46": 13.0
+        }
+      },
+      {
+        "name": "DICH-9重型头盔",
+        "protectionLevel": 6,
+        "type": "无",
+        "aimingPenalty": -0.03,
+        "movementPenalty": -0.01,
+        "weight": 2.06,
+        "initialMax": 50,
+        "firstRepairMax": 45,
+        "repairLoss": 0.1,
+        "repairPrice": 1491,
+        "repairEfficiencies": {
+          "0.03": 8.8,
+          "0.05": 8.8,
+          "0.08": 10.9,
+          "0.65": 13.0
+        }
+      },
+      {
+        "name": "GT5指挥官头盔",
+        "protectionLevel": 6,
+        "type": "有",
+        "aimingPenalty": -0.08,
+        "movementPenalty": -0.03,
+        "weight": 3.63,
+        "initialMax": 60,
+        "firstRepairMax": 55.8,
+        "repairLoss": 0.07,
+        "repairPrice": 1737,
+        "repairEfficiencies": {
+          "0.03": 8.8,
+          "0.05": 8.8,
+          "0.08": 10.9,
+          "0.56": 13.0
+        }
+      },
+      {
+        "name": "H70精英头盔",
+        "protectionLevel": 6,
+        "type": "有",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.03,
+        "weight": 3.58,
+        "initialMax": 55,
+        "firstRepairMax": 46.2,
+        "repairLoss": 0.16,
+        "repairPrice": 1007,
+        "repairEfficiencies": {
+          "0.04": 8.8,
+          "0.05": 8.8,
+          "0.09": 10.9,
+          "0.96": 13.0
+        }
+      },
+      {
+        "name": "H70夜视精英头盔",
+        "protectionLevel": 6,
+        "type": "有",
+        "aimingPenalty": -0.04,
+        "movementPenalty": -0.03,
+        "weight": 3.8,
+        "initialMax": 55,
+        "firstRepairMax": 46.2,
+        "repairLoss": 0.16,
+        "repairPrice": 1007,
+        "repairEfficiencies": {
+          "0.04": 8.8,
+          "0.05": 8.8,
+          "0.09": 10.9,
+          "0.96": 13.0
+        }
+      }
+    ]
+  }
+}

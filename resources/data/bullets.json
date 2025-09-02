@@ -1,0 +1,626 @@
+{
+  "bullets": {
+    ".357马格南": [
+      {
+        "name": ".357马格南 HP",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": ".357马格南 JHP",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": ".357马格南 FMJ",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      }
+    ],
+    ".45 ACP": [
+      {
+        "name": ".45 ACP HS",
+        "pelletCount": 1,
+        "penetrationLevel": 1,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.6, 0.6, 0.4, 0.3, 0.2, 0.2]
+      },
+      {
+        "name": ".45 ACP JHP",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": ".45 ACP RIP",
+        "pelletCount": 1,
+        "penetrationLevel": 0,
+        "baseDamageMultiplier": 1.35,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.4, 0.3, 0.2, 0.2, 0.2, 0.2]
+      },
+      {
+        "name": ".45 ACP FMJ",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": ".45 ACP AP",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": ".45 ACP+P",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    ".50 AE": [
+      {
+        "name": ".50 AE HP",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": ".50 AE JHP",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": ".50 AE FMJ",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      }
+    ],
+    "12 Gauge": [
+      {
+        "name": "12 Gauge 独头 RIP",
+        "pelletCount": 1,
+        "penetrationLevel": 0,
+        "baseDamageMultiplier": 5.5,
+        "baseArmorMultiplier": 3.5,
+        "armorDecayFactors": [0.4, 0.3, 0.2, 0.2, 0.2, 0.2]
+      },
+      {
+        "name": "12 Gauge 独头 GT",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 4.8,
+        "baseArmorMultiplier": 3.5,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "12 Gauge 独头 FTX",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 4.8,
+        "baseArmorMultiplier": 3.5,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "12 Gauge 独头 AP-20",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 4.8,
+        "baseArmorMultiplier": 3.5,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      }
+    ],
+    "12.7x55mm": [
+      {
+        "name": "12.7x55mm PS12A",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "12.7x55mm PS12",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "12.7x55mm PS12B",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "5.45x39mm": [
+      {
+        "name": "5.45x39mm PRS",
+        "pelletCount": 1,
+        "penetrationLevel": 1,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.6, 0.6, 0.4, 0.3, 0.2, 0.2]
+      },
+      {
+        "name": "5.45x39mm T",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "5.45x39mm PS",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "5.45x39mm BT",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "5.45x39mm BS",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "5.56x45mm": [
+      {
+        "name": "5.56x45mm RRLP",
+        "pelletCount": 1,
+        "penetrationLevel": 1,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.6, 0.6, 0.4, 0.3, 0.2, 0.2]
+      },
+      {
+        "name": "5.56x45mm FMJ",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "5.56x45mm M855",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "5.56x45mm M855A1",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "5.56x45mm M995",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "5.8x42mm": [
+      {
+        "name": "5.8x42mm DBP87",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "5.8x42mm DVP88",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "5.8x42mm DBP10",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "5.8x42mm DVC12",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "5.7x28mm": [
+      {
+        "name": "5.7x28mm SS198LF",
+        "pelletCount": 1,
+        "penetrationLevel": 1,
+        "baseDamageMultiplier": 1.2,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.6, 0.6, 0.4, 0.3, 0.2, 0.2]
+      },
+      {
+        "name": "5.7x28mm SS197SR",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.2,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "5.7x28mm R37.F",
+        "pelletCount": 1,
+        "penetrationLevel": 0,
+        "baseDamageMultiplier": 1.4,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.4, 0.3, 0.2, 0.2, 0.2, 0.2]
+      },
+      {
+        "name": "5.7x28mm L191",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      }
+    ],
+    "6.8x51mm": [
+      {
+        "name": "6.8x51mm FMJ",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "6.8x51mm Hybrid",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      },
+      {
+        "name": "6.8x51mm AP",
+        "pelletCount": 1,
+        "penetrationLevel": 6,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "7.62x39mm": [
+      {
+        "name": "7.62x39mm LP",
+        "pelletCount": 1,
+        "penetrationLevel": 1,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.6, 0.6, 0.4, 0.3, 0.2, 0.2]
+      },
+      {
+        "name": "7.62x39mm T45M",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "7.62x39mm PS",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "7.62x39mm BP",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "7.62x39mm AP",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "7.62x51mm": [
+      {
+        "name": "7.62x51mm Ultra Nosler",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "7.62x51mm BPZ",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "7.62x51mm M80",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "7.62x51mm M62",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      },
+      {
+        "name": "7.62x51mm M61",
+        "pelletCount": 1,
+        "penetrationLevel": 6,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
+      }
+    ],
+    "7.62x54R": [
+      {
+        "name": "7.62x54R T46M",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "7.62x54R LPS",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "7.62x54R BT",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      },
+      {
+        "name": "7.62x54R SNB",
+        "pelletCount": 1,
+        "penetrationLevel": 6,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.2, 1.2, 1.2, 1.2, 1.2, 1.2]
+      }
+    ],
+    "9x19mm": [
+      {
+        "name": "9x19mm PSO",
+        "pelletCount": 1,
+        "penetrationLevel": 1,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.6, 0.6, 0.4, 0.3, 0.2, 0.2]
+      },
+      {
+        "name": "9x19mm Pst",
+        "pelletCount": 1,
+        "penetrationLevel": 2,
+        "baseDamageMultiplier": 1.1,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.7, 0.7, 0.7, 0.5, 0.4, 0.3]
+      },
+      {
+        "name": "9x19mm RIP",
+        "pelletCount": 1,
+        "penetrationLevel": 0,
+        "baseDamageMultiplier": 1.4,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.4, 0.3, 0.2, 0.2, 0.2, 0.2]
+      },
+      {
+        "name": "9x19mm AP6.3",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "9x19mm PBP",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "9x19mm 7N21",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "9x39mm": [
+      {
+        "name": "9x39mm SP5",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "9x39mm SP6",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "9x39mm BP",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "4.6x30mm": [
+      {
+        "name": "4.6x30mm Subsonic SX",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": "4.6x30mm FMJ SX",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": "4.6x30mm AP SX",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    ".300BLK": [
+      {
+        "name": ".300BLK V-Max",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 0.9, 0.5, 0.4]
+      },
+      {
+        "name": ".300BLK BCP FMJ",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.0, 0.6]
+      },
+      {
+        "name": ".300BLK TAC-TX",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    "箭矢": [
+      {
+        "name": "玻纤柳叶箭矢",
+        "pelletCount": 1,
+        "penetrationLevel": 3,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [0.9, 0.9, 0.9, 1.0, 0.5, 0.4]
+      },
+      {
+        "name": "碳纤维刺骨箭矢",
+        "pelletCount": 1,
+        "penetrationLevel": 4,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.0, 1.0, 1.0, 1.0, 1.1, 0.6]
+      },
+      {
+        "name": "碳纤维穿甲箭矢",
+        "pelletCount": 1,
+        "penetrationLevel": 5,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ],
+    ".338 Lap Mag": [
+      {
+        "name": ".338 Lap Mag AP",
+        "pelletCount": 1,
+        "penetrationLevel": 7,
+        "baseDamageMultiplier": 1.0,
+        "baseArmorMultiplier": 1.0,
+        "armorDecayFactors": [1.1, 1.1, 1.1, 1.1, 1.1, 1.1]
+      }
+    ]
+  }
+}

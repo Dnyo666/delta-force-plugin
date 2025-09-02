@@ -1,0 +1,88 @@
+{
+  "melee_weapons": [
+    {
+      "name": "战术匕首",
+      "firstStrikeDamage": 25,
+      "secondStrikeDamage": 34,
+      "thirdStrikeDamage": null,
+      "firstStrikeArmorDamage": 4,
+      "secondStrikeArmorDamage": 4,
+      "thirdStrikeArmorDamage": null,
+      "firstStrikeHeadMultiplier": 2.0,
+      "secondStrikeHeadMultiplier": 2.0,
+      "thirdStrikeHeadMultiplier": null
+    },
+    {
+      "name": "黑鹰",
+      "firstStrikeDamage": 27,
+      "secondStrikeDamage": 27,
+      "thirdStrikeDamage": null,
+      "firstStrikeArmorDamage": 4,
+      "secondStrikeArmorDamage": 4,
+      "thirdStrikeArmorDamage": null,
+      "firstStrikeHeadMultiplier": 1.6,
+      "secondStrikeHeadMultiplier": 1.6,
+      "thirdStrikeHeadMultiplier": null
+    },
+    {
+      "name": "赤枭",
+      "firstStrikeDamage": 25,
+      "secondStrikeDamage": 25,
+      "thirdStrikeDamage": 39,
+      "firstStrikeArmorDamage": 4,
+      "secondStrikeArmorDamage": 4,
+      "thirdStrikeArmorDamage": 4,
+      "firstStrikeHeadMultiplier": 2.0,
+      "secondStrikeHeadMultiplier": 2.0,
+      "thirdStrikeHeadMultiplier": 2.0
+    },
+    {
+      "name": "怜悯",
+      "firstStrikeDamage": 27,
+      "secondStrikeDamage": 30,
+      "thirdStrikeDamage": 39,
+      "firstStrikeArmorDamage": 4,
+      "secondStrikeArmorDamage": 4,
+      "thirdStrikeArmorDamage": 4,
+      "firstStrikeHeadMultiplier": 2.0,
+      "secondStrikeHeadMultiplier": 2.0,
+      "thirdStrikeHeadMultiplier": 2.0
+    },
+    {
+      "name": "影锋",
+      "firstStrikeDamage": 27,
+      "secondStrikeDamage": 27,
+      "thirdStrikeDamage": 27,
+      "firstStrikeArmorDamage": 4,
+      "secondStrikeArmorDamage": 4,
+      "thirdStrikeArmorDamage": 4,
+      "firstStrikeHeadMultiplier": 1.6,
+      "secondStrikeHeadMultiplier": 1.6,
+      "thirdStrikeHeadMultiplier": 1.6
+    },
+    {
+      "name": "黑海",
+      "firstStrikeDamage": 30,
+      "secondStrikeDamage": 27,
+      "thirdStrikeDamage": 45,
+      "firstStrikeArmorDamage": 4,
+      "secondStrikeArmorDamage": 4,
+      "thirdStrikeArmorDamage": 4,
+      "firstStrikeHeadMultiplier": 2.0,
+      "secondStrikeHeadMultiplier": 2.0,
+      "thirdStrikeHeadMultiplier": 2.0
+    },
+    {
+      "name": "北极星",
+      "firstStrikeDamage": 30,
+      "secondStrikeDamage": 30,
+      "thirdStrikeDamage": 42,
+      "firstStrikeArmorDamage": 4,
+      "secondStrikeArmorDamage": 4,
+      "thirdStrikeArmorDamage": 4,
+      "firstStrikeHeadMultiplier": 2.0,
+      "secondStrikeHeadMultiplier": 2.0,
+      "thirdStrikeHeadMultiplier": 2.0
+    }
+  ]
+}

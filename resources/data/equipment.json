@@ -1,0 +1,240 @@
+{
+  "equipment": {
+    "body_armor": [
+      {
+        "name": "摩托马甲（全新）",
+        "marketPrice": 2210,
+        "readinessValue": 1953,
+        "quality": 1
+      },
+      {
+        "name": "摩托马甲（几乎全新）",
+        "marketPrice": 1641,
+        "readinessValue": 1660,
+        "quality": 1
+      },
+      {
+        "name": "摩托马甲（破损）",
+        "marketPrice": 1421,
+        "readinessValue": 1367,
+        "quality": 1
+      },
+      {
+        "name": "尼龙防弹衣（全新）",
+        "marketPrice": 2950,
+        "readinessValue": 2807,
+        "quality": 1
+      },
+      {
+        "name": "轻型防弹衣（全新）",
+        "marketPrice": 3700,
+        "readinessValue": 3521,
+        "quality": 1
+      },
+      {
+        "name": "制式防弹背心（全新）",
+        "marketPrice": 34699,
+        "readinessValue": 29870,
+        "quality": 3
+      },
+      {
+        "name": "TG-H防弹衣（全新）",
+        "marketPrice": 55069,
+        "readinessValue": 44933,
+        "quality": 3
+      },
+      {
+        "name": "武士防弹背心（全新）",
+        "marketPrice": 144417,
+        "readinessValue": 122888,
+        "quality": 4
+      },
+      {
+        "name": "DT-AVS防弹衣（全新）",
+        "marketPrice": 195991,
+        "readinessValue": 156919,
+        "quality": 4
+      },
+      {
+        "name": "精英防弹背心（全新）",
+        "marketPrice": 3910181,
+        "readinessValue": 1474897,
+        "quality": 6
+      }
+    ],
+    "helmets": [
+      {
+        "name": "老式钢盔（全新）",
+        "marketPrice": 303096,
+        "readinessValue": 295412,
+        "quality": 5
+      },
+      {
+        "name": "H70精英头盔（全新）",
+        "marketPrice": 3910181,
+        "readinessValue": 1474897,
+        "quality": 6
+      }
+    ],
+    "chest_rigs": [
+      {
+        "name": "便携胸包",
+        "marketPrice": 1930,
+        "readinessValue": 1835,
+        "quality": 1
+      },
+      {
+        "name": "快速侦查胸挂",
+        "marketPrice": 1930,
+        "readinessValue": 1835,
+        "quality": 1
+      },
+      {
+        "name": "轻型战术胸挂",
+        "marketPrice": 1969,
+        "readinessValue": 1876,
+        "quality": 1
+      },
+      {
+        "name": "简易挂载包",
+        "marketPrice": 1969,
+        "readinessValue": 1877,
+        "quality": 1
+      },
+      {
+        "name": "尼龙挎包",
+        "marketPrice": 3165,
+        "readinessValue": 2988,
+        "quality": 2
+      },
+      {
+        "name": "HK3便携胸挂",
+        "marketPrice": 3600,
+        "readinessValue": 3154,
+        "quality": 2
+      },
+      {
+        "name": "D01轻型胸挂",
+        "marketPrice": 3445,
+        "readinessValue": 3249,
+        "quality": 2
+      },
+      {
+        "name": "通用战术胸挂",
+        "marketPrice": 4130,
+        "readinessValue": 3902,
+        "quality": 2
+      },
+      {
+        "name": "简易携行弹挂",
+        "marketPrice": 6015,
+        "readinessValue": 4864,
+        "quality": 3
+      },
+      {
+        "name": "HD3战术胸挂",
+        "marketPrice": 6744,
+        "readinessValue": 5428,
+        "quality": 3
+      },
+      {
+        "name": "DSA战术胸挂",
+        "marketPrice": 7624,
+        "readinessValue": 6311,
+        "quality": 3
+      },
+      {
+        "name": "G01战术弹挂",
+        "marketPrice": 12877,
+        "readinessValue": 8757,
+        "quality": 3
+      },
+      {
+        "name": "强袭战术背心",
+        "marketPrice": 33100,
+        "readinessValue": 21879,
+        "quality": 4
+      },
+      {
+        "name": "突击者战术背心",
+        "marketPrice": 58361,
+        "readinessValue": 43088,
+        "quality": 4
+      },
+      {
+        "name": "DRC先进侦查胸挂",
+        "marketPrice": 92055,
+        "readinessValue": 67285,
+        "quality": 4
+      },
+      {
+        "name": "GIR野战胸挂",
+        "marketPrice": 137203,
+        "readinessValue": 105736,
+        "quality": 4
+      },
+      {
+        "name": "飓风战术胸挂",
+        "marketPrice": 0,
+        "readinessValue": 120562,
+        "quality": 5
+      },
+      {
+        "name": "黑鹰野战胸挂",
+        "marketPrice": 0,
+        "readinessValue": 153473,
+        "quality": 5
+      },
+      {
+        "name": "DAR突击手胸挂",
+        "marketPrice": 0,
+        "readinessValue": 235131,
+        "quality": 5
+      }
+    ],
+    "backpacks": [
+      {
+        "name": "斜挎包",
+        "marketPrice": 2625,
+        "readinessValue": 2616,
+        "quality": 1
+      },
+      {
+        "name": "运动背包",
+        "marketPrice": 3796,
+        "readinessValue": 3757,
+        "quality": 1
+      },
+      {
+        "name": "轻型户外背包",
+        "marketPrice": 6718,
+        "readinessValue": 6395,
+        "quality": 2
+      },
+      {
+        "name": "大型登山包",
+        "marketPrice": 9670,
+        "readinessValue": 8748,
+        "quality": 3
+      },
+      {
+        "name": "MAP侦查背包",
+        "marketPrice": 38583,
+        "readinessValue": 39605,
+        "quality": 4
+      },
+      {
+        "name": "ALS背负系统",
+        "marketPrice": 104940,
+        "readinessValue": 91014,
+        "quality": 5
+      },
+      {
+        "name": "D7战术背包",
+        "marketPrice": 0,
+        "readinessValue": 394507,
+        "quality": 6
+      }
+    ]
+  }
+}
