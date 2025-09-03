@@ -192,8 +192,17 @@ export class Calculate {
         'calf': weapon.calfMultiplier || 1.0
       }
 
-      // 定义护甲和头盔的保护部位
-      const armorProtectedAreas = ['胸部', '腹部', '下腹部', 'chest', 'abdomen']  // 护甲保护躯干
+      // 根据护甲类型定义保护部位
+      const getArmorProtectedAreas = (armorType) => {
+        const typeMap = {
+          '半甲': ['胸部', '腹部', 'chest', 'abdomen'],
+          '全甲': ['胸部', '腹部', '下腹部', 'chest', 'abdomen'],  
+          '重甲': ['胸部', '腹部', '下腹部', '大臂', 'chest', 'abdomen', 'upper_arm']
+        }
+        return typeMap[armorType] || []
+      }
+      
+      const armorProtectedAreas = armor ? getArmorProtectedAreas(armor.type) : []
       const helmetProtectedAreas = ['头部', 'head']  // 头盔保护头部
 
       // 模拟结果
