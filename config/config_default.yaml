@@ -24,3 +24,5 @@ delta_force:
   push_weekly_report:
     enabled: false # 是否开启每周战报定时推送
     cron: '0 0 10 * * 1' # 每周一上午10点推送
+  web_login:
+    allow_share_with_other_bots: false # 是否允许其他机器人共用网页登陆数据

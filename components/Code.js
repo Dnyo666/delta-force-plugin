@@ -155,10 +155,15 @@ export default class Code {
   /**
    * 获取平台登录状态 - 用于网页登录轮询
    * @param {string} platformID - 平台用户ID (QQ号)
+   * @param {string} botID - 机器人ID (可选，用于区分不同机器人实例)
    * @returns {Promise<object>} - 平台登录状态响应
    */
-  async getPlatformLoginStatus(platformID) {
-    return this.request('/login/qq/link/platform-status', { platformID }, 'GET');
+  async getPlatformLoginStatus(platformID, botID = null) {
+    const params = { platformID };
+    if (botID) {
+      params.botID = botID;
+    }
+    return this.request('/login/qq/link/platform-status', params, 'GET');
   }
 
   /**

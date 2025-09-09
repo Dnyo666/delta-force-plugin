@@ -600,7 +600,19 @@ export class Login extends plugin {
    */
   async webLogin() {
     const platformID = this.e.user_id;
-    const webLoginUrl = `https://df.shallow.ink/qq-link-login?platformID=${platformID}`;
+    
+    // 获取配置，判断是否允许其他机器人共用网页登陆数据
+    const config = Config.getConfig()?.delta_force || {};
+    const allowShareWithOtherBots = config.web_login?.allow_share_with_other_bots !== false; // 默认为false
+    
+    let webLoginUrl = `https://df.shallow.ink/qq-link-login?platformID=${platformID}`;
+    
+    // 如果不允许共用，添加botID参数
+    if (!allowShareWithOtherBots) {
+      // 获取机器人ID，优先使用Bot.uin，fallback到其他可能的标识
+      const botID = Bot?.uin || Bot?.self_id || this.e?.self_id || 'unknown';
+      webLoginUrl += `&botID=${botID}`;
+    }
 
     // 发送网页登录链接
     const loginMessage = [
@@ -621,6 +633,9 @@ export class Login extends plugin {
     let notifiedPending = false;
     let pendingMsg = null; // 存储"正在等待登录"消息，用于撤回
     let isCompleted = false; // 标记是否已完成登录
+    
+    // 保存配置变量供轮询函数使用
+    const shareConfig = allowShareWithOtherBots;
 
     const pollStatus = async () => {
       // 检查是否已完成或超时
@@ -655,8 +670,14 @@ export class Login extends plugin {
       }
 
       try {
-        // 获取平台登录状态
-        const statusRes = await this.api.getPlatformLoginStatus(platformID);
+        // 获取平台登录状态，如果不允许共用则传入botID
+        let statusRes;
+        if (!shareConfig) {
+          const botID = Bot?.uin || Bot?.self_id || this.e?.self_id || 'unknown';
+          statusRes = await this.api.getPlatformLoginStatus(platformID, botID);
+        } else {
+          statusRes = await this.api.getPlatformLoginStatus(platformID);
+        }
         
         if (!statusRes || statusRes.code !== 0) {
           logger.warn(`[DELTA FORCE PLUGIN] 获取平台登录状态失败:`, statusRes);

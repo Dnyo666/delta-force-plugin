@@ -107,6 +107,12 @@ export function supportGuoba() {
           component: 'EasyCron',
           bottomHelpMessage: '设置每周战报的推送时间 (通常为周一)',
         },
+        {
+          field: 'web_login.allow_share_with_other_bots',
+          label: '允许同时登陆',
+          component: 'Switch',
+          bottomHelpMessage: '开启后，网页授权将不会再使用botID参数，可以同时登陆触发命令的多个机器人',
+        },
       ],
       getConfigData() {
         // 直接从文件读取最新的、未经缓存的配置
@@ -151,6 +157,13 @@ export function supportGuoba() {
             cron: '0 0 10 * * 1',
           },
           df.push_weekly_report
+        );
+
+        df.web_login = lodash.merge(
+          {
+            allow_share_with_other_bots: false,
+          },
+          df.web_login
         );
 
         return df;
