@@ -6,15 +6,11 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **该接口由浅巷墨黎、Admilk、mapleleaf开发，任何数据请以三角洲行动官方为准，版权归属腾讯有限公司，该接口仅供技术学习使用**
 
-**对于接口任何返回数据中不懂的部分，请看https://df-api.apifox.cn，该接口文档由浅巷墨黎整理**
+**对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**本次测试不做任何数据保留，截止日期：2025-07-15**
+**版本号：v1.4.0**
 
-## 基础信息
 
-- **测试前端**: `https://df.cduestc.fun`（包含文档）
-- **测试后端**: `https://df-api.cduestc.fun`
-- **认证方式**: 注册后登陆即可使用，如需测试房间和用户绑定测试，请联系开发者进行手动邮箱验证
 
 ## 登录接口
 
@@ -70,28 +66,60 @@ GET /login/qq/ck/status
 GET /login/qq/ck/token
 ```
 
-### QQ Link 登录
+### QQ OAuth 授权登录
 
-#### 1. Link登录 获取frameworkToken
+#### 1. 获取OAuth授权URL
 ```http
-GET /login/qq/link
+GET /login/qq/oauth
 ```
-#### 2. Link登录 提交信息
-```http
-POST /login/qq/link
-```
-**请求体说明**(application/x-www-form-urlencoded)
-- frameworkToken
-- authCode
+**查询参数（可选）：**
+- `platformID`: 平台用户ID
+- `botID`: 机器人ID
 
-#### 3. 轮询Link状态
-```http
-GET /login/qq/link/status
+**响应示例：**
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "frameworkToken": "3691c0c9-7701-4496-8ddf-496fe6b9a705",
+  "login_url": "https://graph.qq.com/oauth2.0/authorize?response_type=code&state=3691c0c9-7701-4496-8ddf-496fe6b9a705&client_id=101491592&redirect_uri=...",
+  "expire": 1703123456789
+}
 ```
 
-#### 4. 查看Link token状态
+#### 2. 提交OAuth授权信息
 ```http
-GET /login/qq/link/token
+POST /login/qq/oauth
+```
+**请求体说明（application/json）：**
+```json
+{
+  "authurl": "https://milo.qq.com/comm-htdocs/login/qc_redirect.html?appid=101491592&parent_domain=https%253A%252F%252Fconnect.qq.com%26success.html&code=CB680BF17005380202A00F9AE7D89216&state=3691c0c9-7701-4496-8ddf-496fe6b9a705"
+}
+```
+**参数说明：**
+- `authurl`: 完整的回调URL（包含code和state参数）
+- 或者分别提供：
+  - `frameworkToken`: 框架Token
+  - `authcode`: 授权码
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "msg": "OAuth授权成功",
+  "frameworkToken": "3691c0c9-7701-4496-8ddf-496fe6b9a705"
+}
+```
+
+#### 3. 轮询OAuth状态
+```http
+GET /login/qq/oauth/status?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
+```
+
+#### 4. 查看OAuth token状态
+```http
+GET /login/qq/oauth/token?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
 ```
 
 ### QQ 安全登录
@@ -140,6 +168,62 @@ GET /login/wechat/refresh?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
 **参数说明**
 - `frameworkToken`：登陆获取到的框架token
 
+### 微信OAuth 授权登录
+
+#### 1. 获取OAuth授权URL
+```http
+GET /login/wechat/oauth
+```
+**查询参数（可选）：**
+- `platformID`: 平台用户ID
+- `botID`: 机器人ID
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "frameworkToken": "403f7116-9285-4f6b-bb38-eff3f4f9f401",
+  "login_url": "https://open.weixin.qq.com/connect/oauth2/authorize?appid=wx1cd4fbe9335888fe&redirect_uri=https%3A%2F%2Fiu.qq.com%2Fcomm-htdocs%2Flogin%2Fmilosdk%2Fwx_mobile_redirect.html&response_type=code&scope=snsapi_userinfo&state=403f7116-9285-4f6b-bb38-eff3f4f9f401&md=true",
+  "expire": 1703123456789
+}
+```
+
+#### 2. 提交OAuth授权信息
+```http
+POST /login/wechat/oauth
+```
+**请求体说明（application/json）：**
+```json
+{
+  "authurl": "https://connect.qq.com/comm-htdocs/login/milosdk/wx_mobile_callback.html?acctype=wx&appid=wx1cd4fbe9335888fe&s_url=https%3A%2F%2Fconnect.qq.com%2Fsuccess.html&code=021kjz1w3xAPH53SBj0w3QJYEg4kjz1w&state=403f7116-9285-4f6b-bb38-eff3f4f9f401"
+}
+```
+**参数说明：**
+- `authurl`: 完整的回调URL（包含code和state参数）
+- 或者分别提供：
+  - `frameworkToken`: 框架Token
+  - `authcode`: 授权码
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "msg": "OAuth授权成功",
+  "frameworkToken": "403f7116-9285-4f6b-bb38-eff3f4f9f401"
+}
+```
+
+#### 3. 轮询OAuth状态
+```http
+GET /login/wechat/oauth/status?frameworkToken=403f7116-9285-4f6b-bb38-eff3f4f9f401
+```
+
+#### 4. 查看OAuth token状态
+```http
+GET /login/wechat/oauth/token?frameworkToken=403f7116-9285-4f6b-bb38-eff3f4f9f401
+```
+
 ### WeGame 登录
 
 #### 1. 获取WeGame二维码
@@ -182,6 +266,68 @@ GET /login/wegame/wechat/token
 #### 4. 获取WeGame微信礼品
 ```http
 GET /df/wegame/wechat/gift
+```
+
+## 统一OAuth接口
+
+### 统一平台状态查询
+```http
+GET /login/oauth/platform-status?platformID=12345&botID=67890&type=qq
+```
+**查询参数：**
+- `platformID`: 平台用户ID（必填）
+- `botID`: 机器人ID（可选）
+- `type`: 登录类型（可选，`qq`|`wechat`|不填表示查询全部）
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "msg": "ok",
+  "platformID": "12345",
+  "botID": "67890",
+  "type": "qq",
+  "sessions": [
+    {
+      "frameworkToken": "3691c0c9-7701-4496-8ddf-496fe6b9a705",
+      "status": "completed",
+      "expire": 1703123456789,
+      "loginUrl": "https://graph.qq.com/oauth2.0/authorize?...",
+      "createdAt": 1703120000000,
+      "openId": "D7AF10F0E80DD74A6844FB54A131C95D",
+      "botID": "67890",
+      "type": "qq",
+      "oauthType": "oauth2",
+      "qqNumber": ""
+    }
+  ],
+  "count": 1,
+  "breakdown": {
+    "qq": 1,
+    "wechat": 0
+  }
+}
+```
+
+### 统一Token验证
+```http
+GET /login/oauth/token?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
+```
+**查询参数：**
+- `frameworkToken`: 框架Token（必填）
+
+**响应示例：**
+```json
+{
+  "code": 0,
+  "msg": "token有效",
+  "type": "qq",
+  "frameworkToken": "3691c0c9-7701-4496-8ddf-496fe6b9a705",
+  "isValid": true,
+  "isBind": false,
+  "hasOpenId": true,
+  "updatedAt": "2024-01-15T10:30:00.000Z"
+}
 ```
 
 ## 用户管理接口
@@ -918,10 +1064,13 @@ GET /example
 
 ## 注意事项
 
-1. QQ和微信登录需要有效的游戏账号（如果显示请绑定大区，那么请使用/df/person/bind接口
-2. WeGame登录需要有效的WeGame账号
-3. 价格历史数据有轮询更新机制，数据可能有一定延迟
-4. 利润排行榜基于历史数据计算，需要先有相关数据
-5. 改枪方案V2版本提供了更完整的功能，建议优先使用
-6. AI战绩点评功能需要先绑定游戏角色并有战绩数据
-7. 建议在测试环境中使用，避免影响生产数据
+1. **OAuth授权登录推荐**：建议优先使用OAuth授权登录（`/login/qq/oauth` 和 `/login/wechat/oauth`），相比传统方式更安全稳定
+2. **授权流程**：OAuth登录需要用户在授权页面登录后，将完整的回调URL提交给接口，系统会自动提取授权码和frameworkToken
+3. **统一接口**：使用 `/login/oauth/platform-status` 可以同时查询QQ和微信的授权状态，支持type参数过滤
+4. QQ和微信登录需要有效的游戏账号（如果显示请绑定大区，那么请使用/df/person/bind接口）
+5. WeGame登录需要有效的WeGame账号
+6. 价格历史数据有轮询更新机制，数据可能有一定延迟
+7. 利润排行榜基于历史数据计算，需要先有相关数据
+8. 改枪方案V2版本提供了更完整的功能，建议优先使用
+9. AI战绩点评功能需要先绑定游戏角色并有战绩数据
+10. 建议在测试环境中使用，避免影响生产数据

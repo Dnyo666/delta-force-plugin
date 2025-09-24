@@ -49,7 +49,6 @@ pnpm install --filter=delta-force-plugin
 > 配置项说明：
 > - `api_key`: API密钥，在[管理页面](https://df.shallow.ink/api-keys)创建
 > - `clientID`: 客户端ID，在[管理页面](https://df.shallow.ink/)的个人信息获取（用户id）
-> - `base_url`：如果默认的无法使用，请尝试替换为https://df-api.eo.shallow.ink
 
 ## 功能列表
 
@@ -58,7 +57,8 @@ pnpm install --filter=delta-force-plugin
 ### 个人类功能
 
 - [x] QQ/微信扫码登录
-- [x] QQ授权登陆
+- [x] QQ/微信授权登陆
+- [x] QQ/微信-wegame登陆
 - [x] QQCK登陆
 - [x] Token绑定与切换
 - [x] 角色绑定
@@ -104,6 +104,8 @@ pnpm install --filter=delta-force-plugin
 
 - [ ] 摸金模拟器
 - [ ] 对局模拟器
+- [ ] 随机音频
+- [ ] 随机表情包
 
 ## 命令示例
 

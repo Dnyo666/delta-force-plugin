@@ -24,7 +24,8 @@ export default class Code {
    */
   async request (url, params, method = 'GET', opts = {}) {
     const { responseType = 'json' } = opts
-    const { api_key: apiKey, base_url: BASE_URL } = this.cfg
+    const { api_key: apiKey } = this.cfg
+    const BASE_URL = 'https://df-api.shallow.ink' // 固定的API地址
 
     if (!apiKey || apiKey === 'sk-xxxxxxx') {
       const errorMsg = 'APIKey 未配置，请联系机器人管理员。'
@@ -98,6 +99,60 @@ export default class Code {
     }
   }
 
+  /**
+   * JSON格式的POST请求方法，用于OAuth等需要JSON body的接口
+   * @param {string} url - 请求的API端点
+   * @param {object} data - 请求数据对象
+   * @param {string} method - HTTP方法，默认POST
+   * @returns {Promise<object|boolean>}
+   */
+  async requestJson (url, data, method = 'POST') {
+    const { api_key: apiKey } = this.cfg
+    const BASE_URL = 'https://df-api.shallow.ink'
+
+    if (!apiKey || apiKey === 'sk-xxxxxxx') {
+      const errorMsg = 'APIKey 未配置，请联系机器人管理员。'
+      logger.error('[DELTA FORCE PLUGIN] APIKey 未配置，请在 config/config.yaml 中填写')
+      if (this.e) {
+        await this.e.reply(errorMsg)
+      }
+      return false
+    }
+
+    const headers = {
+      Authorization: `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    }
+
+    const fullUrl = `${BASE_URL}${url}`
+    const fetchOptions = { 
+      method: method.toUpperCase(), 
+      headers,
+      body: JSON.stringify(data)
+    }
+
+    try {
+      const response = await fetch(fullUrl, fetchOptions)
+
+      if (!response.ok) {
+        const errorBody = await response.json().catch(() => ({ message: `API 错误: ${response.statusText}` }))
+        logger.error(`[DELTA FORCE PLUGIN] API 请求失败: ${response.status} ${response.statusText} - ${fullUrl}`)
+        logger.error(`[DELTA FORCE PLUGIN] 错误详情: ${JSON.stringify(errorBody)}`)
+        return errorBody
+      }
+
+      const responseBody = await response.json().catch(() => ({}))
+      if (responseBody.code !== 0 && responseBody.success !== true) {
+        logger.warn(`[DELTA FORCE PLUGIN] API 返回业务错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
+      }
+      return responseBody
+    } catch (error) {
+      const errorMsg = '网络请求异常，请检查后端服务是否可用'
+      logger.error(`[DELTA FORCE PLUGIN] 网络请求异常: ${error} - ${fullUrl}`)
+      return false
+    }
+  }
+
   // --- 登录相关 ---
 
   /**
@@ -126,44 +181,68 @@ export default class Code {
   }
 
   /**
-   * QQ Link登录 - 获取授权链接和frameworkToken
+   * QQ OAuth登录 - 获取授权链接和frameworkToken
+   * @param {string} platformID - 平台用户ID (可选)
+   * @param {string} botID - 机器人ID (可选)
    * @returns {Promise<object>} - 包含login_url和frameworkToken的响应
    */
-  async getQqLinkAuth() {
-    return this.request('/login/qq/link', {}, 'GET');
+  async getQqOAuthAuth(platformID = null, botID = null) {
+    const params = {};
+    if (platformID) params.platformID = platformID;
+    if (botID) params.botID = botID;
+    return this.request('/login/qq/oauth', params, 'GET');
   }
 
   /**
-   * QQ Link登录 - 提交授权码完成登录
-   * @param {string} frameworkToken - 第一步获取的frameworkToken
-   * @param {string} authCode - 从授权链接中提取的code参数
+   * QQ OAuth登录 - 提交授权信息完成登录
+   * @param {string} authurl - 完整的回调URL (包含code和state参数)
+   * @param {string} frameworkToken - 框架Token (可选，如果authurl中没有state)
+   * @param {string} authcode - 授权码 (可选，如果不使用完整authurl)
    * @returns {Promise<object>} - 登录结果
    */
-  async submitQqLinkAuth(frameworkToken, authCode) {
-    return this.request('/login/qq/link', { frameworkToken, authCode }, 'POST');
+  async submitQqOAuthAuth(authurl = null, frameworkToken = null, authcode = null) {
+    const data = {};
+    
+    if (authurl) {
+      // 使用完整的回调URL
+      data.authurl = authurl;
+    } else if (frameworkToken && authcode) {
+      // 使用分离的参数
+      data.frameworkToken = frameworkToken;
+      data.authcode = authcode;
+    } else {
+      throw new Error('必须提供authurl或者frameworkToken+authcode');
+    }
+    
+    // 使用特殊的JSON POST请求
+    return this.requestJson('/login/qq/oauth', data, 'POST');
   }
 
   /**
-   * 获取QQ Link登录状态
+   * 获取QQ OAuth登录状态
    * @param {string} frameworkToken - frameworkToken
    * @returns {Promise<object>} - 登录状态响应
    */
-  async getQqLinkStatus(frameworkToken) {
-    return this.request('/login/qq/link/status', { frameworkToken }, 'GET');
+  async getQqOAuthStatus(frameworkToken) {
+    return this.request('/login/qq/oauth/status', { frameworkToken }, 'GET');
   }
 
   /**
-   * 获取平台登录状态 - 用于网页登录轮询
+   * 获取统一平台登录状态 - 用于OAuth轮询
    * @param {string} platformID - 平台用户ID (QQ号)
    * @param {string} botID - 机器人ID (可选，用于区分不同机器人实例)
+   * @param {string} type - 登录类型 (可选，qq|wechat|不填表示查询全部)
    * @returns {Promise<object>} - 平台登录状态响应
    */
-  async getPlatformLoginStatus(platformID, botID = null) {
+  async getPlatformLoginStatus(platformID, botID = null, type = null) {
     const params = { platformID };
     if (botID) {
       params.botID = botID;
     }
-    return this.request('/login/qq/link/platform-status', params, 'GET');
+    if (type) {
+      params.type = type;
+    }
+    return this.request('/login/oauth/platform-status', params, 'GET');
   }
 
   /**
@@ -174,6 +253,86 @@ export default class Code {
    */
   async getAiCommentary(frameworkToken, type) {
     return this.request('/df/person/ai', { frameworkToken, type }, 'POST');
+  }
+
+  /**
+   * 微信OAuth登录 - 获取授权链接和frameworkToken
+   * @param {string} platformID - 平台用户ID (可选)
+   * @param {string} botID - 机器人ID (可选)
+   * @returns {Promise<object>} - 包含login_url和frameworkToken的响应
+   */
+  async getWechatOAuthAuth(platformID = null, botID = null) {
+    const params = {};
+    if (platformID) params.platformID = platformID;
+    if (botID) params.botID = botID;
+    return this.request('/login/wechat/oauth', params, 'GET');
+  }
+
+  /**
+   * 微信OAuth登录 - 提交授权信息完成登录
+   * @param {string} authurl - 完整的回调URL (包含code和state参数)
+   * @param {string} frameworkToken - 框架Token (可选，如果authurl中没有state)
+   * @param {string} authcode - 授权码 (可选，如果不使用完整authurl)
+   * @returns {Promise<object>} - 登录结果
+   */
+  async submitWechatOAuthAuth(authurl = null, frameworkToken = null, authcode = null) {
+    const data = {};
+    
+    if (authurl) {
+      data.authurl = authurl;
+    } else if (frameworkToken && authcode) {
+      data.frameworkToken = frameworkToken;
+      data.authcode = authcode;
+    } else {
+      throw new Error('必须提供authurl或者frameworkToken+authcode');
+    }
+    
+    // 使用统一的JSON POST请求
+    return this.requestJson('/login/wechat/oauth', data, 'POST');
+  }
+
+  /**
+   * 获取微信OAuth登录状态
+   * @param {string} frameworkToken - frameworkToken
+   * @returns {Promise<object>} - 登录状态响应
+   */
+  async getWechatOAuthStatus(frameworkToken) {
+    return this.request('/login/wechat/oauth/status', { frameworkToken }, 'GET');
+  }
+
+  /**
+   * 统一Token验证
+   * @param {string} frameworkToken - 框架Token
+   * @returns {Promise<object>} - Token验证响应
+   */
+  async verifyOAuthToken(frameworkToken) {
+    return this.request('/login/oauth/token', { frameworkToken }, 'GET');
+  }
+
+  // ========== 向后兼容的旧版API方法 ==========
+  
+  /**
+   * @deprecated 请使用 getQqOAuthAuth() 替代
+   * QQ Link登录 - 获取授权链接和frameworkToken (旧版兼容)
+   */
+  async getQqLinkAuth() {
+    return this.getQqOAuthAuth();
+  }
+
+  /**
+   * @deprecated 请使用 submitQqOAuthAuth() 替代  
+   * QQ Link登录 - 提交授权码完成登录 (旧版兼容)
+   */
+  async submitQqLinkAuth(frameworkToken, authCode) {
+    return this.submitQqOAuthAuth(null, frameworkToken, authCode);
+  }
+
+  /**
+   * @deprecated 请使用 getQqOAuthStatus() 替代
+   * 获取QQ Link登录状态 (旧版兼容)
+   */
+  async getQqLinkStatus(frameworkToken) {
+    return this.getQqOAuthStatus(frameworkToken);
   }
 
   // --- 用户数据 ---

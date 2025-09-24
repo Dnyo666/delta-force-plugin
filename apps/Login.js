@@ -29,8 +29,12 @@ export class Login extends plugin {
           fnc: 'loginWithCookie'
         },
         {
-          reg: '^(#三角洲|\\^)(qq|QQ)(授权|auth)(登陆|登录)\\s*(.*)$',
-          fnc: 'qqAuthLogin'
+          reg: '^(#三角洲|\\^)(qq|QQ)(授权|auth|oauth)(登陆|登录)\\s*(.*)$',
+          fnc: 'qqOAuthLogin'
+        },
+        {
+          reg: '^(#三角洲|\\^)(微信|wx|WX)(授权|auth|oauth)(登陆|登录)\\s*(.*)$',
+          fnc: 'wechatOAuthLogin'
         },
         {
           reg: '^(#三角洲|\\^)(网页|web|网站)(登陆|登录)$',
@@ -417,16 +421,17 @@ export class Login extends plugin {
   }
 
   /**
-   * QQ授权登录
+   * QQ OAuth授权登录 (新版API v1.4.0)
    */
-  async qqAuthLogin() {
+  async qqOAuthLogin() {
     const match = this.e.msg.match(this.rule[2].reg);
     const authUrl = match[5] ? match[5].trim() : '';
 
     if (!authUrl) {
       // 没有提供授权链接，显示帮助信息
       try {
-        const res = await this.api.getQqLinkAuth();
+        // 使用新版OAuth API获取授权链接
+        const res = await this.api.getQqOAuthAuth(this.e.user_id, Bot?.uin || 'unknown');
         
         if (!res || res.code !== 0 || !res.login_url || !res.frameworkToken) {
           await this.e.reply('获取授权链接失败，请稍后重试。');
@@ -434,11 +439,13 @@ export class Login extends plugin {
         }
 
         const helpMsg = [
-          '三角洲QQ授权登陆教程：',
+          '三角洲QQ OAuth授权登陆教程：',
           `1. QQ内打开链接：${res.login_url}`,
           '2. 点击登陆',
           '3. 登陆成功后，点击右上角，选择复制链接',
           '4. 返回聊天界面，发送 ^qq授权登陆 刚刚复制的链接',
+          '',
+          '⚠️ 新版OAuth登录更安全稳定，推荐使用！'
         ].join('\n');
 
         const helpMessage = await this.e.reply([segment.at(this.e.user_id), '\n', helpMsg]);
@@ -450,35 +457,21 @@ export class Login extends plugin {
           }, 10 * 60 * 1000);
         }
       } catch (error) {
-        logger.error('[DELTA FORCE PLUGIN] QQ授权登录获取链接失败:', error);
+        logger.error('[DELTA FORCE PLUGIN] QQ OAuth登录获取链接失败:', error);
         await this.e.reply('获取授权链接时发生错误，请稍后重试。');
       }
       return true;
     }
 
-
     try {
-      // 从URL中提取authCode
-      const authCode = this.extractAuthCodeFromUrl(authUrl);
-      if (!authCode) {
-        await this.e.reply('无法从链接中提取授权码，请确保链接包含 code= 参数。\n示例链接应该类似：https://milo.qq.com/...?code=XXXXXX&state=...');
-        return true;
-      }
-
-      // 先获取frameworkToken
-      const authRes = await this.api.getQqLinkAuth();
-      if (!authRes || authRes.code !== 0 || !authRes.frameworkToken) {
-        throw new Error('获取frameworkToken失败，请重试');
-      }
-
-      // 提交授权码
-      const res = await this.api.submitQqLinkAuth(authRes.frameworkToken, authCode);
+      // 提交完整的授权URL到新版OAuth接口
+      const res = await this.api.submitQqOAuthAuth(authUrl);
       
       if (!res || res.code !== 0) {
-        throw new Error(res?.msg || res?.message || '授权码提交失败');
+        throw new Error(res?.msg || res?.message || 'OAuth授权提交失败');
       }
 
-      const finalToken = res.frameworkToken || authRes.frameworkToken;
+      const finalToken = res.frameworkToken;
       if (!finalToken) {
         throw new Error('未能获取到有效的Token');
       }
@@ -496,7 +489,6 @@ export class Login extends plugin {
       const helpMessageId = userHelpMessages.get(this.e.user_id);
       if (helpMessageId) {
         messagesToRecall.push({ id: helpMessageId, type: '登录教程消息' });
-        // 清理已使用的教程消息ID
         userHelpMessages.delete(this.e.user_id);
       }
 
@@ -515,58 +507,172 @@ export class Login extends plugin {
       if (recallFailedMessages.length > 0) {
         const failedTypes = recallFailedMessages.join('、');
         await this.e.reply(`⚠️ 隐私提醒：机器人权限不足，无法自动撤回${failedTypes}，请您手动撤回以保护账号安全！`);
-      } else if (messagesToRecall.length > 0) {
       }
 
-      // -- 复用登录成功后的绑定逻辑 --
-      const clientID = Config.getConfig()?.delta_force?.clientID;
-      if (!clientID) {
-        throw new Error('clientID 未配置，无法进行绑定');
-      }
-
-      const bindRes = await this.api.bindUser({
-        frameworkToken: finalToken,
-        platformID: this.e.user_id,
-        clientID: clientID,
-        clientType: 'qq'
-      });
-
-      if (bindRes && (bindRes.code === 0 || bindRes.success)) {
-        // 使用统一的绑定和激活函数
-        const result = await this.handleBindAndActivate(finalToken, 'QQ授权登录');
-        
-        if (result.success) {
-          // 如果需要自动绑定角色
-          if (result.shouldBindCharacter) {
-            const characterBindRes = await this.api.bindCharacter(finalToken);
-            if (characterBindRes && characterBindRes.success && characterBindRes.roleInfo) {
-              const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
-              const isAdult = adultstatus === '0' ? '否' : '是';
-              
-              let charMsg = '角色信息已获取！\n';
-              charMsg += '--- 角色信息 ---\n';
-              charMsg += `昵称: ${charac_name}\n`;
-              charMsg += `烽火地带等级: ${level}\n`;
-              charMsg += `全面战场等级: ${tdmlevel}\n`;
-              charMsg += `防沉迷: ${isAdult}`;
-              
-              await this.e.reply([segment.at(this.e.user_id), charMsg]);
-            } else {
-              const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
-              await this.e.reply(`自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
-            }
+      // 使用统一的绑定和激活函数
+      const result = await this.handleBindAndActivate(finalToken, 'QQ OAuth登录');
+      
+      if (result.success) {
+        // 如果需要自动绑定角色
+        if (result.shouldBindCharacter) {
+          const characterBindRes = await this.api.bindCharacter(finalToken);
+          if (characterBindRes && characterBindRes.success && characterBindRes.roleInfo) {
+            const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
+            const isAdult = adultstatus === '0' ? '否' : '是';
+            
+            let charMsg = 'QQ OAuth登录成功并获取角色信息！\n';
+            charMsg += '--- 角色信息 ---\n';
+            charMsg += `昵称: ${charac_name}\n`;
+            charMsg += `烽火地带等级: ${level}\n`;
+            charMsg += `全面战场等级: ${tdmlevel}\n`;
+            charMsg += `防沉迷: ${isAdult}`;
+            
+            await this.e.reply([segment.at(this.e.user_id), charMsg]);
+          } else {
+            const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
+            await this.e.reply(`QQ OAuth登录成功！\n自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
           }
         } else {
           await this.e.reply(result.message);
         }
       } else {
-        await this.e.reply(`账号绑定失败: ${bindRes.msg || bindRes.message || '未知错误'}`);
+        await this.e.reply(result.message);
       }
     } catch (error) {
-      await this.e.reply(`授权登录失败: ${error.message}`);
+      await this.e.reply(`QQ OAuth授权登录失败: ${error.message}`);
     }
 
     return true;
+  }
+
+  /**
+   * 微信OAuth授权登录 (新版API v1.4.0)
+   */
+  async wechatOAuthLogin() {
+    const match = this.e.msg.match(this.rule[3].reg);
+    const authUrl = match[5] ? match[5].trim() : '';
+
+    if (!authUrl) {
+      // 没有提供授权链接，显示帮助信息
+      try {
+        // 使用新版OAuth API获取授权链接
+        const res = await this.api.getWechatOAuthAuth(this.e.user_id, Bot?.uin || 'unknown');
+        
+        if (!res || res.code !== 0 || !res.login_url || !res.frameworkToken) {
+          await this.e.reply('获取微信授权链接失败，请稍后重试。');
+          return true;
+        }
+
+        const helpMsg = [
+          '三角洲微信OAuth授权登陆教程：',
+          `1. 微信内打开链接：${res.login_url}`,
+          '2. 点击登陆',
+          '3. 登陆成功后，点击右上角，选择复制链接',
+          '4. 返回聊天界面，发送 ^微信授权登陆 刚刚复制的链接',
+          '',
+        ].join('\n');
+
+        const helpMessage = await this.e.reply([segment.at(this.e.user_id), '\n', helpMsg]);
+        // 存储教程消息ID，用于后续可能的撤回，10分钟后自动清理
+        if (helpMessage?.message_id) {
+          userHelpMessages.set(this.e.user_id, helpMessage.message_id);
+          setTimeout(() => {
+            userHelpMessages.delete(this.e.user_id);
+          }, 10 * 60 * 1000);
+        }
+      } catch (error) {
+        logger.error('[DELTA FORCE PLUGIN] 微信OAuth登录获取链接失败:', error);
+        await this.e.reply('获取微信授权链接时发生错误，请稍后重试。');
+      }
+      return true;
+    }
+
+    try {
+      // 提交完整的授权URL到新版OAuth接口
+      const res = await this.api.submitWechatOAuthAuth(authUrl);
+      
+      if (!res || res.code !== 0) {
+        throw new Error(res?.msg || res?.message || '微信OAuth授权提交失败');
+      }
+
+      const finalToken = res.frameworkToken;
+      if (!finalToken) {
+        throw new Error('未能获取到有效的Token');
+      }
+
+      // 尝试自动撤回相关消息
+      const messagesToRecall = [];
+      let recallFailedMessages = [];
+
+      if (this.e.message_id) {
+        messagesToRecall.push({ id: this.e.message_id, type: '用户授权链接消息' });
+      }
+
+      const helpMessageId = userHelpMessages.get(this.e.user_id);
+      if (helpMessageId) {
+        messagesToRecall.push({ id: helpMessageId, type: '登录教程消息' });
+        userHelpMessages.delete(this.e.user_id);
+      }
+
+      // 执行撤回操作
+      for (const msgInfo of messagesToRecall) {
+        try {
+          await this.e.group.recallMsg(msgInfo.id);
+          logger.info(`[DELTA FORCE PLUGIN] 成功撤回${msgInfo.type}: ${msgInfo.id}`);
+        } catch (err) {
+          logger.warn(`[DELTA FORCE PLUGIN] 撤回${msgInfo.type}失败: ${msgInfo.id}`, err);
+          recallFailedMessages.push(msgInfo.type);
+        }
+      }
+
+      if (recallFailedMessages.length > 0) {
+        const failedTypes = recallFailedMessages.join('、');
+        await this.e.reply(`⚠️ 隐私提醒：机器人权限不足，无法自动撤回${failedTypes}，请您手动撤回以保护账号安全！`);
+      }
+
+      // 使用统一的绑定和激活函数
+      const result = await this.handleBindAndActivate(finalToken, '微信OAuth登录');
+      
+      if (result.success) {
+        // 如果需要自动绑定角色
+        if (result.shouldBindCharacter) {
+          const characterBindRes = await this.api.bindCharacter(finalToken);
+          if (characterBindRes && characterBindRes.success && characterBindRes.roleInfo) {
+            const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
+            const isAdult = adultstatus === '0' ? '否' : '是';
+            
+            let charMsg = '微信OAuth登录成功并获取角色信息！\n';
+            charMsg += '--- 角色信息 ---\n';
+            charMsg += `昵称: ${charac_name}\n`;
+            charMsg += `烽火地带等级: ${level}\n`;
+            charMsg += `全面战场等级: ${tdmlevel}\n`;
+            charMsg += `防沉迷: ${isAdult}`;
+            
+            await this.e.reply([segment.at(this.e.user_id), charMsg]);
+          } else {
+            const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
+            await this.e.reply(`微信OAuth登录成功！\n自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
+          }
+        } else {
+          await this.e.reply(result.message);
+        }
+      } else {
+        await this.e.reply(result.message);
+      }
+    } catch (error) {
+      await this.e.reply(`微信OAuth授权登录失败: ${error.message}`);
+    }
+
+    return true;
+  }
+
+  /**
+   * 兼容旧版QQ授权登录方法
+   * @deprecated 请使用 qqOAuthLogin 替代
+   */
+  async qqAuthLogin() {
+    logger.warn('[DELTA FORCE PLUGIN] 使用了已弃用的qqAuthLogin方法，建议使用qqOAuthLogin');
+    return this.qqOAuthLogin();
   }
 
 
@@ -605,7 +711,8 @@ export class Login extends plugin {
     const config = Config.getConfig()?.delta_force || {};
     const allowShareWithOtherBots = config.web_login?.allow_share_with_other_bots !== false; // 默认为false
     
-    let webLoginUrl = `https://df.shallow.ink/qq-link-login?platformID=${platformID}`;
+    // 使用统一的OAuth登录页面，支持用户选择QQ或微信登录
+    let webLoginUrl = `https://df.shallow.ink/oauth-login?platformID=${platformID}`;
     
     // 如果不允许共用，添加botID参数
     if (!allowShareWithOtherBots) {
@@ -616,10 +723,10 @@ export class Login extends plugin {
 
     // 发送网页登录链接
     const loginMessage = [
-      '三角洲行动网页授权登陆：',
-      '请打开：',
+      '三角洲行动网页OAuth登陆：',
+      '请到浏览器打开：',
       webLoginUrl,
-      '进行登陆，三分钟内登陆将会自动绑定'
+      '选择QQ或微信进行登陆，三分钟内完成登陆将会自动绑定'
     ].join('\n');
 
     const sentMsg = await this.e.reply([segment.at(this.e.user_id), '\n', loginMessage]);
@@ -630,6 +737,7 @@ export class Login extends plugin {
     const pollInterval = 3000; // 3秒轮询一次
 
     let activeTokens = new Set(); // 存储所有活跃的frameworkToken
+    let sessionInfoMap = new Map(); // 存储token和其完整session信息的映射关系
     let notifiedPending = false;
     let pendingMsg = null; // 存储"正在等待登录"消息，用于撤回
     let isCompleted = false; // 标记是否已完成登录
@@ -670,13 +778,13 @@ export class Login extends plugin {
       }
 
       try {
-        // 获取平台登录状态，如果不允许共用则传入botID
+        // 获取平台登录状态，如果不允许共用则传入botID，使用新版统一接口
         let statusRes;
         if (!shareConfig) {
           const botID = Bot?.uin || Bot?.self_id || this.e?.self_id || 'unknown';
-          statusRes = await this.api.getPlatformLoginStatus(platformID, botID);
+          statusRes = await this.api.getPlatformLoginStatus(platformID, botID, null);
         } else {
-          statusRes = await this.api.getPlatformLoginStatus(platformID);
+          statusRes = await this.api.getPlatformLoginStatus(platformID, null, null);
         }
         
         if (!statusRes || statusRes.code !== 0) {
@@ -686,6 +794,8 @@ export class Login extends plugin {
         }
 
         const sessions = statusRes.sessions || [];
+        const breakdown = statusRes.breakdown || {};
+        const totalCount = statusRes.count || 0;
         
         if (sessions.length === 0) {
           // 没有会话，继续轮询
@@ -693,20 +803,65 @@ export class Login extends plugin {
           return;
         }
 
-        // 收集所有有效的frameworkToken（最多5个）
-        const validTokens = sessions
-          .filter(session => session.frameworkToken && session.status !== 'expired')
-          .slice(-5) // 只取最近的5个
-          .map(session => session.frameworkToken);
+        // 记录会话统计信息
+        if (totalCount > 0) {
+          const breakdownText = Object.entries(breakdown)
+            .map(([type, count]) => `${type.toUpperCase()}:${count}`)
+            .join(', ');
+          logger.debug(`[DELTA FORCE PLUGIN] 检测到${totalCount}个OAuth会话 (${breakdownText})`);
+        }
 
-        // 检查是否有新的token
-        for (const token of validTokens) {
-          if (!activeTokens.has(token)) {
-            activeTokens.add(token);
-            logger.info(`[DELTA FORCE PLUGIN] 网页登录检测到新frameworkToken: ${token.substring(0, 4)}****`);
+        // 收集所有有效的session，包含完整信息
+        const validSessions = sessions
+          .filter(session => {
+            // 检查token和状态
+            if (!session.frameworkToken || session.status === 'expired') {
+              return false;
+            }
+            
+            // 检查是否已过期 (expire是时间戳)
+            if (session.expire && Date.now() > session.expire) {
+              logger.info(`[DELTA FORCE PLUGIN] 会话${session.frameworkToken.substring(0, 4)}****已过期，跳过`);
+              return false;
+            }
+            
+            return true;
+          })
+          .slice(-5) // 只取最近的5个
+          .map(session => ({
+            token: session.frameworkToken,
+            type: session.type || 'qq', // 默认为qq以保持兼容性
+            status: session.status,
+            expire: session.expire,
+            loginUrl: session.loginUrl,
+            oauthType: session.oauthType || 'oauth2',
+            createdAt: session.createdAt,
+            qqNumber: session.qqNumber || null
+          }));
+
+        // 检查是否有新的session
+        for (const session of validSessions) {
+          if (!activeTokens.has(session.token)) {
+            activeTokens.add(session.token);
+            sessionInfoMap.set(session.token, session); // 存储完整session信息
+            
+            // 构建详细的日志信息
+            const sessionAge = session.createdAt ? Math.floor((Date.now() - session.createdAt) / 1000) : '未知';
+            const expireIn = session.expire ? Math.floor((session.expire - Date.now()) / 1000) : '未知';
+            
+            logger.info(`[DELTA FORCE PLUGIN] 网页登录检测到新${session.type.toUpperCase()}会话: ${session.token.substring(0, 4)}**** (创建${sessionAge}秒前, ${expireIn}秒后过期)`);
             
             if (!notifiedPending) {
-              pendingMsg = await this.e.reply('已检测到网页登录会话，正在等待您完成登录...');
+              const breakdownText = Object.entries(breakdown)
+                .filter(([_, count]) => count > 0)
+                .map(([type, count]) => `${type === 'qq' ? 'QQ' : type === 'wechat' ? '微信' : type}${count}个`)
+                .join('、');
+              
+              const pendingText = breakdownText ? 
+                `已检测到${breakdownText}网页登录会话，正在等待您完成登录...` :
+                '已检测到网页登录会话，正在等待您完成登录...';
+                
+              pendingMsg = await this.e.reply(pendingText);
               notifiedPending = true;
             }
           }
@@ -717,45 +872,73 @@ export class Login extends plugin {
           const tokenArray = Array.from(activeTokens);
           logger.debug(`[DELTA FORCE PLUGIN] 正在轮询 ${tokenArray.length} 个frameworkToken状态`);
           
-          // 并发检查所有token的状态
+          // 并发检查所有token的状态，根据类型调用不同的API
           const statusPromises = tokenArray.map(async (token) => {
             try {
-              const loginStatusRes = await this.api.getQqLinkStatus(token);
-              return { token, status: loginStatusRes };
+              const sessionInfo = sessionInfoMap.get(token);
+              const tokenType = sessionInfo?.type || 'qq'; // 默认使用qq
+              let loginStatusRes;
+              
+              // 在调用API前先检查本地过期时间
+              if (sessionInfo?.expire && Date.now() > sessionInfo.expire) {
+                logger.info(`[DELTA FORCE PLUGIN] ${tokenType.toUpperCase()}会话${token.substring(0, 4)}****本地检查已过期`);
+                return { 
+                  token, 
+                  type: tokenType, 
+                  status: { status: 'expired' },
+                  sessionInfo
+                };
+              }
+              
+              // 根据登录类型调用不同的状态检查API
+              if (tokenType === 'wechat') {
+                loginStatusRes = await this.api.getWechatOAuthStatus(token);
+              } else {
+                // qq 或其他类型默认使用QQ OAuth状态检查
+                loginStatusRes = await this.api.getQqOAuthStatus(token);
+              }
+              
+              return { token, type: tokenType, status: loginStatusRes, sessionInfo };
             } catch (error) {
-              logger.warn(`[DELTA FORCE PLUGIN] 轮询token ${token.substring(0, 4)}**** 状态失败:`, error);
-              return { token, status: null };
+              const sessionInfo = sessionInfoMap.get(token);
+              const tokenType = sessionInfo?.type || 'qq';
+              logger.warn(`[DELTA FORCE PLUGIN] 轮询${tokenType.toUpperCase()}Token ${token.substring(0, 4)}**** 状态失败:`, error);
+              return { token, type: tokenType, status: null, sessionInfo };
             }
           });
 
           const results = await Promise.all(statusPromises);
           
           // 检查结果
-          for (const { token, status } of results) {
+          for (const { token, type, status, sessionInfo } of results) {
             if (status && status.status === 'done') {
               // 检查是否和当前激活token相同，如果相同则跳过这个token，继续检查其他token
               const currentToken = await utils.getAccount(this.e.user_id);
               if (currentToken === token) {
-                logger.info(`[DELTA FORCE PLUGIN] 网页登录token与当前激活token相同，跳过: ${token.substring(0, 4)}****`);
+                logger.info(`[DELTA FORCE PLUGIN] 网页${type.toUpperCase()}登录token与当前激活token相同，跳过: ${token.substring(0, 4)}****`);
                 // 从活跃token列表中移除，不再轮询
                 activeTokens.delete(token);
+                sessionInfoMap.delete(token);
                 continue; // 跳过当前token，继续检查其他token
               }
               
-              // 找到登录成功的token，执行绑定
-              logger.info(`[DELTA FORCE PLUGIN] 网页登录成功，使用token: ${token.substring(0, 4)}****`);
+              // 构建详细的成功日志
+              const sessionAge = sessionInfo?.createdAt ? Math.floor((Date.now() - sessionInfo.createdAt) / 1000) : '未知';
+              logger.info(`[DELTA FORCE PLUGIN] 网页${type.toUpperCase()}登录成功，使用token: ${token.substring(0, 4)}**** (会话持续${sessionAge}秒)`);
+              
               isCompleted = true;
-              await this.handleWebLoginSuccess(token, { sentMsg, pendingMsg });
+              await this.handleWebLoginSuccess(token, { sentMsg, pendingMsg }, type);
               return;
             } else if (status && status.status === 'expired') {
               // 移除过期的token
               activeTokens.delete(token);
-              logger.info(`[DELTA FORCE PLUGIN] 移除过期token: ${token.substring(0, 4)}****`);
+              sessionInfoMap.delete(token);
+              logger.info(`[DELTA FORCE PLUGIN] 移除过期${type.toUpperCase()}token: ${token.substring(0, 4)}****`);
             }
           }
           
           // 如果所有token都过期了，撤回消息并提醒用户
-          if (activeTokens.size === 0 && validTokens.length === 0) {
+          if (activeTokens.size === 0 && validSessions.length === 0) {
             const messagesToRecall = [];
             
             if (sentMsg?.message_id) {
@@ -803,8 +986,9 @@ export class Login extends plugin {
    * 处理网页登录成功
    * @param {string} frameworkToken - 登录成功的token
    * @param {object} messages - 要撤回的消息对象 {sentMsg, pendingMsg}
+   * @param {string} loginType - 登录类型 'qq' 或 'wechat'
    */
-  async handleWebLoginSuccess(frameworkToken, messages) {
+  async handleWebLoginSuccess(frameworkToken, messages, loginType = 'qq') {
     try {
       // 尝试撤回相关消息
       const messagesToRecall = [];
@@ -835,7 +1019,8 @@ export class Login extends plugin {
       }
 
       // 使用统一的绑定和激活函数
-      const result = await this.handleBindAndActivate(frameworkToken, '网页登录');
+      const loginTypeText = loginType === 'wechat' ? '微信' : 'QQ';
+      const result = await this.handleBindAndActivate(frameworkToken, `网页${loginTypeText}登录`);
       
       if (result.success) {
         // 如果需要自动绑定角色
@@ -845,7 +1030,7 @@ export class Login extends plugin {
             const { charac_name, level, tdmlevel, adultstatus } = characterBindRes.roleInfo;
             const isAdult = adultstatus === '0' ? '否' : '是';
             
-            let charMsg = '网页登录绑定成功并角色信息已获取！\n';
+            let charMsg = `网页${loginTypeText}登录绑定成功并角色信息已获取！\n`;
             charMsg += '--- 角色信息 ---\n';
             charMsg += `昵称: ${charac_name}\n`;
             charMsg += `烽火地带等级: ${level}\n`;
@@ -855,7 +1040,7 @@ export class Login extends plugin {
             await this.e.reply([segment.at(this.e.user_id), charMsg]);
           } else {
             const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
-            await this.e.reply(`网页登录成功！\n自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
+            await this.e.reply(`网页${loginTypeText}登录成功！\n自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
           }
         } else {
           await this.e.reply(result.message);
@@ -865,8 +1050,9 @@ export class Login extends plugin {
       }
 
     } catch (error) {
-      logger.error('[DELTA FORCE PLUGIN] 网页登录绑定失败:', error);
-      await this.e.reply(`网页登录失败: ${error.message}`);
+      const loginTypeText = loginType === 'wechat' ? '微信' : 'QQ';
+      logger.error(`[DELTA FORCE PLUGIN] 网页${loginTypeText}登录绑定失败:`, error);
+      await this.e.reply(`网页${loginTypeText}登录失败: ${error.message}`);
     }
   }
 
