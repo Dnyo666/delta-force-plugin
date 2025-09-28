@@ -566,6 +566,22 @@ export default class Code {
     return this.request(`/login/${platform}/refresh`, { frameworkToken }, 'GET');
   }
 
+  /**
+   * 删除QQ登录数据
+   * @param {string} frameworkToken - 用户的token
+   */
+  async deleteQqLogin(frameworkToken) {
+    return this.request('/login/qq/delete', { frameworkToken }, 'GET');
+  }
+
+  /**
+   * 删除微信登录数据
+   * @param {string} frameworkToken - 用户的token
+   */
+  async deleteWechatLogin(frameworkToken) {
+    return this.request('/login/wechat/delete', { frameworkToken }, 'GET');
+  }
+
   async getBanHistory(frameworkToken) {
     return this.request('/login/qqsafe/ban', { frameworkToken }, 'GET');
   }

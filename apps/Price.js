@@ -33,6 +33,10 @@ export class Price extends plugin {
         {
           reg: '^(#三角洲|\\^)(最高利润|利润排行v2|利润榜v2)\\s*(.*)$',
           fnc: 'getProfitRankV2'
+        },
+        {
+          reg: '^(#三角洲|\\^)(特勤处利润|特勤利润)\\s*(.*)$',
+          fnc: 'getSpecialOpsProfit'
         }
       ]
     })
@@ -1059,6 +1063,180 @@ export class Price extends plugin {
     } catch (error) {
       logger.error(`[Price] 查询最高利润排行失败: ${error.message}`);
       await this.e.reply('查询最高利润排行时发生错误，请稍后重试。');
+      return true;
+    }
+  }
+
+  /**
+   * 获取特勤处四个场所的利润排行
+   * 命令: #三角洲特勤处利润 [类型]
+   * 支持参数: hour/total (默认hour)
+   */
+  async getSpecialOpsProfit() {
+    const match = this.e.msg.match(this.rule[6].reg);
+    const argString = match[3] ? match[3].trim() : '';
+    
+    // 解析类型参数
+    let type = 'hour';  // 默认按小时利润
+    if (argString && ['hour', 'total', 'hourprofit', 'totalprofit', 'profit'].includes(argString.toLowerCase())) {
+      type = argString.toLowerCase();
+    }
+
+    // 特勤处四个制造场所
+    const places = [
+      { key: 'tech', name: '科技中心' },
+      { key: 'workbench', name: '工作台' },
+      { key: 'pharmacy', name: '药剂站' },
+      { key: 'armory', name: '军械库' }
+    ];
+
+    const typeText = {
+      hour: '小时利润',
+      total: '总利润', 
+      hourprofit: '小时利润',
+      totalprofit: '总利润',
+      profit: '总利润'
+    }[type] || '利润';
+
+    await this.e.reply(`正在查询特勤处四个场所的${typeText}排行，每个场所显示前3名...`);
+
+    try {
+      // 构建转发消息
+      const userInfo = {
+        user_id: this.e.user_id,
+        nickname: this.e.sender.nickname
+      };
+
+      let forwardMsg = [];
+      
+      // 标题消息
+      forwardMsg.push({
+        ...userInfo,
+        message: `【特勤处${typeText}总览】\n四个制造场所TOP3排行\n查询类型: ${type}`
+      });
+
+      // 并行查询四个场所的数据
+      const promises = places.map(async (place) => {
+        try {
+          const params = { type, place: place.key };
+          const res = await this.api.getProfitRankV2(params);
+          
+          if (res && res.data && res.data.groups && res.data.groups[place.key]) {
+            const items = res.data.groups[place.key];
+            
+            // 按指定类型排序
+            if (type === 'hour' || type === 'hourprofit') {
+              items.sort((a, b) => (b.today?.hourProfit || 0) - (a.today?.hourProfit || 0));
+            } else {
+              items.sort((a, b) => (b.today?.profit || 0) - (a.today?.profit || 0));
+            }
+            
+            return {
+              place: place,
+              items: items.slice(0, 3), // 只取前3名
+              success: true,
+              updateTime: res.data.currentTime
+            };
+          } else {
+            return {
+              place: place,
+              items: [],
+              success: false,
+              error: '无数据'
+            };
+          }
+        } catch (error) {
+          logger.error(`[Price] 查询${place.name}利润失败:`, error);
+          return {
+            place: place,
+            items: [],
+            success: false,
+            error: error.message
+          };
+        }
+      });
+
+      // 等待所有查询完成
+      const results = await Promise.all(promises);
+      
+      // 为每个场所生成消息
+      results.forEach((result) => {
+        let msg = `🏭 ${result.place.name} (${result.place.key})\n`;
+        
+        if (!result.success) {
+          msg += `❌ 查询失败: ${result.error}`;
+          forwardMsg.push({
+            ...userInfo,
+            message: msg
+          });
+          return;
+        }
+        
+        if (result.items.length === 0) {
+          msg += `📊 暂无${typeText}数据`;
+          forwardMsg.push({
+            ...userInfo,
+            message: msg
+          });
+          return;
+        }
+        
+        msg += `📊 ${typeText}TOP3\n`;
+        if (result.updateTime) {
+          msg += `⏰ 更新: ${new Date(result.updateTime).toLocaleString()}\n`;
+        }
+        msg += `\n`;
+        
+        result.items.forEach((item, index) => {
+          const rank = index + 1;
+          const today = item.today || {};
+          const rankEmoji = ['🥇', '🥈', '🥉'][index] || `${rank}.`;
+          
+          msg += `${rankEmoji} ${item.objectName}\n`;
+          msg += `   ID: ${item.objectID} | Lv.${item.level}\n`;
+          
+          if (type === 'hour' || type === 'hourprofit') {
+            msg += `   时利润: ${today.hourProfit?.toLocaleString() || '0'}\n`;
+            msg += `   时排名: ${today.hourProfitRank || 'N/A'}\n`;
+          } else {
+            msg += `   总利润: ${today.profit?.toLocaleString() || '0'}\n`;
+            msg += `   总排名: ${today.profitRank || 'N/A'}\n`;
+          }
+          
+          if (index < result.items.length - 1) {
+            msg += `\n`;
+          }
+        });
+        
+        forwardMsg.push({
+          ...userInfo,
+          message: msg
+        });
+      });
+      
+      // 汇总统计信息
+      const totalItems = results.reduce((sum, result) => sum + (result.items?.length || 0), 0);
+      const successCount = results.filter(r => r.success).length;
+      
+      let summaryMsg = `📈 汇总统计\n`;
+      summaryMsg += `✅ 成功查询: ${successCount}/4 个场所\n`;
+      summaryMsg += `📋 总计显示: ${totalItems} 个物品\n`;
+      summaryMsg += `🔄 排序类型: ${typeText}\n\n`;
+      summaryMsg += `💡 使用说明:\n`;
+      summaryMsg += `• 支持参数: hour(小时利润) / total(总利润)\n`;
+      summaryMsg += `• 示例: ^特勤处利润 hour\n`;
+      summaryMsg += `• 示例: ^特勤利润 total`;
+      
+      forwardMsg.push({
+        ...userInfo,
+        message: summaryMsg
+      });
+
+      return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+
+    } catch (error) {
+      logger.error(`[Price] 查询特勤处利润失败: ${error.message}`);
+      await this.e.reply('查询特勤处利润时发生错误，请稍后重试。');
       return true;
     }
   }

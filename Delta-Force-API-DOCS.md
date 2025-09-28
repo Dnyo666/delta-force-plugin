@@ -8,9 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v1.4.0**
-
-
+**版本号：v1.5.0**
 
 ## 登录接口
 
@@ -48,6 +46,37 @@ GET /login/qq/status?token=frameworkToken
 ```http
 GET /login/qq/token?token=frameworkToken
 ```
+
+#### 4. 手动刷新QQ登录状态
+```http
+GET /login/qq/refresh?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
+```
+**参数说明**
+- `frameworkToken`：登陆获取到的框架token
+
+**功能说明**：手动刷新QQ登录的access_token，延长有效期
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "access_token刷新成功",
+  "data": {
+    "expires_in": 7776000,
+    "openid": "用户OpenID",
+    "qqnumber": "2131******"
+  }
+}
+```
+
+#### 5. 删除QQ登录数据
+```http
+GET /login/qq/delete?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
+```
+**参数说明**
+- `frameworkToken`：登陆获取到的框架token
+
+**功能说明**：删除指定的QQ登录数据和相关绑定信息
 
 ### QQ CK 登录
 
@@ -168,6 +197,27 @@ GET /login/wechat/refresh?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
 **参数说明**
 - `frameworkToken`：登陆获取到的框架token
 
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "access_token刷新成功",
+  "data": {
+    "expires_in": 7200,
+    "scope": "snsapi_userinfo"
+  }
+}
+```
+
+#### 5. 删除微信登录数据
+```http
+GET /login/wechat/delete?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
+```
+**参数说明**
+- `frameworkToken`：登陆获取到的框架token
+
+**功能说明**：删除指定的微信登录数据和相关绑定信息
+
 ### 微信OAuth 授权登录
 
 #### 1. 获取OAuth授权URL
@@ -265,7 +315,29 @@ GET /login/wegame/wechat/token
 
 #### 4. 获取WeGame微信礼品
 ```http
-GET /df/wegame/wechat/gift
+GET /df/wegame/wechat/gift?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
+```
+**参数说明**
+- `frameworkToken`：登陆获取到的框架token
+
+**功能说明**：使用WeGame微信登录凭据获取游戏内礼品
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "data": {
+    "gifts": [
+      {
+        "id": "gift_001",
+        "name": "新手礼包",
+        "description": "包含基础武器和装备",
+        "claimed": false
+      }
+    ],
+    "totalGifts": 1
+  }
+}
 ```
 
 ## 统一OAuth接口
@@ -316,7 +388,9 @@ GET /login/oauth/token?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
 **查询参数：**
 - `frameworkToken`: 框架Token（必填）
 
-**响应示例：**
+**功能说明**：统一验证QQ和微信的frameworkToken是否有效，返回token状态信息
+
+**QQ Token响应示例：**
 ```json
 {
   "code": 0,
@@ -327,6 +401,30 @@ GET /login/oauth/token?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
   "isBind": false,
   "hasOpenId": true,
   "updatedAt": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**微信Token响应示例：**
+```json
+{
+  "code": 0,
+  "msg": "token有效",
+  "type": "wechat",
+  "frameworkToken": "403f7116-9285-4f6b-bb38-eff3f4f9f401",
+  "isValid": true,
+  "isBind": false,
+  "hasOpenId": true,
+  "hasUnionId": true,
+  "updatedAt": "2024-01-15T10:30:00.000Z"
+}
+```
+
+**Token不存在响应：**
+```json
+{
+  "code": -2,
+  "msg": "token不存在或已过期",
+  "frameworkToken": "invalid-token"
 }
 ```
 
@@ -397,11 +495,50 @@ GET /df/object/search?id=14060000003
 ```http
 GET /df/object/health
 ```
+**功能说明**：获取游戏健康状态相关信息
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "data": {
+    "healthStatus": "normal",
+    "serverTime": "2025-01-15T10:30:00.000Z",
+    "gameVersion": "1.4.0"
+  }
+}
+```
+
+### 皮肤收藏品信息
+```http
+GET /df/object/collection
+```
+**功能说明**：获取所有皮肤收藏品的信息列表
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "data": {
+    "collections": [
+      {
+        "id": 15080050001,
+        "name": "经典AK-47",
+        "type": "weapon_skin",
+        "rare": "legendary",
+        "gunType": "assault_rifle"
+      }
+    ],
+    "totalCount": 150
+  }
+}
+```
 
 ### 干员信息
 ```http
 GET /df/object/operator
 ```
+**功能说明**：获取游戏中所有干员的详细信息
 
 ### 地图列表
 ```http
@@ -416,6 +553,52 @@ GET /df/object/operator2
 ### 段位分数对照表
 ```http
 GET /df/object/rankscore
+```
+
+### 弹药信息及价格历史
+```http
+GET /df/object/ammo?days=7
+```
+**参数说明:**
+- `days`: 获取多少天的价格历史数据（可选，默认2天，最大30天，最小1天）
+
+**功能说明**：获取所有弹药物品及其价格历史数据，支持指定天数的历史价格查询
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "获取子弹及价格历史成功",
+  "data": {
+    "bullets": [
+      {
+        "objectID": 15010000001,
+        "name": "5.56x45mm NATO",
+        "primaryClass": "ammo",
+        "secondClass": "rifle",
+        "caliber": "5.56x45mm",
+        "penetrationLevel": 3,
+        "harmRatio": 100,
+        "muzzleVelocity": 850,
+        "priceHistory": [
+          {
+            "timestamp": 1703123456789,
+            "avgPrice": 12.5,
+            "minPrice": 10.0,
+            "maxPrice": 15.0
+          }
+        ]
+      }
+    ],
+    "totalCount": 25,
+    "queryDays": 7,
+    "currentTime": "2025-01-15T10:30:00.000Z",
+    "loginInfo": {
+      "type": "qc",
+      "openid": "D7AF10F0E80DD74A6844FB54A131C95D"
+    }
+  }
+}
 ```
 
 ## 功能接口
@@ -805,7 +988,7 @@ GET /df/object/price/history/v2?objectId=12345
 
 ### 获取物品当前均价
 ```http
-GET /df/object/price/latest
+GET /df/object/price/latest?id=12345
 ```
 **参数说明**
 - `id`：物品ID（必填，支持数组）
@@ -1030,9 +1213,222 @@ POST /df/person/ai
 
 ## 系统健康检查
 
-### 系统健康状态
+### 基础健康状态
 ```http
 GET /health
+```
+**功能说明**：获取系统基础健康状态，包括节点信息、内存使用情况、运行时间等。
+
+**响应示例：**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-01-15T10:30:00.000Z",
+  "nodeType": "master",
+  "nodeId": "node-001",
+  "uptime": 86400,
+  "memory": {
+    "used": 128,
+    "total": 512,
+    "rss": 256,
+    "external": 32
+  },
+  "nodeInfo": {
+    "version": "v20.10.0",
+    "platform": "win32",
+    "arch": "x64",
+    "pid": 12345
+  }
+}
+```
+
+### 详细健康检查
+```http
+GET /health/detailed
+```
+**功能说明**：获取系统详细健康状态，包括数据库连接、Redis状态、集群信息、功能状态等。
+
+**响应示例：**
+```json
+{
+  "status": "healthy",
+  "timestamp": "2025-01-15T10:30:00.000Z",
+  "cluster": {
+    "nodeType": "master",
+    "nodeId": "node-001",
+    "isReadOnlyMode": false,
+    "autoSyncEnabled": true,
+    "scheduledTasksEnabled": true,
+    "dataSyncEnabled": true,
+    "weight": 100,
+    "slaveNodes": []
+  },
+  "system": {
+    "uptime": 86400,
+    "nodeVersion": "v20.10.0",
+    "platform": "win32",
+    "arch": "x64",
+    "memory": {
+      "rss": 256,
+      "heapTotal": 512,
+      "heapUsed": 128,
+      "external": 32
+    },
+    "cpu": {
+      "user": 1000000,
+      "system": 500000
+    }
+  },
+  "dependencies": {
+    "mongodb": {
+      "status": "connected",
+      "dbName": "delta_force_api",
+      "version": "7.0.0",
+      "topology": "ReplicaSetWithPrimary",
+      "servers": ["***.***.***:27017"],
+      "latency": 15
+    },
+    "redis": {
+      "status": "connected"
+    }
+  },
+  "features": {
+    "objectSync": true,
+    "collectionSync": true,
+    "subscriptionPoller": true,
+    "tokenPoller": true,
+    "loginPoolRefresh": true,
+    "tradePoller": true,
+    "pricePoller": true,
+    "profitPoller": true
+  }
+}
+```
+
+## 用户统计接口
+
+### 获取用户统计信息
+```http
+GET /stats/users?clientID=your_client_id
+```
+**参数说明：**
+- `clientID`：客户端ID（必填）
+
+**功能说明**：
+- **管理员用户**：可查看全系统统计数据，包括所有用户、API密钥、订阅、登录方式等统计信息
+- **普通用户**：只能查看自己的统计数据，包括绑定账号、登录方式、API密钥等
+
+**管理员响应示例：**
+```json
+{
+  "code": 0,
+  "message": "获取全部用户统计信息成功（管理员权限）",
+  "data": {
+    "users": {
+      "total": 1250,
+      "emailVerified": 980,
+      "emailUnverified": 270
+    },
+    "api": {
+      "totalKeys": 450,
+      "activeKeys": 380,
+      "inactiveKeys": 70
+    },
+    "subscription": {
+      "proUsers": 125,
+      "freeUsers": 1125,
+      "totalSubscriptions": 1250
+    },
+    "loginMethods": {
+      "qq": {
+        "total": 850,
+        "valid": 720,
+        "invalid": 130
+      },
+      "wechat": {
+        "total": 450,
+        "valid": 380,
+        "invalid": 70
+      },
+      "wegame": {
+        "total": 320,
+        "valid": 280,
+        "invalid": 40
+      },
+      "wegameWechat": {
+        "total": 180,
+        "valid": 150,
+        "invalid": 30
+      },
+      "qqsafe": {
+        "total": 200,
+        "valid": 170,
+        "invalid": 30
+      },
+      "qqCk": {
+        "total": 100,
+        "valid": 85,
+        "invalid": 15
+      }
+    },
+    "platform": {
+      "totalBindings": 2500,
+      "boundUsers": 2200,
+      "unboundUsers": 300
+    },
+    "security": {
+      "passwordResets24h": 15,
+      "passwordResets7d": 78,
+      "totalSecurityEvents": 1250,
+      "recentSecurityEvents": [
+        {
+          "action": "password_reset",
+          "count": 25,
+          "severity": "medium"
+        }
+      ]
+    }
+  },
+  "timestamp": "2025-01-15T10:30:00.000Z",
+  "accessLevel": "admin"
+}
+```
+
+**普通用户响应示例：**
+```json
+{
+  "code": 0,
+  "message": "获取用户特定统计信息成功",
+  "data": {
+    "userInfo": {
+      "clientID": "bot_12345",
+      "totalAccounts": 5,
+      "boundAccounts": 4,
+      "unboundAccounts": 1,
+      "clientType": "qq_bot",
+      "bindTime": "2024-12-01T10:00:00.000Z"
+    },
+    "loginMethods": {
+      "qq": {
+        "total": 3,
+        "valid": 2,
+        "invalid": 1
+      },
+      "wechat": {
+        "total": 2,
+        "valid": 2,
+        "invalid": 0
+      }
+    },
+    "api": {
+      "totalKeys": 2,
+      "activeKeys": 2,
+      "inactiveKeys": 0
+    }
+  },
+  "timestamp": "2025-01-15T10:30:00.000Z",
+  "accessLevel": "user"
+}
 ```
 
 ### 示例接口

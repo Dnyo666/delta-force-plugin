@@ -57,7 +57,8 @@ pnpm install --filter=delta-force-plugin
 ### 个人类功能
 
 - [x] QQ/微信扫码登录
-- [x] QQ/微信授权登陆
+- [x] QQ/微信授权登陆（网页登陆）
+- [x] QQ/微信令牌手动刷新（QQ需要使用二维码登陆）
 - [x] QQ/微信-wegame登陆
 - [x] QQCK登陆
 - [x] Token绑定与切换

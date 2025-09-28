@@ -67,31 +67,31 @@ export class Stats extends plugin {
   }
 
   async displayAdminStats(data) {
-    const { users, api, subscription, loginMethods, platform } = data
+    const { users, api, subscription, loginMethods, platform, security } = data
     
     let msg = '【三角洲行动 - 全站用户统计】\n'
-    msg += '权限级别：超级管理员\n'
+    msg += '权限级别：超级管理员\n\n'
     
     // 用户统计
-    msg += '用户统计\n'
+    msg += '📊 用户统计\n'
     msg += `总用户数: ${users.total}\n`
     msg += `邮箱已验证: ${users.emailVerified}\n`
-    msg += `邮箱未验证: ${users.emailUnverified}\n`
+    msg += `邮箱未验证: ${users.emailUnverified}\n\n`
     
     // API密钥统计
-    msg += 'API密钥统计\n'
+    msg += '🔑 API密钥统计\n'
     msg += `总密钥数: ${api.totalKeys}\n`
     msg += `活跃密钥: ${api.activeKeys}\n`
-    msg += `非活跃密钥: ${api.inactiveKeys}\n`
+    msg += `非活跃密钥: ${api.inactiveKeys}\n\n`
     
     // 订阅统计
-    msg += '订阅统计\n'
+    msg += '💎 订阅统计\n'
     msg += `专业用户: ${subscription.proUsers}\n`
     msg += `免费用户: ${subscription.freeUsers}\n`
-    msg += `总订阅数: ${subscription.totalSubscriptions}\n`
+    msg += `总订阅数: ${subscription.totalSubscriptions}\n\n`
     
     // 登录方式统计
-    msg += '登录方式统计\n'
+    msg += '🔐 登录方式统计\n'
     Object.entries(loginMethods).forEach(([method, stats]) => {
       const methodName = this.getMethodDisplayName(method)
       msg += `${methodName}: ${stats.total} (有效: ${stats.valid}, 无效: ${stats.invalid})\n`
@@ -99,12 +99,29 @@ export class Stats extends plugin {
     msg += '\n'
     
     // 平台绑定统计
-    msg += '平台绑定统计\n'
+    msg += '🔗 平台绑定统计\n'
     msg += `总绑定数: ${platform.totalBindings}\n`
     msg += `已绑定用户: ${platform.boundUsers}\n`
-    msg += `未绑定用户: ${platform.unboundUsers}`
+    msg += `未绑定用户: ${platform.unboundUsers}\n\n`
+    
+    // 安全统计
+    if (security) {
+      msg += '🛡️ 安全统计\n'
+      msg += `24小时内密码重置: ${security.passwordResets24h}\n`
+      msg += `7天内密码重置: ${security.passwordResets7d}\n`
+      msg += `总安全事件: ${security.totalSecurityEvents}\n`
+      
+      if (security.recentSecurityEvents && security.recentSecurityEvents.length > 0) {
+        msg += '最近安全事件:\n'
+        security.recentSecurityEvents.forEach(event => {
+          const severity = this.getSeverityDisplayName(event.severity)
+          const action = this.getActionDisplayName(event.action)
+          msg += `  • ${action}: ${event.count}次 (${severity})\n`
+        })
+      }
+    }
 
-    await this.e.reply(msg)
+    await this.e.reply(msg.trim())
   }
 
   async displayUserStats(data) {
@@ -144,6 +161,27 @@ export class Stats extends plugin {
       'qqCk': 'QQ Cookie登录'
     }
     return methodNames[method] || method
+  }
+
+  getSeverityDisplayName(severity) {
+    const severityNames = {
+      'low': '低',
+      'medium': '中',
+      'high': '高',
+      'critical': '严重'
+    }
+    return severityNames[severity] || severity
+  }
+
+  getActionDisplayName(action) {
+    const actionNames = {
+      'password_reset': '密码重置',
+      'login_failed': '登录失败',
+      'account_locked': '账号锁定',
+      'suspicious_activity': '可疑活动',
+      'api_abuse': 'API滥用'
+    }
+    return actionNames[action] || action
   }
 
   formatDate(dateString) {

@@ -31,12 +31,20 @@ export class Account extends plugin {
           fnc: 'unbindToken'
         },
         {
+          reg: '^(#三角洲|\\^)删除\\s*(\\d+)$',
+          fnc: 'deleteToken'
+        },
+        {
           reg: '^(#三角洲|\\^)?(账号切换|切换账号)\\s*(.*)$',
           fnc: 'switchAccount'
         },
         {
           reg: '^(#三角洲|\\^)(微信刷新|刷新微信)$',
           fnc: 'refreshWechat'
+        },
+        {
+          reg: '^(#三角洲|\\^)(qq刷新|QQ刷新|刷新qq|刷新QQ)$',
+          fnc: 'refreshQq'
         }
       ]
     })
@@ -166,6 +174,7 @@ export class Account extends plugin {
     buildGroupMsg('QQ安全中心', grouped.qqsafe, 'qqsafe');
 
     msg += '\n可通过 #三角洲解绑 <序号> 来解绑账号。';
+    msg += '\n可通过 #三角洲删除 <序号> 来删除QQ/微信登录数据。';
     msg += '\n使用 #三角洲账号切换 <序号> 可切换当前激活账号。';
     
     await this.e.reply(msg.trim());
@@ -201,6 +210,89 @@ export class Account extends plugin {
           await this.e.reply(`解绑失败: ${unbindRes.msg || unbindRes.message || '未知错误'}`);
       }
       return true;
+  }
+
+  /**
+   * 删除指定序号的账号登录数据（仅支持QQ和微信）
+   * @returns {Promise<boolean>}
+   */
+  async deleteToken() {
+    const index = parseInt(this.e.msg.match(/\d+$/)[0]) - 1;
+    
+    const accountData = await this._getGroupedAccounts();
+    if (!accountData) return true;
+    
+    const { all } = accountData;
+
+    if (index < 0 || index >= all.length) {
+      await this.e.reply('序号无效，请发送 #三角洲账号 查看正确的序号。');
+      return true;
+    }
+    
+    const targetAccount = all[index];
+    const tokenType = targetAccount.tokenType?.toLowerCase();
+    
+    // 只支持删除QQ和微信登录数据
+    if (!['qq', 'wechat'].includes(tokenType)) {
+      await this.e.reply(`该账号类型（${targetAccount.tokenType}）不支持删除操作。\n删除功能仅支持QQ和微信登录数据。`);
+      return true;
+    }
+    
+    const tokenToDelete = targetAccount.frameworkToken;
+    const maskedToken = `${tokenToDelete.substring(0, 4)}****${tokenToDelete.slice(-4)}`;
+    const qqDisplay = targetAccount.qqNumber ? ` (${targetAccount.qqNumber.slice(0, 4)}****)` : '';
+    
+    await this.e.reply(`正在删除${targetAccount.tokenType.toUpperCase()}登录数据${qqDisplay} ${maskedToken}，请稍候...`);
+    
+    try {
+      let deleteRes;
+      
+      if (tokenType === 'qq') {
+        deleteRes = await this.api.deleteQqLogin(tokenToDelete);
+      } else if (tokenType === 'wechat') {
+        deleteRes = await this.api.deleteWechatLogin(tokenToDelete);
+      }
+      
+      if (await utils.handleApiError(deleteRes, this.e)) return true;
+      
+      if (deleteRes && (deleteRes.success || deleteRes.code === 0)) {
+        // 删除成功后，同时解绑该账号
+        const clientID = getClientID();
+        if (clientID) {
+          const unbindRes = await this.api.unbindUser({
+            frameworkToken: tokenToDelete,
+            platformID: this.e.user_id,
+            clientID: clientID,
+            clientType: 'qq'
+          });
+          
+          if (unbindRes && (unbindRes.code === 0 || unbindRes.success)) {
+            await this.e.reply(`${targetAccount.tokenType.toUpperCase()}登录数据删除成功！账号已自动解绑。`);
+          } else {
+            await this.e.reply(`${targetAccount.tokenType.toUpperCase()}登录数据删除成功！但账号解绑失败，请手动解绑。`);
+          }
+        } else {
+          await this.e.reply(`${targetAccount.tokenType.toUpperCase()}登录数据删除成功！`);
+        }
+        
+        // 如果删除的是当前激活账号，清除本地激活状态
+        const currentActiveToken = await utils.getAccount(this.e.user_id);
+        if (currentActiveToken === tokenToDelete) {
+          const targetGroup = this.getAccountGroup(targetAccount);
+          await this.setGroupedActiveToken(this.e.user_id, targetGroup, null);
+          await this.e.reply('注意：已删除的账号是当前激活账号，请重新切换到其他账号。');
+        }
+        
+      } else {
+        await this.e.reply(`删除${targetAccount.tokenType.toUpperCase()}登录数据失败: ${deleteRes?.message || deleteRes?.msg || '未知错误'}`);
+      }
+      
+    } catch (error) {
+      logger.error(`[DELTA FORCE PLUGIN] 删除${tokenType}登录数据失败:`, error);
+      await this.e.reply(`删除登录数据时发生错误: ${error.message}`);
+    }
+    
+    return true;
   }
 
   /**
@@ -330,6 +422,53 @@ export class Account extends plugin {
       await this.e.reply(`微信登录状态刷新成功！`);
     } else {
       await this.e.reply(`刷新失败：${res.message || '未知错误'}`);
+    }
+    
+    return true;
+  }
+
+  /**
+   * 手动刷新QQ登录状态
+   * @returns {Promise<boolean>}
+   */
+  async refreshQq() {
+    const token = await utils.getAccount(this.e.user_id);
+    if (!token) {
+      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。');
+      return true;
+    }
+    
+    await this.e.reply('正在刷新QQ登录状态，请稍候...');
+    
+    const res = await this.api.refreshLogin('qq', token);
+    
+    if (await utils.handleApiError(res, this.e)) return true;
+    
+    if (res.success) {
+      const data = res.data || {};
+      let msg = 'QQ登录状态刷新成功！';
+      
+      // 显示刷新后的详细信息
+      if (data.expires_in) {
+        const hours = Math.floor(data.expires_in / 3600);
+        const days = Math.floor(hours / 24);
+        const remainingHours = hours % 24;
+        
+        if (days > 0) {
+          msg += `\n有效期：${days}天${remainingHours}小时`;
+        } else {
+          msg += `\n有效期：${hours}小时`;
+        }
+      }
+      
+      if (data.qqnumber) {
+        const maskedQQ = `${data.qqnumber.slice(0, 4)}****`;
+        msg += `\nQQ号：${maskedQQ}`;
+      }
+      
+      await this.e.reply(msg);
+    } else {
+      await this.e.reply(`QQ登录状态刷新失败：${res.message || res.msg || '未知错误'}`);
     }
     
     return true;

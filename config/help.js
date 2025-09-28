@@ -17,7 +17,9 @@ export const helpList = [
             { icon: 80, title: "#三角洲账号", desc: "查看已绑定token" },
             { icon: 71, title: "#三角洲账号切换 [序号]", desc: "激活指定序号账号" },
             { icon: 48, title: "#三角洲解绑 [序号]", desc: "解绑指定序号token" },
+            { icon: 47, title: "#三角洲删除 [序号]", desc: "删除QQ/微信登录数据" },
             { icon: 49, title: "#三角洲微信刷新", desc: "刷新微信token" },
+            { icon: 50, title: "#三角洲QQ刷新", desc: "刷新QQ token" },
             { icon: 76, title: "#三角洲角色绑定 [token]", desc: "手动绑定token" }
         ]
     },
@@ -107,7 +109,8 @@ export const helpList = [
             { icon: 61, title: "#三角洲材料价格 [物品ID]", desc: "查询制造材料最低价格" },
             { icon: 61, title: "#三角洲利润历史 [物品名/ID/场所]", desc: "查询制造利润历史记录" },
             { icon: 61, title: "#三角洲利润排行 [类型] [场所] [数量]", desc: "查询利润排行榜V1" },
-            { icon: 61, title: "#三角洲最高利润 [类型] [场所] [物品ID]", desc: "查询最高利润排行榜V2(今日vs昨日)" }
+            { icon: 61, title: "#三角洲最高利润 [类型] [场所] [物品ID]", desc: "查询最高利润排行榜V2(今日vs昨日)" },
+            { icon: 62, title: "#三角洲特勤处利润 [类型]", desc: "查询特勤处四个场所利润TOP3" }
         ]
     },
     {
