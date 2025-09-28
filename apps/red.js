@@ -26,26 +26,23 @@ export class Red extends plugin {
   async getRedList(e) {
     const token = await utils.getAccount(e.user_id)
     if (!token) {
-      await e.reply([segment.at(e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
-      return true
+      return e.reply([segment.at(e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
     }
 
     await e.reply('正在获取您的藏品解锁记录，请稍候...')
 
     try {
       const res = await this.api.getRedList(token)
-      
-      if (await utils.handleApiError(res, e)) return true
+
+      if (await utils.handleApiError(res, e)) return
 
       if (!res || !res.success || !res.data || !res.data.records) {
-        await e.reply('获取藏品记录失败：数据格式错误')
-        return true
+        return e.reply('获取藏品记录失败：数据格式错误')
       }
 
       const records = res.data.records
       if (!records.list || records.list.length === 0) {
-        await e.reply('您还没有任何藏品解锁记录')
-        return true
+        return e.reply('您还没有任何藏品解锁记录')
       }
 
       // 获取物品名称映射
@@ -53,9 +50,9 @@ export class Red extends plugin {
 
       const userInfo = { user_id: e.user_id, nickname: e.sender.nickname }
       const forwardMsg = []
-      
-      forwardMsg.push({ 
-        ...userInfo, 
+
+      forwardMsg.push({
+        ...userInfo,
         message: `【藏品解锁记录】\n总计：${records.total}条记录\n查询时间：${res.data.currentTime}` 
       })
 
@@ -74,25 +71,23 @@ export class Red extends plugin {
         if (record.des) {
           msg += `描述：${record.des}`
         }
-        
+
         forwardMsg.push({ ...userInfo, message: msg })
       })
 
       await e.reply(await Bot.makeForwardMsg(forwardMsg))
-      
+
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 藏品记录查询失败:', error)
       await e.reply('藏品记录查询失败，请稍后重试')
     }
-    
-    return true
+    return
   }
 
   async getRedByName(e) {
     const token = await utils.getAccount(e.user_id)
     if (!token) {
-      await e.reply([segment.at(e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
-      return true
+      return e.reply([segment.at(e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
     }
 
     const match = e.msg.match(/^(#三角洲|\^)(大红记录|藏品记录)\s+(.+)$/)
@@ -108,8 +103,7 @@ export class Red extends plugin {
 
       const items = searchRes?.data?.keywords
       if (!Array.isArray(items) || items.length === 0) {
-        await e.reply(`未找到名为"${itemName}"的物品，请检查名称是否正确`)
-        return true
+        return e.reply(`未找到名为"${itemName}"的物品，请检查名称是否正确`)
       }
 
       // 如果搜索到多个结果，使用第一个
@@ -117,8 +111,7 @@ export class Red extends plugin {
       const objectId = targetItem.objectID
 
       if (!objectId) {
-        await e.reply('获取物品ID失败，无法查询记录')
-        return true
+        return e.reply('获取物品ID失败，无法查询记录')
       }
 
       // 2. 根据objectID获取具体记录
@@ -127,21 +120,19 @@ export class Red extends plugin {
       if (await utils.handleApiError(recordRes, e)) return true
 
       if (!recordRes || !recordRes.success || !recordRes.data) {
-        await e.reply('获取藏品记录失败：数据格式错误')
-        return true
+        return e.reply('获取藏品记录失败：数据格式错误')
       }
 
       const itemData = recordRes.data.itemData
       if (!itemData || !itemData.list || itemData.list.length === 0) {
-        await e.reply(`物品"${targetItem.objectName}"暂无解锁记录`)
-        return true
+        return e.reply(`物品"${targetItem.objectName}"暂无解锁记录`)
       }
 
       const userInfo = { user_id: e.user_id, nickname: e.sender.nickname }
       const forwardMsg = []
-      
-      forwardMsg.push({ 
-        ...userInfo, 
+
+      forwardMsg.push({
+        ...userInfo,
         message: `【${targetItem.objectName} 解锁记录】\n物品ID：${objectId}\n总计：${itemData.total}条记录\n${itemData.des ? `描述：${itemData.des}\n` : ''}查询时间：${recordRes.data.currentTime}` 
       })
 
@@ -150,7 +141,7 @@ export class Red extends plugin {
 
       sortedRecords.forEach((record, index) => {
         const mapInfo = DataManager.getMapName(record.mapid)
-        
+
         let msg = `第${index + 1}次解锁\n`
         msg += `时间：${record.time}\n`
         msg += `地图：${mapInfo}\n`
@@ -166,7 +157,7 @@ export class Red extends plugin {
       await e.reply('查询失败，请稍后重试')
     }
     
-    return true
+    return
   }
 
   /**
@@ -227,6 +218,4 @@ export class Red extends plugin {
     logger.info(`[DELTA FORCE PLUGIN] 物品名称查询完成，成功获取${itemMap.size}/${uniqueIds.length}个物品名称`)
     return itemMap
   }
-
-
-} 
+}

@@ -118,7 +118,7 @@ export class Account extends plugin {
     const clientID = getClientID();
     if (!clientID) {
       this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
-      return true;
+      return;
     }
 
     const res = await this.api.bindUser({
@@ -138,7 +138,7 @@ export class Account extends plugin {
 
   async showAccounts () {
     const accountData = await this._getGroupedAccounts();
-    if (!accountData) return true;
+    if (!accountData) return;
     
     const { grouped, activeTokens } = accountData;
 
@@ -185,13 +185,12 @@ export class Account extends plugin {
       const index = parseInt(this.e.msg.match(/\d+$/)[0]) - 1;
       
       const accountData = await this._getGroupedAccounts();
-      if (!accountData) return true;
+      if (!accountData) return;
       
       const { all } = accountData;
 
       if (index < 0 || index >= all.length) {
-          await this.e.reply('序号无效，请发送 #三角洲账号 查看正确的序号。');
-          return true;
+          return this.e.reply('序号无效，请发送 #三角洲账号 查看正确的序号。');
       }
       
       const tokenToUnbind = all[index].frameworkToken;

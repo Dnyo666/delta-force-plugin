@@ -133,7 +133,6 @@ export class Data extends plugin {
         msg += `游戏时长: ${mpDetail.totalGameTime}`
     }
 
-    await this.e.reply(msg.trim())
-    return true
+    return await this.e.reply(msg.trim())
   }
 }

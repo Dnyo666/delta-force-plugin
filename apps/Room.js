@@ -283,14 +283,12 @@ export class Room extends plugin {
     const token = await utils.getAccount(this.e.user_id)
     const clientID = getClientID()
     if (!token) {
-      await this.e.reply('请先绑定账号。')
-      return true
+      return await this.e.reply('请先绑定账号。')
     }
     if (!clientID) {
-      await this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
-      return true
+      return await this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
     }
-    
+
     const match = this.e.msg.match(/^(#三角洲|\^)?(退出|解散)房间\s+(\d+)$/)
     const roomId = match[3]
 
