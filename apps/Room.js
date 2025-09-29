@@ -6,40 +6,40 @@ let mapCache = null;
 let tagCache = null;
 
 async function getMapData(api) {
-    if (mapCache) {
-        return mapCache;
+  if (mapCache) {
+    return mapCache;
+  }
+  const res = await api.getMaps();
+  if (res && res.code === 0 && res.data) {
+    mapCache = new Map();
+    for (const map of res.data) {
+      mapCache.set(map.id, map.name);
     }
-    const res = await api.getMaps();
-    if (res && res.code === 0 && res.data) {
-        mapCache = new Map();
-        for (const map of res.data) {
-            mapCache.set(map.id, map.name);
-        }
-        // 设置一个定时器，比如1小时后清空缓存，以便下次可以获取最新的
-        setTimeout(() => { mapCache = null; }, 3600 * 1000);
-        return mapCache;
-    }
-    return new Map(); // 失败时返回空Map，避免阻塞
+    // 设置一个定时器，比如1小时后清空缓存，以便下次可以获取最新的
+    setTimeout(() => { mapCache = null; }, 3600 * 1000);
+    return mapCache;
+  }
+  return new Map(); // 失败时返回空Map，避免阻塞
 }
 
 async function getTagData(api) {
-    if (tagCache) {
-        return tagCache;
+  if (tagCache) {
+    return tagCache;
+  }
+  const res = await api.getTags();
+  if (res && res.code === 0 && res.data) {
+    tagCache = new Map();
+    for (const tag of res.data) {
+      tagCache.set(tag.id, tag.name);
     }
-    const res = await api.getTags();
-    if (res && res.code === 0 && res.data) {
-        tagCache = new Map();
-        for (const tag of res.data) {
-            tagCache.set(tag.id, tag.name);
-        }
-        // 设置一个定时器，比如1小时后清空缓存，以便下次可以获取最新的
-        setTimeout(() => { tagCache = null; }, 3600 * 1000);
-        return tagCache;
-    }
-    return new Map(); // 失败时返回空Map，避免阻塞
+    // 设置一个定时器，比如1小时后清空缓存，以便下次可以获取最新的
+    setTimeout(() => { tagCache = null; }, 3600 * 1000);
+    return tagCache;
+  }
+  return new Map(); // 失败时返回空Map，避免阻塞
 }
 
-function getClientID () {
+function getClientID() {
   const clientID = Config.getConfig()?.delta_force?.clientID
   if (!clientID || clientID === 'xxxxxx') {
     return null
@@ -48,7 +48,7 @@ function getClientID () {
 }
 
 export class Room extends plugin {
-  constructor (e) {
+  constructor(e) {
     super({
       name: '三角洲开黑房间',
       dsc: '创建和管理开黑房间',
@@ -93,13 +93,13 @@ export class Room extends plugin {
     this.api = new Code(e)
   }
 
-  async getRoomList () {
+  async getRoomList() {
     const clientID = getClientID()
     if (!clientID) {
-        await this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
-        return true
+      await this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
+      return true
     }
-    
+
     const argString = this.e.msg.match(/^(#三角洲|\^)?房间列表(.*)$/)[2].trim();
     const args = argString.split(' ').filter(Boolean);
 
@@ -133,12 +133,12 @@ export class Room extends plugin {
     } else if (isAllModeQuery) {
       filterDesc.push('模式:全部');
     }
-    
+
     if (hasPassword !== '') filterDesc.push(hasPassword ? '有密码' : '无密码');
-    
+
     const replyMsg = `正在查询房间列表... ${filterDesc.length > 0 ? `[${filterDesc.join(', ')}]` : ''}`;
     await this.e.reply(replyMsg.trim());
-    
+
     const res = await this.api.getRoomList(clientID, type, hasPassword)
 
     if (await utils.handleApiError(res, this.e)) return true;
@@ -171,7 +171,7 @@ export class Room extends plugin {
     return true
   }
 
-  async createRoom () {
+  async createRoom() {
     const token = await utils.getAccount(this.e.user_id)
     const clientID = getClientID()
     if (!token) {
@@ -186,12 +186,12 @@ export class Room extends plugin {
     const argString = this.e.msg.replace(/^(#三角洲|\^)?创建房间/, '').trim()
     const args = []
     if (argString) {
-        // 使用正则表达式来解析参数，支持带引号的字符串
-        const regex = /"([^"]*)"|'([^']*)'|(\S+)/g
-        let match;
-        while ((match = regex.exec(argString)) !== null) {
-            args.push(match[1] || match[2] || match[3] || '');
-        }
+      // 使用正则表达式来解析参数，支持带引号的字符串
+      const regex = /"([^"]*)"|'([^']*)'|(\S+)/g
+      let match;
+      while ((match = regex.exec(argString)) !== null) {
+        args.push(match[1] || match[2] || match[3] || '');
+      }
     }
 
     const type = args[0] || '' // 模式 (sol/mp)
@@ -210,12 +210,12 @@ export class Room extends plugin {
     }
 
     if (!typeEng) {
-        let helpMsg = '指令格式错误，缺少必要的房间模式 (sol/mp/烽火/战场)！\n';
-        helpMsg += '格式: #三角洲创建房间 <模式> [地图ID] [标签ID] [密码] [仅本机:是/否]\n';
-        helpMsg += '示例: #三角洲创建房间 sol 1902 10001 123 是\n';
-        helpMsg += '可使用 #三角洲房间地图列表 和 #三角洲房间标签列表 查询可用ID。';
-        await this.e.reply(helpMsg);
-        return true;
+      let helpMsg = '指令格式错误，缺少必要的房间模式 (sol/mp/烽火/战场)！\n';
+      helpMsg += '格式: #三角洲创建房间 <模式> [地图ID] [标签ID] [密码] [仅本机:是/否]\n';
+      helpMsg += '示例: #三角洲创建房间 sol 1902 10001 123 是\n';
+      helpMsg += '可使用 #三角洲房间地图列表 和 #三角洲房间标签列表 查询可用ID。';
+      await this.e.reply(helpMsg);
+      return true;
     }
 
     const maps = await getMapData(this.api);
@@ -224,7 +224,7 @@ export class Room extends plugin {
     const tagName = tags.get(tag) || (tag ? '自定义' : '无');
 
     await this.e.reply(`正在创建房间... [模式:${typeEng}, 地图:${mapName}, 标签:${tagName}, 仅本机:${onlyCurrentlyClient}]`)
-    
+
     // 修正了参数传递顺序，使其与解析顺序一致
     const res = await this.api.createRoom(token, clientID, typeEng, mapid, tag, password, onlyCurrentlyClient)
 
@@ -244,7 +244,7 @@ export class Room extends plugin {
     return true
   }
 
-  async joinRoom () {
+  async joinRoom() {
     const token = await utils.getAccount(this.e.user_id)
     const clientID = getClientID()
     if (!token) {
@@ -258,10 +258,10 @@ export class Room extends plugin {
 
     const match = this.e.msg.match(/^(#三角洲|\^)?加入房间\s+(\d+)(.*)$/)
     if (!match) {
-        await this.e.reply('指令格式错误，请使用：#三角洲加入房间 <房间ID> [密码]')
-        return true
+      await this.e.reply('指令格式错误，请使用：#三角洲加入房间 <房间ID> [密码]')
+      return true
     }
-    
+
     const roomId = match[2]
     const password = match[3] ? match[3].trim() : ''
 
@@ -279,7 +279,7 @@ export class Room extends plugin {
     return true
   }
 
-  async quitRoom () {
+  async quitRoom() {
     const token = await utils.getAccount(this.e.user_id)
     const clientID = getClientID()
     if (!token) {
@@ -308,7 +308,7 @@ export class Room extends plugin {
     return true
   }
 
-  async kickMember () {
+  async kickMember() {
     const token = await utils.getAccount(this.e.user_id)
     const clientID = getClientID()
     if (!token) {
@@ -322,17 +322,17 @@ export class Room extends plugin {
 
     const match = this.e.msg.match(/^(#三角洲|\^)?踢人\s*(\d+)/)
     if (!match || !this.e.at) {
-        await this.e.reply('指令格式错误，请使用：#三角洲踢人 <房间ID> @目标玩家')
-        return true
+      await this.e.reply('指令格式错误，请使用：#三角洲踢人 <房间ID> @目标玩家')
+      return true
     }
-    
+
     const roomId = match[2]
     const targetUserId = this.e.at
     const targetFrameworkToken = await utils.getAccount(targetUserId)
 
     if (!targetFrameworkToken) {
-        await this.e.reply(`目标玩家 @${targetUserId} 未绑定账号。`)
-        return true
+      await this.e.reply(`目标玩家 @${targetUserId} 未绑定账号。`)
+      return true
     }
 
     await this.e.reply(`正在从房间 ${roomId} 中踢出玩家 @${targetUserId}...`)
@@ -349,87 +349,87 @@ export class Room extends plugin {
   }
 
   async getRoomInfo() {
-      const token = await utils.getAccount(this.e.user_id)
-      const clientID = getClientID()
-      if (!token) {
-        await this.e.reply('请先绑定账号。')
-        return true
-      }
-      if (!clientID) {
-        await this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
-        return true
-      }
-      
-      await this.e.reply(`正在查询您所在的房间信息...`);
-      const res = await this.api.getRoomInfo(token, clientID);
+    const token = await utils.getAccount(this.e.user_id)
+    const clientID = getClientID()
+    if (!token) {
+      await this.e.reply('请先绑定账号。')
+      return true
+    }
+    if (!clientID) {
+      await this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
+      return true
+    }
 
-      if (await utils.handleApiError(res, this.e)) return true;
+    await this.e.reply(`正在查询您所在的房间信息...`);
+    const res = await this.api.getRoomInfo(token, clientID);
 
-      if (!res || res.code !== 0 || !res.data) {
-          await this.e.reply(`查询失败: ${res.msg || res.message || '未知错误，可能您不在任何房间内'}`);
-          return true;
-      }
+    if (await utils.handleApiError(res, this.e)) return true;
 
-      const room = res.data;
-      const maps = await getMapData(this.api);
-      const mapName = maps.get(room.mapid) || room.mapid;
-      const tags = await getTagData(this.api);
-      const tagName = tags.get(room.tag) || room.tagText || (room.tag ? '自定义' : '无');
-      let msg = `--- 房间信息 (ID: ${room.roomId}) ---\n`;
-      msg += `模式: ${room.type === 'sol' ? '烽火地带' : '全面战场'}\n`;
-      msg += `标签: ${tagName}\n`;
-      msg += `地图: ${mapName}\n`;
-      msg += `人数: ${room.currentMemberCount}/${room.maxMemberCount}\n\n`;
-      msg += `--- 成员列表 ---\n`;
-      room.members.forEach((member, index) => {
-          msg += `${index + 1}. ${member.nickname} (UID: ${member.uid})\n`;
-      });
-
-      await this.e.reply(msg.trim());
+    if (!res || res.code !== 0 || !res.data) {
+      await this.e.reply(`查询失败: ${res.msg || res.message || '未知错误，可能您不在任何房间内'}`);
       return true;
+    }
+
+    const room = res.data;
+    const maps = await getMapData(this.api);
+    const mapName = maps.get(room.mapid) || room.mapid;
+    const tags = await getTagData(this.api);
+    const tagName = tags.get(room.tag) || room.tagText || (room.tag ? '自定义' : '无');
+    let msg = `--- 房间信息 (ID: ${room.roomId}) ---\n`;
+    msg += `模式: ${room.type === 'sol' ? '烽火地带' : '全面战场'}\n`;
+    msg += `标签: ${tagName}\n`;
+    msg += `地图: ${mapName}\n`;
+    msg += `人数: ${room.currentMemberCount}/${room.maxMemberCount}\n\n`;
+    msg += `--- 成员列表 ---\n`;
+    room.members.forEach((member, index) => {
+      msg += `${index + 1}. ${member.nickname} (UID: ${member.uid})\n`;
+    });
+
+    await this.e.reply(msg.trim());
+    return true;
   }
 
   async getMapList() {
-      await this.e.reply("正在获取最新地图列表...");
-      const res = await this.api.getMaps();
-      
-      if (await utils.handleApiError(res, this.e)) return true;
+    await this.e.reply("正在获取最新地图列表...");
+    const res = await this.api.getMaps();
 
-      if (!res || res.code !== 0 || !res.data) {
-          await this.e.reply(`获取地图列表失败: ${res.msg || res.message || '未知错误'}`);
-          return true;
-      }
-      
-      let msg = "--- 房间可用地图列表 ---\n";
-      msg += "ID - 地图名称\n";
-      res.data.forEach(map => {
-          msg += `${map.id} - ${map.name}\n`;
-      });
-      await this.e.reply(msg.trim());
+    if (await utils.handleApiError(res, this.e)) return true;
+
+    if (!res || res.code !== 0 || !res.data) {
+      await this.e.reply(`获取地图列表失败: ${res.msg || res.message || '未知错误'}`);
       return true;
+    }
+
+    let msg = "--- 房间可用地图列表 ---\n";
+    msg += "ID - 地图名称\n";
+    res.data.forEach(map => {
+      msg += `${map.id} - ${map.name}\n`;
+    });
+    await this.e.reply(msg.trim());
+    return true;
   }
 
   async getTagList() {
-      await this.e.reply("正在获取最新标签列表...");
-      const res = await this.api.getTags();
-      
-      if (await utils.handleApiError(res, this.e)) return true;
+    await this.e.reply("正在获取最新标签列表...");
+    const res = await this.api.getTags();
 
-      if (!res || res.code !== 0 || !res.data) {
-          await this.e.reply(`获取标签列表失败: ${res.msg || res.message || '未知错误'}`);
-          return true;
-      }
+    if (await utils.handleApiError(res, this.e)) return true;
 
-      if (res.data.length === 0) {
-          await this.e.reply("暂无可用房间标签。");
-      } else {
-          let msg = "--- 房间可用标签列表 ---\n";
-          msg += "ID - 标签名称\n";
-          res.data.forEach(tag => {
-              msg += `${tag.id} - ${tag.name}\n`;
-          });
-          await this.e.reply(msg.trim());
-      }
+    if (!res || res.code !== 0 || !res.data) {
+      await this.e.reply(`获取标签列表失败: ${res.msg || res.message || '未知错误'}`);
       return true;
+    }
+
+    if (res.data.length === 0) {
+      await this.e.reply("暂无可用房间标签。");
+    } else {
+      let msg = "--- 房间可用标签列表 ---\n";
+      msg += "ID - 标签名称\n";
+      res.data.forEach(tag => {
+        msg += `${tag.id} - ${tag.name}\n`;
+      });
+      await this.e.reply(msg.trim());
+    }
+    return true;
   }
 } 

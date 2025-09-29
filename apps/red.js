@@ -53,7 +53,7 @@ export class Red extends plugin {
 
       forwardMsg.push({
         ...userInfo,
-        message: `【藏品解锁记录】\n总计：${records.total}条记录\n查询时间：${res.data.currentTime}` 
+        message: `【藏品解锁记录】\n总计：${records.total}条记录\n查询时间：${res.data.currentTime}`
       })
 
       // 按时间倒序排列（最新的在前）
@@ -63,7 +63,7 @@ export class Red extends plugin {
         // 确保使用字符串类型的ID进行查找
         const itemName = itemMap.get(String(record.itemId)) || `未知物品(${record.itemId})`
         const mapInfo = DataManager.getMapName(record.mapid)
-        
+
         let msg = `${index + 1}. ${itemName}\n`
         msg += `时间：${record.time}\n`
         msg += `地图：${mapInfo}\n`
@@ -98,7 +98,7 @@ export class Red extends plugin {
     try {
       // 1. 先搜索物品获取objectID
       const searchRes = await this.api.searchObject(itemName, '')
-      
+
       if (await utils.handleApiError(searchRes, e)) return true
 
       const items = searchRes?.data?.keywords
@@ -116,7 +116,7 @@ export class Red extends plugin {
 
       // 2. 根据objectID获取具体记录
       const recordRes = await this.api.getRedRecord(token, objectId)
-      
+
       if (await utils.handleApiError(recordRes, e)) return true
 
       if (!recordRes || !recordRes.success || !recordRes.data) {
@@ -133,7 +133,7 @@ export class Red extends plugin {
 
       forwardMsg.push({
         ...userInfo,
-        message: `【${targetItem.objectName} 解锁记录】\n物品ID：${objectId}\n总计：${itemData.total}条记录\n${itemData.des ? `描述：${itemData.des}\n` : ''}查询时间：${recordRes.data.currentTime}` 
+        message: `【${targetItem.objectName} 解锁记录】\n物品ID：${objectId}\n总计：${itemData.total}条记录\n${itemData.des ? `描述：${itemData.des}\n` : ''}查询时间：${recordRes.data.currentTime}`
       })
 
       // 按时间倒序排列
@@ -146,17 +146,17 @@ export class Red extends plugin {
         msg += `时间：${record.time}\n`
         msg += `地图：${mapInfo}\n`
         msg += `数量：${record.num}`
-        
+
         forwardMsg.push({ ...userInfo, message: msg })
       })
 
       await e.reply(await Bot.makeForwardMsg(forwardMsg))
-      
+
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 指定藏品记录查询失败:', error)
       await e.reply('查询失败，请稍后重试')
     }
-    
+
     return
   }
 
@@ -167,17 +167,17 @@ export class Red extends plugin {
    */
   async getItemNameMap(itemIds) {
     const itemMap = new Map()
-    
+
     // 去重处理并转为字符串
     const uniqueIds = [...new Set(itemIds)].map(id => String(id))
-    
+
     logger.info(`[DELTA FORCE PLUGIN] 开始查询物品名称，共${uniqueIds.length}个ID: ${uniqueIds.join(',')}`)
-    
+
     // 先尝试批量查询
     try {
       const batchRes = await this.api.searchObject('', uniqueIds.join(','))
       logger.info(`[DELTA FORCE PLUGIN] 批量查询结果: ${JSON.stringify(batchRes?.data?.keywords?.length || 0)}条记录`)
-      
+
       if (batchRes?.success && batchRes?.data?.keywords) {
         batchRes.data.keywords.forEach(item => {
           // 确保使用字符串类型的ID作为key
@@ -188,17 +188,17 @@ export class Red extends plugin {
     } catch (error) {
       logger.error(`[DELTA FORCE PLUGIN] 批量查询失败: ${error.message}`)
     }
-    
+
     // 检查还有哪些ID没有找到，进行单个查询
     const missingIds = uniqueIds.filter(id => !itemMap.has(id))
     if (missingIds.length > 0) {
       logger.info(`[DELTA FORCE PLUGIN] 还有${missingIds.length}个ID需要单独查询: ${missingIds.join(',')}`)
-      
+
       for (const id of missingIds) {
         try {
           const singleRes = await this.api.searchObject('', id)
           logger.info(`[DELTA FORCE PLUGIN] 单个查询ID ${id} 结果: ${JSON.stringify(singleRes?.data?.keywords?.length || 0)}条记录`)
-          
+
           if (singleRes?.success && singleRes?.data?.keywords?.length > 0) {
             const item = singleRes.data.keywords[0]
             itemMap.set(String(item.objectID), item.objectName)
@@ -206,7 +206,7 @@ export class Red extends plugin {
           } else {
             logger.warn(`[DELTA FORCE PLUGIN] 单个查询ID ${id} 未找到结果`)
           }
-          
+
           // 单个查询间隔
           await new Promise(resolve => setTimeout(resolve, 300))
         } catch (singleError) {
@@ -214,7 +214,7 @@ export class Red extends plugin {
         }
       }
     }
-    
+
     logger.info(`[DELTA FORCE PLUGIN] 物品名称查询完成，成功获取${itemMap.size}/${uniqueIds.length}个物品名称`)
     return itemMap
   }

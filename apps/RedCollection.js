@@ -24,10 +24,10 @@ export class RedCollection extends plugin {
 
     // URL解码函数（参考Info.js）
     decode(str) {
-        try { 
-            return decodeURIComponent(str || '') 
-        } catch (e) { 
-            return str || '' 
+        try {
+            return decodeURIComponent(str || '')
+        } catch (e) {
+            return str || ''
         }
     }
 
@@ -36,7 +36,7 @@ export class RedCollection extends plugin {
             // 解析赛季参数
             let seasonId = 'all'  // 默认查询所有赛季
             let seasonDisplay = '所有赛季'
-            
+
             const seasonMatch = e.msg.match(/^(#三角洲|\^)(大红收藏|大红藏品|大红海报|藏品海报)(?:\s+(\d+))?$/)
             if (seasonMatch && seasonMatch[3]) {
                 seasonId = seasonMatch[3]
@@ -54,7 +54,7 @@ export class RedCollection extends plugin {
             // 获取个人信息（用户名、头像、段位分数）
             const personalInfoRes = await this.api.getPersonalInfo(token)
             if (await utils.handleApiError(personalInfoRes, e)) return true;
-            
+
             if (!personalInfoRes.data || !personalInfoRes.roleInfo) {
                 await e.reply('获取个人信息失败：API返回数据格式异常')
                 return true
@@ -63,7 +63,7 @@ export class RedCollection extends plugin {
             // 获取个人数据（支持赛季参数）
             const personalDataRes = await this.api.getPersonalData(token, '', seasonId)
             if (await utils.handleApiError(personalDataRes, e)) return true;
-            
+
             if (!personalDataRes.success || !personalDataRes.data) {
                 await e.reply('获取个人数据失败：API返回数据格式异常')
                 return true
@@ -72,7 +72,7 @@ export class RedCollection extends plugin {
             // 获取大红称号信息
             const titleRes = await this.api.getTitle(token)
             if (await utils.handleApiError(titleRes, e)) return true;
-            
+
             if (!titleRes.success || !titleRes.data) {
                 await e.reply('获取大红称号失败：API返回数据格式异常')
                 return true
@@ -83,12 +83,12 @@ export class RedCollection extends plugin {
             const { roleInfo } = personalInfoRes
 
             const userName = this.decode(userData?.charac_name || roleInfo?.charac_name) || '未知'
-            
+
             let userAvatar = this.decode(userData?.picurl || roleInfo?.picurl)
             if (userAvatar && /^[0-9]+$/.test(userAvatar)) {
                 userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${userAvatar}.webp`
             }
-            
+
             let userRank = '未知段位'
             if (careerData?.rankpoint) {
                 const fullRank = DataManager.getRankByScore(careerData.rankpoint, 'sol')
@@ -102,7 +102,7 @@ export class RedCollection extends plugin {
             if (allModesData?.sol?.data?.data?.solDetail) {
                 solDetail = allModesData.sol.data.data.solDetail
             }
-            
+
             if (!solDetail) {
                 await e.reply('没有找到烽火地带游戏数据，请确保您已经在游戏中进行过烽火地带模式的对局。')
                 return true
@@ -118,7 +118,7 @@ export class RedCollection extends plugin {
             const redTotalMoney = solDetail.redTotalMoney || 0
             const redTotalCount = solDetail.redTotalCount || 0
             const redCollectionDetail = solDetail.redCollectionDetail || []
-            
+
             if (redCollectionDetail.length === 0) {
                 await e.reply('您还没有任何大红收藏品，快去游戏中获取一些稀有收藏品吧！')
                 return true
@@ -135,7 +135,7 @@ export class RedCollection extends plugin {
 
             // 获取所有需要查询名称的物品ID
             const objectIds = sortedCollections.map(item => item.objectID)
-            
+
             // 批量查询物品名称
             let objectNames = {}
             if (objectIds.length > 0) {
@@ -167,15 +167,15 @@ export class RedCollection extends plugin {
                 if (allCollectionsRes && allCollectionsRes.data && allCollectionsRes.data.keywords) {
                     // 筛选出grade=6的物品（大红藏品）
                     const allRedCollections = allCollectionsRes.data.keywords.filter(item => item.grade === 6)
-                    
+
                     // 获取已收藏的物品ID集合
                     const collectedIds = new Set(redCollectionDetail.map(item => item.objectID))
-                    
+
                     // 找出未收藏的物品
                     const uncollectedItems = allRedCollections.filter(item => !collectedIds.has(item.objectID))
-                    
+
                     unlockedCount = uncollectedItems.length
-                    
+
                     // 随机选择3个未收藏的物品展示
                     if (uncollectedItems.length > 0) {
                         const shuffled = uncollectedItems.sort(() => 0.5 - Math.random())
@@ -211,8 +211,8 @@ export class RedCollection extends plugin {
             }
 
             try {
-                const img = await Render.render('Template/redCollection/redCollection.html', renderData, { 
-                    e, 
+                const img = await Render.render('Template/redCollection/redCollection.html', renderData, {
+                    e,
                     scale: 1.0,
                     renderCfg: {
                         viewPort: {
