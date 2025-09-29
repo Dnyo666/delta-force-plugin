@@ -4,7 +4,7 @@ import DataManager from '../utils/Data.js'
 import Render from '../components/Render.js'
 
 export class Info extends plugin {
-  constructor (e) {
+  constructor(e) {
     super({
       name: '三角洲信息',
       dsc: '查询三角洲行动个人信息',
@@ -27,10 +27,10 @@ export class Info extends plugin {
 
   // URL解码函数
   decode(str) {
-    try { 
-      return decodeURIComponent(str || '') 
-    } catch (e) { 
-      return str || '' 
+    try {
+      return decodeURIComponent(str || '')
+    } catch (e) {
+      return str || ''
     }
   }
 
@@ -48,9 +48,9 @@ export class Info extends plugin {
 
     let totalMinutes;
     if (unit === 'seconds') {
-        totalMinutes = Math.floor(numValue / 60);
+      totalMinutes = Math.floor(numValue / 60);
     } else { // minutes
-        totalMinutes = numValue;
+      totalMinutes = numValue;
     }
     const h = Math.floor(totalMinutes / 60);
     const m = Math.floor(totalMinutes % 60);
@@ -60,8 +60,7 @@ export class Info extends plugin {
   async getUserInfo() {
     const token = await utils.getAccount(this.e.user_id)
     if (!token) {
-      await this.e.reply([segment.at(this.e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
-      return true
+      return await this.e.reply([segment.at(this.e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
     }
 
     await this.e.reply('正在生成个人信息，请稍候...')
@@ -72,8 +71,7 @@ export class Info extends plugin {
       if (await utils.handleApiError(res, this.e)) return true;
 
       if (!res.data || !res.roleInfo || !res.data.careerData) {
-        await this.e.reply(`查询失败: API 返回数据格式不正确`)
-        return true
+        return await this.e.reply(`查询失败: API 返回数据格式不正确`)
       }
 
       const { userData, careerData } = res.data;
@@ -98,7 +96,7 @@ export class Info extends plugin {
       // 段位信息处理
       const solRank = careerData.rankpoint ? DataManager.getRankByScore(careerData.rankpoint, 'sol') : '-';
       const tdmRank = careerData.tdmrankpoint ? DataManager.getRankByScore(careerData.tdmrankpoint, 'tdm') : '-';
-      
+
       // 获取段位图片路径
       const solRankImagePath = DataManager.getRankImagePath(solRank, 'sol');
       const tdmRankImagePath = DataManager.getRankImagePath(tdmRank, 'mp');
@@ -116,7 +114,7 @@ export class Info extends plugin {
         registerTime: this.formatDate(roleInfo.register_time),
         lastLoginTime: this.formatDate(roleInfo.lastlogintime),
         accountStatus: `账号封禁: ${isBanUser} | 禁言: ${isBanSpeak} | 防沉迷: ${isAdult}`,
-        
+
         // 烽火地带信息
         solLevel: roleInfo.level || '-',
         solRankName: solRankName,
@@ -126,7 +124,7 @@ export class Info extends plugin {
         solEscapeRatio: careerData.solescaperatio || '-',
         solTotalKill: careerData.soltotalkill || '-',
         solDuration: this.formatDuration(careerData.solduration),
-        
+
         // 全面战场信息
         tdmLevel: roleInfo.tdmlevel || '-',
         tdmRankName: tdmRankName,
@@ -136,15 +134,15 @@ export class Info extends plugin {
         tdmWinRatio: careerData.tdmsuccessratio || '-',
         tdmTotalKill: careerData.tdmtotalkill || '-',
         tdmDuration: this.formatDuration(careerData.tdmduration, 'minutes'),
-        
+
         // 资产信息
         hafCoin: roleInfo.hafcoinnum?.toLocaleString() || '-',
         totalAssets: totalAssets > 0 ? totalAssets.toFixed(2) + 'M' : '-'
       };
 
       try {
-        const img = await Render.render('Template/userInfo/userInfo.html', renderData, { 
-          e: this.e, 
+        const img = await Render.render('Template/userInfo/userInfo.html', renderData, {
+          e: this.e,
           retType: 'default',
           renderCfg: {
             viewport: {
@@ -153,34 +151,30 @@ export class Info extends plugin {
             }
           }
         })
-        
+
         // 检查图片数据是否有效 - 修复对象类型处理
         if (img) {
           try {
-            await this.e.reply(img)
-            return true
+            return await this.e.reply(img)
           } catch (replyError) {
             logger.error('[三角洲信息] 发送图片失败:', replyError)
             // 如果发送失败，记录更详细的图片信息
-            logger.error('[三角洲信息] 图片数据详情:', { 
-              type: typeof img, 
+            logger.error('[三角洲信息] 图片数据详情:', {
+              type: typeof img,
               isBuffer: Buffer.isBuffer(img),
               isString: typeof img === 'string',
               constructor: img?.constructor?.name,
               keys: img && typeof img === 'object' ? Object.keys(img) : null
             })
-            await this.e.reply('图片发送失败，请稍后重试。')
-            return true
+            return await this.e.reply('图片发送失败，请稍后重试。')
           }
         } else {
           logger.error('[三角洲信息] 渲染失败: 图片数据为空')
-          await this.e.reply('图片渲染失败，请稍后重试。')
-          return true
+          return await this.e.reply('图片渲染失败，请稍后重试。')
         }
       } catch (renderError) {
         logger.error('[三角洲信息] 渲染失败:', renderError)
-        await this.e.reply(`图片渲染失败: ${renderError.message}`)
-        return true
+        return await this.e.reply(`图片渲染失败: ${renderError.message}`)
       }
 
     } catch (error) {
@@ -190,33 +184,31 @@ export class Info extends plugin {
         `\n查询个人信息失败: ${error.message}\n\n请检查：\n1. 账号是否已登录或过期\n2. 是否已绑定游戏角色\n3. 网络连接是否正常`
       ])
     }
-    return true
+    return
   }
 
   async getUid() {
     const token = await utils.getAccount(this.e.user_id)
     if (!token) {
-      await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
-      return true
+      return await this.e.reply('您尚未绑定账号，请使用 #三角洲登录 进行绑定。')
     }
 
     const res = await this.api.getPersonalInfo(token)
-    
-    if (await utils.handleApiError(res, this.e)) return true;
-    
+
+    if (await utils.handleApiError(res, this.e)) return;
+
     if (!res.roleInfo) {
-      await this.e.reply(`查询失败: API 返回数据格式不正确`)
-      return true
+      return await this.e.reply(`查询失败: API 返回数据格式不正确`)
     }
-    
+
     const { roleInfo } = res;
     const nickName = roleInfo.charac_name || '未知';
     const uid = roleInfo.uid || '未获取到';
-    
+
     await this.e.reply([
       segment.at(this.e.user_id),
       `\n昵称: ${nickName}\nUID: ${uid}`
     ]);
-    return true;
+    return;
   }
-} 
+}
