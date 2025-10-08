@@ -42,6 +42,6 @@ for (let i in files) {
 }
 
 logger.info(logger.green("- DELTA-FORCE-PLUGIN 载入成功"));
-logger.info(logger.magenta(`- 欢迎加入三角洲行动插件交流群 936712625`));
+logger.info(logger.magenta(`- 欢迎加入三角洲行动插件交流群 932459332`));
 
 export { apps };
