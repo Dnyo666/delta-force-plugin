@@ -31,7 +31,7 @@ export class Data extends plugin {
     const args = argString.split(' ').filter(Boolean)
 
     let mode = ''
-    let season = 5 // 默认赛季5
+    let season = 6 // 默认赛季5
 
     // 健壮的参数解析，不再依赖顺序
     for (const arg of args) {
