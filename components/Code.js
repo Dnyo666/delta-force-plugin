@@ -906,4 +906,48 @@ export default class Code {
   async getUserStats(clientID) {
     return this.request('/stats/users', { clientID }, 'GET');
   }
+
+  // ==================== 音频语音接口 ====================
+
+  /**
+   * 随机获取音频
+   * @param {object} params - 查询参数
+   * @returns {Promise<object>} - API响应
+   */
+  async getRandomAudio(params = {}) {
+    return this.request('/df/audio/random', params, 'GET');
+  }
+
+  /**
+   * 获取角色随机音频
+   * @param {object} params - 查询参数
+   * @returns {Promise<object>} - API响应
+   */
+  async getCharacterAudio(params = {}) {
+    return this.request('/df/audio/character', params, 'GET');
+  }
+
+  /**
+   * 获取音频分类列表
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioCategories() {
+    return this.request('/df/audio/categories', {}, 'GET');
+  }
+
+  /**
+   * 获取角色列表
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioCharacters() {
+    return this.request('/df/audio/characters', {}, 'GET');
+  }
+
+  /**
+   * 获取音频统计信息
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioStats() {
+    return this.request('/df/audio/stats', {}, 'GET');
+  }
 }

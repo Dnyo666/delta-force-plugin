@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v1.5.0**
+**版本号：v1.6.0**
 
 ## 登录接口
 
@@ -1210,6 +1210,292 @@ POST /df/person/ai
 - type：游戏模式（sol/mp，必填）
 - conversation_id：对话ID（可选，用于继续对话）
 
+## 音频语音接口
+
+### 随机获取音频
+```http
+GET /df/audio/random?category=Voice&character=红狼&scene=InGame&actionType=Breath&count=1
+```
+
+**参数说明：**
+- `category`：一级分类（可选）
+  - `Voice`: 角色语音
+  - `CutScene`: 过场动画
+  - `Amb`: 环境音效
+  - `Music`: 音乐
+  - `SFX`: 音效
+  - `Festivel`: 节日活动
+- `character`：角色名称（可选，中文名，如：红狼、威龙、蜂医等）
+- `characterId`：角色ID（可选，如：Voice_101, Voice_301等，与character二选一）
+- `scene`：场景（可选，如：InGame, OutGame）
+- `actionType`：动作类型（可选，如：Breath, Combat等）
+- `actionDetail`：具体动作（可选）
+- `count`：返回数量（可选，默认1，范围1-5）
+
+**功能说明**：随机获取符合条件的音频文件，支持角色中文名称查询，自动生成七牛云私有下载链接（带时效性，由服务器配置控制，防止恶意刷流量）
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "成功获取3个随机音频文件",
+  "data": {
+    "audios": [
+      {
+        "fileId": "74cc3b1cfc4d2b6a",
+        "fileName": "Voice_101_Breath_Pain_01",
+        "category": "Voice",
+        "characterId": "Voice_301",
+        "characterName": "红狼",
+        "scene": "InGame",
+        "actionType": "Breath",
+        "actionDetail": "Voice_301_Breath_Pain",
+        "download": {
+          "url": "http://df-voice.shallow.ink/Voice%2FCharacter%2FVoice_301%2FInGame%2FBreath%2FVoice_301_Breath_Pain%2Fxxx.wav?e=1729260000&token=maPJADfhLC3g9YzTR8BUUisFWqUb0mwzz6u02icM:abc123...",
+          "token": "maPJADfhLC3g9YzTR8BUUisFWqUb0mwzz6u02icM:abc123...",
+          "deadline": 1729260000,
+          "expiresAt": "2025-10-18T12:30:00.000Z",
+          "expiresIn": 120
+        },
+        "metadata": {
+          "filePath": "Voice/Character/Voice_101/InGame/Breath/Voice_101_Breath_Pain/xxx.wav",
+          "fileExtension": "wav"
+        }
+      }
+    ],
+    "query": {
+      "category": "Voice",
+      "character": "红狼",
+      "characterId": "Voice_301",
+      "scene": "InGame",
+      "actionType": "Breath"
+    },
+    "statistics": {
+      "requested": 3,
+      "returned": 3,
+      "totalAvailable": 150
+    },
+    "cdn": {
+      "provider": "qiniu",
+      "bucket": "delta-force-voice",
+      "domain": "df-voice.shallow.ink"
+    }
+  }
+}
+```
+
+### 获取角色随机音频
+```http
+GET /df/audio/character?character=红狼&scene=InGame&actionType=Breath&count=1
+```
+
+**参数说明：**
+- `character`：角色名称（可选，中文名，如：红狼、威龙、蜂医等）
+- `characterId`：角色ID（可选，如：Voice_101, Voice_301等，与character二选一）
+- `scene`：场景（可选，如：InGame, OutGame）
+- `actionType`：动作类型（可选，如：Breath, Combat）
+- `actionDetail`：具体动作（可选）
+- `count`：返回数量（可选，默认1，范围1-5）
+
+**功能说明**：随机获取角色语音，支持角色中文名称查询，所有参数均为可选（不指定角色则随机获取任意角色语音），下载链接有效期由服务器配置控制
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "成功获取3个角色随机音频",
+  "data": {
+    "audios": [
+      {
+        "fileId": "74cc3b1cfc4d2b6a",
+        "fileName": "Voice_301_Breath_Pain_01",
+        "category": "Voice",
+        "characterId": "Voice_301",
+        "characterName": "红狼",
+        "scene": "InGame",
+        "actionType": "Breath",
+        "actionDetail": "Voice_301_Breath_Pain",
+        "download": {
+          "url": "http://df-voice.shallow.ink/...",
+          "token": "...",
+          "deadline": 1729260000,
+          "expiresAt": "2025-10-18T12:30:00.000Z",
+          "expiresIn": 120
+        },
+        "metadata": {
+          "filePath": "Voice/Character/Voice_101/InGame/Breath/xxx.wav",
+          "fileExtension": "wav"
+        }
+      }
+    ],
+    "query": {
+      "character": "红狼",
+      "characterId": "Voice_301",
+      "scene": "InGame",
+      "actionType": "Breath"
+    },
+    "statistics": {
+      "requested": 3,
+      "returned": 3,
+      "totalAvailable": 150
+    },
+    "cdn": {
+      "provider": "qiniu",
+      "bucket": "delta-force-voice",
+      "domain": "df-voice.shallow.ink"
+    }
+  }
+}
+```
+
+### 获取音频分类列表
+```http
+GET /df/audio/categories
+```
+
+**功能说明**：获取所有可用的音频分类列表（用于查询筛选）
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "获取音频分类成功",
+  "data": {
+    "categories": [
+      { "category": "Amb" },
+      { "category": "CutScene" },
+      { "category": "Festivel" },
+      { "category": "Music" },
+      { "category": "SFX" },
+      { "category": "Voice" }
+    ]
+  }
+}
+```
+
+### 获取角色列表
+```http
+GET /df/audio/characters
+```
+
+**功能说明**：获取所有可用的角色ID列表（用于查询筛选）
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "获取角色列表成功",
+  "data": {
+    "characters": [
+      "Voice_101",
+      "Voice_201",
+      "Voice_301",
+      "Voice_302",
+      "Voice_401",
+      "Voice_402",
+      "Voice_403",
+      "Voice_501",
+      "Voice_601",
+      "Voice_701",
+      "Voice_801",
+      "Voice_901"
+    ]
+  }
+}
+```
+
+### 获取音频统计信息
+```http
+GET /df/audio/stats
+```
+
+**功能说明**：获取音频文件的基础统计信息，包括总数和各分类的文件数量
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "获取音频统计成功",
+  "data": {
+    "totalFiles": 15436,
+    "categories": [
+      { "category": "Amb", "fileCount": 2500 },
+      { "category": "CutScene", "fileCount": 1200 },
+      { "category": "Festivel", "fileCount": 236 },
+      { "category": "Music", "fileCount": 1500 },
+      { "category": "SFX", "fileCount": 1500 },
+      { "category": "Voice", "fileCount": 8500 }
+    ]
+  }
+}
+```
+
+### 同步音频文件（管理员）
+```http
+POST /df/audio/sync
+```
+
+**参数 (body/json)**：
+- `clientID`：管理员的ClientID（必填）
+
+**功能说明**：
+- 从七牛云私有空间下载音频文件列表
+- 解析文件路径，提取分类元数据
+- 批量同步到MongoDB数据库
+- **仅限管理员操作**
+- 自动同步：启动2秒后执行首次同步，之后根据集群配置定时同步
+
+**响应示例（成功）：**
+```json
+{
+  "success": true,
+  "message": "从七牛云同步音频文件完成",
+  "data": {
+    "total": 15436,
+    "success": 14980,
+    "skipped": 450,
+    "failed": 6,
+    "source": "qiniu",
+    "fileKey": "audio_files_list.txt",
+    "bucket": "delta-force-voice",
+    "syncTime": "2025-10-18T14:01:00.000Z"
+  }
+}
+```
+
+**响应示例（权限不足）：**
+```json
+{
+  "success": false,
+  "message": "权限不足：只有管理员可以执行同步操作"
+}
+```
+
+### 音频接口说明
+1. **私有链接**：所有音频下载链接都是七牛云私有空间的临时签名链接，有时效性
+2. **链接过期时间**：由服务器配置文件控制（默认120秒，范围120-300秒），客户端无法自定义，防止恶意刷流量
+3. **安全机制**：
+   - Token有效期由服务器统一管理
+   - 下载链接使用HMAC-SHA1签名认证
+   - 配置的过期时间会被强制限制在安全范围内
+   - 单次请求最多5个音频
+4. **角色名称支持**：支持使用中文角色名称查询，如 `character=红狼` 会自动映射为 `Voice_301`
+5. **可选参数**：所有筛选参数均为可选，不指定角色则随机获取任意角色语音
+6. **自动同步**：系统会自动从七牛云同步音频文件列表，无需手动操作
+7. **权限控制**：手动同步仅限管理员，查询接口无需认证
+8. **分类结构**：
+   - **Voice**：角色语音（按角色ID、场景、动作类型分类）
+   - **CutScene**：过场动画（按游戏模式、场景分类）
+   - **Amb**：环境音效
+   - **Music**：背景音乐
+   - **SFX**：音效
+   - **Festivel**：节日活动音频
+9. **角色名称映射**（支持中文名查询）：
+   - **医疗 (1xx)**：蜂医 → Voice_101 / 蛊 → Voice_102 / 蛊A → Voice_102_skinA
+   - **侦查 (2xx)**：露娜 → Voice_201 / 骇爪 → Voice_202 / 骇爪A → Voice_202_skinA / 银翼 → Voice_203
+   - **突击 (3xx)**：红狼 → Voice_301 / 红狼A/蚀金玫瑰 → Voice_301_skinA / 威龙 → Voice_302 / 无名 → Voice_303 / 疾风 → Voice_304
+   - **工程 (4xx)**：深蓝 → Voice_401 / 乌鲁鲁 → Voice_402 / 牧羊人 → Voice_403
+   - **干员ID对应关系**：蜂医(20003) / 蛊(20004) / 露娜(40005) / 骇爪(40010) / 银翼(40011) / 红狼(10007) / 威龙(10010) / 无名(10011) / 疾风(10012) / 深蓝(30010) / 乌鲁鲁(30009) / 牧羊人(30008)
 
 ## 系统健康检查
 
@@ -1469,4 +1755,6 @@ GET /example
 7. 利润排行榜基于历史数据计算，需要先有相关数据
 8. 改枪方案V2版本提供了更完整的功能，建议优先使用
 9. AI战绩点评功能需要先绑定游戏角色并有战绩数据
-10. 建议在测试环境中使用，避免影响生产数据
+10. **音频下载链接时效性**：所有音频下载链接都是七牛云私有空间的签名链接，默认2分钟过期（由服务器配置控制），请及时使用
+11. **音频同步权限**：音频文件同步功能仅限管理员操作，系统会自动定时同步
+12. **防刷流量机制**：音频链接的有效期由服务器配置统一管理，客户端无法自定义，防止恶意长时间占用CDN资源
