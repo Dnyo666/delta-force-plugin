@@ -7,6 +7,8 @@ import { pluginRoot } from '../model/path.js'
 let mapData = null;
 let operatorData = null;
 let rankScoreData = null;
+let audioTagsData = null;  // 音频标签数据
+let audioCharactersData = null;  // 音频角色数据
 
 // 新增JSON数据缓存变量
 let weaponsData = null;
@@ -22,6 +24,8 @@ let meleeWeaponsData = null;
 const localMapsFile = path.join(pluginRoot, 'config', 'maps.yaml');
 const localOperatorsFile = path.join(pluginRoot, 'config', 'operators.yaml');
 const localRankScoreFile = path.join(pluginRoot, 'config', 'rankscore.yaml');
+const localAudioTagsFile = path.join(pluginRoot, 'config', 'audio_tags.yaml');
+const localAudioCharactersFile = path.join(pluginRoot, 'config', 'audio_characters.yaml');
 
 // JSON数据文件路径
 const jsonDataFiles = {
@@ -213,6 +217,77 @@ async function fetchAndCache(dataType) {
                     logger.info('[Delta-Force 数据管理器] 已从本地加载排位分数数据');
                 }
             }
+        } else if (dataType === 'audiotags') {
+            const res = await api.getAudioTags();
+            if (res && (res.success || res.code === 0)) {
+                // 处理音频标签数据：构建双向映射
+                const tagMapping = {
+                    _tags: {},      // tag -> description
+                    _keywords: {}   // 中文关键词 -> tag
+                };
+                
+                if (res.data && Array.isArray(res.data.tags)) {
+                    res.data.tags.forEach(tagInfo => {
+                        const tag = tagInfo.tag || tagInfo;
+                        const desc = tagInfo.description || '';
+                        
+                        // 保存tag和描述
+                        tagMapping._tags[tag] = desc;
+                        
+                        // 根据描述自动生成中文映射
+                        if (desc) {
+                            // 提取描述中的关键词作为中文映射
+                            const keywords = desc.split(/[\/、]/).map(k => k.trim());
+                            keywords.forEach(keyword => {
+                                if (keyword && keyword.length > 0 && keyword.length < 20) {
+                                    tagMapping._keywords[keyword] = tag;
+                                }
+                            });
+                        }
+                    });
+                }
+                
+                audioTagsData = tagMapping;
+                saveRankScoreData(audioTagsData, localAudioTagsFile);
+                logger.info(`[Delta-Force 数据管理器] 音频标签数据已缓存 (${Object.keys(tagMapping._tags).length}个tag, ${Object.keys(tagMapping._keywords).length}个关键词)`);
+            } else {
+                logger.error('[Delta-Force 数据管理器] 获取音频标签数据失败:', res || '无响应');
+                // 尝试从本地加载
+                const localData = loadRankScoreData(localAudioTagsFile);
+                if (localData && Object.keys(localData).length > 0) {
+                    audioTagsData = localData;
+                    logger.info('[Delta-Force 数据管理器] 已从本地加载音频标签数据');
+                }
+            }
+        } else if (dataType === 'audiocharacters') {
+            const res = await api.getAudioCharacters();
+            if (res && (res.success || res.code === 0)) {
+                // 处理音频角色数据：构建中文名到voiceId的映射
+                const characterMapping = {};
+                if (res.data && Array.isArray(res.data.characters)) {
+                    res.data.characters.forEach(char => {
+                        const voiceId = char.voiceId || char;
+                        const name = char.name || voiceId;
+                        
+                        // 保存voiceId和中文名
+                        characterMapping[voiceId] = name;
+                        // 如果有中文名，建立反向映射
+                        if (name && name !== voiceId) {
+                            characterMapping[name] = voiceId;
+                        }
+                    });
+                }
+                audioCharactersData = characterMapping;
+                saveRankScoreData(audioCharactersData, localAudioCharactersFile);
+            } else {
+                logger.error('[Delta-Force 数据管理器] 获取音频角色数据失败:', res || '无响应');
+                // 尝试从本地加载
+                const localData = loadRankScoreData(localAudioCharactersFile);
+                if (localData && Object.keys(localData).length > 0) {
+                    audioCharactersData = localData;
+                    logger.info('[Delta-Force 数据管理器] 已从本地加载音频角色数据');
+                }
+            }
         }
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 缓存 ${dataType} 数据失败:`, error);
@@ -234,6 +309,18 @@ async function fetchAndCache(dataType) {
             if (localData && Object.keys(localData).length > 0) {
                 rankScoreData = localData;
                 logger.info('[Delta-Force 数据管理器] 已从本地加载排位分数数据');
+            }
+        } else if (dataType === 'audiotags') {
+            const localData = loadRankScoreData(localAudioTagsFile);
+            if (localData && Object.keys(localData).length > 0) {
+                audioTagsData = localData;
+                logger.info('[Delta-Force 数据管理器] 已从本地加载音频标签数据');
+            }
+        } else if (dataType === 'audiocharacters') {
+            const localData = loadRankScoreData(localAudioCharactersFile);
+            if (localData && Object.keys(localData).length > 0) {
+                audioCharactersData = localData;
+                logger.info('[Delta-Force 数据管理器] 已从本地加载音频角色数据');
             }
         }
     }
@@ -260,6 +347,20 @@ export default {
         if (localRankScore && Object.keys(localRankScore).length > 0) {
             rankScoreData = localRankScore;
             logger.mark(`[Delta-Force 数据管理器] 已从本地加载排位分数数据 (${Object.keys(localRankScore).length}个模式)`);
+        }
+        
+        // 加载音频相关数据
+        const localAudioTags = loadRankScoreData(localAudioTagsFile);
+        if (localAudioTags && Object.keys(localAudioTags).length > 0) {
+            audioTagsData = localAudioTags;
+            const tagCount = localAudioTags._tags ? Object.keys(localAudioTags._tags).length : Object.keys(localAudioTags).length;
+            logger.mark(`[Delta-Force 数据管理器] 已从本地加载音频标签数据 (${tagCount}个标签)`);
+        }
+        
+        const localAudioCharacters = loadRankScoreData(localAudioCharactersFile);
+        if (localAudioCharacters && Object.keys(localAudioCharacters).length > 0) {
+            audioCharactersData = localAudioCharacters;
+            logger.mark(`[Delta-Force 数据管理器] 已从本地加载音频角色数据 (${Object.keys(localAudioCharacters).length}个映射)`);
         }
         
         // 加载本地JSON游戏数据（静态数据，无需API同步）
@@ -294,7 +395,9 @@ export default {
         await Promise.all([
             fetchAndCache('maps'),
             fetchAndCache('operators'),
-            fetchAndCache('rankscore')
+            fetchAndCache('rankscore'),
+            fetchAndCache('audiotags'),
+            fetchAndCache('audiocharacters')
         ]);
         
         logger.info('[Delta-Force 数据管理器] 数据缓存初始化完成。');
@@ -451,43 +554,11 @@ export default {
     },
 
     /**
-     * 随机选择一套人物背景配置（用于烽火地带个人数据模板）
-     * @returns {object} - 包含人物图片和对应位置样式的配置对象
+     * 随机选择人物背景图片（用于烽火地带个人数据模板）
+     * @returns {object} - 包含随机选择的人物图片信息
      */
     getRandomCharacterBackgroundConfig() {
-        // 定义7个不同的位置层级配置
-        const positionLayers = [
-            {
-                name: 'layer-1',
-                style: 'width: 1083.49px; height: 571.37px; left: -532.20px; top: -18px; transform: rotate(5deg); transform-origin: top left;'
-            },
-            {
-                name: 'layer-2', 
-                style: 'width: 1258px; height: 663px; left: -477px; top: -17px;'
-            },
-            {
-                name: 'layer-3',
-                style: 'width: 1136px; height: 599px; left: -541px; top: 44px;'
-            },
-            {
-                name: 'layer-4',
-                style: 'width: 1100px; height: 580px; left: -458px; top: 63px;'
-            },
-            {
-                name: 'layer-5',
-                style: 'width: 1141px; height: 602px; left: -506px; top: 43px;'
-            },
-            {
-                name: 'layer-6',
-                style: 'width: 1137px; height: 640px; left: -506px; top: 0px;'
-            },
-            {
-                name: 'layer-7',
-                style: 'width: 1200px; height: 633px; left: -592px; top: 6px;'
-            }
-        ];
-
-        // 人物图片列表
+        // 人物图片列表 - 只管理图片资源，不涉及样式
         const characterImages = [
             'background/op/p4_img2.png',
             'background/op/p4_img3.png', 
@@ -498,26 +569,20 @@ export default {
             'background/op/p4_img9.png'
         ];
 
-        // 为每个人物图片配置一个主要位置层级
-        const characterConfigs = [
-            { image: 'background/op/p4_img2.png', mainLayer: 0 }, // 使用layer-1
-            { image: 'background/op/p4_img3.png', mainLayer: 1 }, // 使用layer-2
-            { image: 'background/op/p4_img5.png', mainLayer: 2 }, // 使用layer-3  
-            { image: 'background/op/p4_img6.png', mainLayer: 3 }, // 使用layer-4
-            { image: 'background/op/p4_img7.png', mainLayer: 4 }, // 使用layer-5
-            { image: 'background/op/p4_img8.png', mainLayer: 5 }, // 使用layer-6
-            { image: 'background/op/p4_img9.png', mainLayer: 6 }  // 使用layer-7
-        ];
+        // 随机选择一张图片
+        const randomIndex = Math.floor(Math.random() * characterImages.length);
+        const selectedImage = characterImages[randomIndex];
+        
+        // 生成对应的 CSS 类名，样式由 CSS 文件管理
+        const imageNumber = selectedImage.match(/p4_img(\d+)/)[1];
+        const cssClass = `character-bg-${imageNumber}`;
 
-        // 随机选择一个配置
-        const randomIndex = Math.floor(Math.random() * characterConfigs.length);
-        const selectedConfig = characterConfigs[randomIndex];
-        const selectedLayer = positionLayers[selectedConfig.mainLayer];
+        logger.info(`[Delta-Force 数据管理器] 随机选择人物背景: ${selectedImage} (CSS类: ${cssClass})`);
 
         return {
-            image: selectedConfig.image,
-            layerName: selectedLayer.name,
-            style: selectedLayer.style
+            image: selectedImage,
+            cssClass: cssClass,
+            imageNumber: imageNumber
         };
     },
 
@@ -799,6 +864,114 @@ export default {
             bullets,
             caliber: weapon.caliber
         };
+    },
+
+    // ========== 音频数据访问接口 ==========
+
+    /**
+     * 根据中文名或tag获取音频标签
+     * @param {string} keyword - 关键词（中文名或tag）
+     * @returns {string|null} - tag值
+     */
+    getAudioTag(keyword) {
+        if (!audioTagsData) {
+            const localData = loadRankScoreData(localAudioTagsFile);
+            if (localData && Object.keys(localData).length > 0) {
+                audioTagsData = localData;
+                logger.info('[Delta-Force 数据管理器] 已临时从本地加载音频标签数据');
+            } else {
+                logger.warn('[Delta-Force 数据管理器] 音频标签数据未就绪');
+                return null;
+            }
+        }
+
+        // 兼容新旧数据格式
+        if (audioTagsData._tags && audioTagsData._keywords) {
+            // 新格式：分离的双向映射
+            // 1. 先检查是否是tag本身
+            if (audioTagsData._tags[keyword]) {
+                return keyword;
+            }
+            // 2. 再检查是否是中文关键词
+            if (audioTagsData._keywords[keyword]) {
+                return audioTagsData._keywords[keyword];
+            }
+        } else {
+            // 旧格式兼容：直接映射表
+            if (!audioTagsData[keyword]) {
+                return null;
+            }
+
+            const value = audioTagsData[keyword];
+            
+            // 判断是tag本身还是中文映射
+            if (this.isTagFormat(value)) {
+                return value;
+            }
+            
+            if (this.isTagFormat(keyword)) {
+                return keyword;
+            }
+        }
+
+        return null;
+    },
+
+    /**
+     * 判断字符串是否是tag格式
+     * @param {string} str - 字符串
+     * @returns {boolean} - 是否是tag格式
+     */
+    isTagFormat(str) {
+        if (!str || typeof str !== 'string') return false;
+        
+        // tag格式包括：boss-X, task-X, Evac-X, eggs-X, bf-X, BF_X, 或特定单词
+        return str.startsWith('boss-') || 
+               str.startsWith('task-') ||
+               str.startsWith('Evac-') ||
+               str.startsWith('eggs-') ||
+               str.startsWith('bf-') ||
+               str.startsWith('BF_') ||
+               ['haavk', 'commander', 'babel', 'Beginner'].includes(str);
+    },
+
+    /**
+     * 根据中文名或voiceId获取角色ID
+     * @param {string} keyword - 关键词（中文名或voiceId）
+     * @returns {string|null} - voiceId值
+     */
+    getAudioCharacter(keyword) {
+        if (!audioCharactersData) {
+            const localData = loadRankScoreData(localAudioCharactersFile);
+            if (localData && Object.keys(localData).length > 0) {
+                audioCharactersData = localData;
+                logger.info('[Delta-Force 数据管理器] 已临时从本地加载音频角色数据');
+            } else {
+                logger.warn('[Delta-Force 数据管理器] 音频角色数据未就绪');
+                return null;
+            }
+        }
+
+        // 直接返回映射值
+        return audioCharactersData[keyword] || null;
+    },
+
+    /**
+     * 检查是否是有效的音频标签
+     * @param {string} keyword - 关键词
+     * @returns {boolean} - 是否是有效标签
+     */
+    isValidAudioTag(keyword) {
+        return this.getAudioTag(keyword) !== null;
+    },
+
+    /**
+     * 检查是否是有效的角色名
+     * @param {string} keyword - 关键词
+     * @returns {boolean} - 是否是有效角色
+     */
+    isValidAudioCharacter(keyword) {
+        return this.getAudioCharacter(keyword) !== null;
     }
     
 }; 

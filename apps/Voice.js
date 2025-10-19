@@ -1,10 +1,7 @@
 import Code from '../components/Code.js'
 import utils from '../utils/utils.js'
+import DataManager from '../utils/Data.js'
 
-/**
- * 三角洲随机语音插件
- * 功能：从云端实时获取并发送游戏角色语音
- */
 export class Voice extends plugin {
   constructor(e) {
     super({
@@ -14,16 +11,16 @@ export class Voice extends plugin {
       priority: 100,
       rule: [
         {
-          reg: '^(#三角洲|\\^)(随机)?语音$',
-          fnc: 'sendRandomVoice'
-        },
-        {
-          reg: '^(#三角洲|\\^)角色语音\\s*(.*)$',
-          fnc: 'sendCharacterVoice'
+          reg: '^(#三角洲|\\^)语音\\s*(.*)$',
+          fnc: 'sendVoice'
         },
         {
           reg: '^(#三角洲|\\^)语音列表$',
           fnc: 'getCharacterList'
+        },
+        {
+          reg: '^(#三角洲|\\^)标签列表$',
+          fnc: 'getTagList'
         },
         {
           reg: '^(#三角洲|\\^)语音分类$',
@@ -40,23 +37,55 @@ export class Voice extends plugin {
   }
 
   /**
-   * 发送随机语音
-   * 命令：#三角洲语音 或 #三角洲随机语音
-   * 功能：随机获取任意角色的语音
+   * 统一的语音发送方法 - 智能识别参数类型
+   * 命令：#三角洲语音 [参数...]
+   * 支持：
+   * - 无参数：完全随机
+   * - 角色名：红狼、威龙、蜂医等
+   * - 特殊标签：渡鸦、boss-1、task-0等
+   * - 场景+动作：局内、局外、呼吸、战斗等
    */
-  async sendRandomVoice() {
+  async sendVoice() {
     try {
-      await this.e.reply('正在获取随机语音，请稍候...')
+      const match = this.e.msg.match(/^(#三角洲|\^)语音\s*(.*)$/)
+      const params = match[2].trim()
 
-      // 调用随机音频接口（不指定任何参数，完全随机）
-      const res = await this.api.getRandomAudio({
-        count: 1
-      })
+      // 解析参数并构建查询
+      const queryParams = await this.parseVoiceParams(params)
+      
+      // 构建提示信息
+      let hint = '正在获取'
+      if (queryParams.hint) {
+        hint += ` ${queryParams.hint}`
+      }
+      hint += ' 语音...'
+      await this.e.reply(hint)
+
+      // 调用对应的API
+      let res
+      if (queryParams.tag) {
+        // 使用tag参数（特殊语音）
+        res = await this.api.getRandomAudio({
+          tag: queryParams.tag,
+          count: 1
+        })
+      } else if (queryParams.character || queryParams.scene || queryParams.actionType) {
+        // 使用角色/场景/动作参数
+        const apiParams = { count: 1 }
+        if (queryParams.character) apiParams.character = queryParams.character
+        if (queryParams.scene) apiParams.scene = queryParams.scene
+        if (queryParams.actionType) apiParams.actionType = queryParams.actionType
+        
+        res = await this.api.getCharacterAudio(apiParams)
+      } else {
+        // 完全随机
+        res = await this.api.getRandomAudio({ count: 1 })
+      }
 
       if (await utils.handleApiError(res, this.e)) return true
 
       if (!res.data || !res.data.audios || res.data.audios.length === 0) {
-        await this.e.reply('未获取到语音数据，请稍后重试。')
+        await this.e.reply('未找到符合条件的语音\n使用 #三角洲语音列表 查看所有可用内容')
         return true
       }
 
@@ -64,91 +93,100 @@ export class Voice extends plugin {
       await this.sendVoiceMessage(res.data.audios[0])
       return true
     } catch (error) {
-      logger.error('[DELTA FORCE PLUGIN] 发送随机语音失败:', error)
+      logger.error('[DELTA FORCE PLUGIN] 发送语音失败:', error)
       await this.e.reply('发送语音失败，请稍后重试。')
       return true
     }
   }
 
   /**
-   * 发送指定角色语音
-   * 命令：#三角洲角色语音 [角色名] [场景] [动作类型]
-   * 示例：#三角洲角色语音 红狼 局内 战斗
+   * 智能解析语音参数
+   * @param {string} params - 用户输入的参数字符串
+   * @returns {object} 解析后的查询参数
    */
-  async sendCharacterVoice() {
-    try {
-      const match = this.e.msg.match(/^(#三角洲|\^)角色语音\s*(.*)$/)
-      const params = match[2].trim()
-
-      // 解析参数
-      const args = params.split(/\s+/).filter(arg => arg)
-      
-      // 构建请求参数
-      const queryParams = {
-        count: 1
-      }
-
-      // 第一个参数：角色名
-      if (args[0]) {
-        queryParams.character = args[0]
-      }
-
-      // 第二个参数：场景
-      if (args[1]) {
-        const sceneMap = {
-          '局内': 'InGame',
-          '局外': 'OutGame',
-          'ingame': 'InGame',
-          'outgame': 'OutGame'
-        }
-        queryParams.scene = sceneMap[args[1].toLowerCase()] || args[1]
-      }
-
-      // 第三个参数：动作类型
-      if (args[2]) {
-        const actionMap = {
-          '呼吸': 'Breath',
-          '战斗': 'Combat',
-          '死亡': 'Death',
-          'breath': 'Breath',
-          'combat': 'Combat',
-          'death': 'Death'
-        }
-        queryParams.actionType = actionMap[args[2].toLowerCase()] || args[2]
-      }
-
-      // 提示信息
-      let hint = '正在获取'
-      if (queryParams.character) hint += ` ${queryParams.character}`
-      if (queryParams.scene) hint += ` ${queryParams.scene === 'InGame' ? '局内' : '局外'}`
-      if (queryParams.actionType) hint += ` ${queryParams.actionType}`
-      hint += ' 语音...'
-      
-      await this.e.reply(hint)
-
-      // 调用角色语音接口
-      const res = await this.api.getCharacterAudio(queryParams)
-
-      if (await utils.handleApiError(res, this.e)) return true
-
-      if (!res.data || !res.data.audios || res.data.audios.length === 0) {
-        let errorMsg = '未找到符合条件的语音'
-        if (queryParams.character) {
-          errorMsg += `\n角色：${queryParams.character}`
-        }
-        errorMsg += '\n使用 #三角洲语音列表 查看所有可用角色'
-        await this.e.reply(errorMsg)
-        return true
-      }
-
-      // 发送语音
-      await this.sendVoiceMessage(res.data.audios[0])
-      return true
-    } catch (error) {
-      logger.error('[DELTA FORCE PLUGIN] 发送角色语音失败:', error)
-      await this.e.reply('发送语音失败，请稍后重试。')
-      return true
+  async parseVoiceParams(params) {
+    if (!params) {
+      return { hint: '随机' }
     }
+
+    const args = params.split(/\s+/).filter(arg => arg)
+    const result = {}
+    let hint = ''
+
+    // 场景映射
+    const sceneMap = {
+      '局内': 'InGame',
+      '局外': 'OutGame',
+      'ingame': 'InGame',
+      'outgame': 'OutGame'
+    }
+
+    // 动作类型映射
+    const actionMap = {
+      '呼吸': 'Breath',
+      '战斗': 'Combat',
+      '死亡': 'Death',
+      '受伤': 'Pain',
+      'breath': 'Breath',
+      'combat': 'Combat',
+      'death': 'Death',
+      'pain': 'Pain'
+    }
+
+    // 第一个参数：可能是角色名、标签或场景
+    if (args[0]) {
+      const firstArg = args[0]
+      
+      // 1. 检查是否是特殊标签（使用DataManager）
+      const mappedTag = DataManager.getAudioTag(firstArg)
+      if (mappedTag) {
+        result.tag = mappedTag
+        result.hint = firstArg
+        return result
+      }
+      
+      // 2. 检查是否是场景
+      if (sceneMap[firstArg] || sceneMap[firstArg.toLowerCase()]) {
+        result.scene = sceneMap[firstArg] || sceneMap[firstArg.toLowerCase()]
+        hint = firstArg
+      } 
+      // 3. 检查是否是动作类型
+      else if (actionMap[firstArg] || actionMap[firstArg.toLowerCase()]) {
+        result.actionType = actionMap[firstArg] || actionMap[firstArg.toLowerCase()]
+        hint = firstArg
+      }
+      // 4. 默认当作角色名（可能是中文名或voiceId）
+      else {
+        result.character = firstArg
+        hint = firstArg
+      }
+    }
+
+    // 第二个参数：可能是场景或动作类型
+    if (args[1]) {
+      const secondArg = args[1]
+      
+      if (sceneMap[secondArg] || sceneMap[secondArg.toLowerCase()]) {
+        result.scene = sceneMap[secondArg] || sceneMap[secondArg.toLowerCase()]
+        hint += ` ${secondArg}`
+      } else if (actionMap[secondArg] || actionMap[secondArg.toLowerCase()]) {
+        result.actionType = actionMap[secondArg] || actionMap[secondArg.toLowerCase()]
+        hint += ` ${secondArg}`
+      }
+    }
+
+    // 第三个参数：动作类型
+    if (args[2]) {
+      const thirdArg = args[2]
+      
+      if (actionMap[thirdArg] || actionMap[thirdArg.toLowerCase()]) {
+        result.actionType = actionMap[thirdArg] || actionMap[thirdArg.toLowerCase()]
+        hint += ` ${thirdArg}`
+      }
+    }
+
+    result.hint = hint || '随机'
+    return result
   }
 
   /**
@@ -168,25 +206,173 @@ export class Voice extends plugin {
         return true
       }
 
-      // 构建消息 - 直接显示API返回的角色ID列表
-      let message = '【三角洲角色语音列表】\n\n'
-      message += `共 ${res.data.characters.length} 个角色\n\n`
-      
-      res.data.characters.forEach((characterId, index) => {
-        message += `${index + 1}. ${characterId}\n`
+      // 构建转发消息
+      const userInfo = {
+        user_id: this.e.user_id,
+        nickname: this.e.sender.nickname
+      }
+
+      const forwardMsg = []
+
+      // 添加标题
+      forwardMsg.push({
+        ...userInfo,
+        message: `【三角洲角色语音列表】\n共 ${res.data.characters.length} 个角色`
       })
 
-      message += '\n使用方法：\n'
-      message += '• #三角洲角色语音 [角色名]\n'
-      message += '• #三角洲角色语音 [角色名] [局内/局外]\n'
-      message += '• #三角洲角色语音 [角色名] [局内/局外] [呼吸/战斗]\n\n'
-      message += '提示：支持使用中文角色名，如"红狼"、"威龙"等'
+      // 按职业分组
+      const groups = {
+        '医疗': [],
+        '侦查': [],
+        '突击': [],
+        '工程': [],
+        '其他': []
+      }
 
-      await this.e.reply(message)
+      res.data.characters.forEach(char => {
+        const voiceId = char.voiceId || char
+        const name = char.name || voiceId
+        
+        if (voiceId.startsWith('Voice_1')) {
+          groups['医疗'].push({ voiceId, name })
+        } else if (voiceId.startsWith('Voice_2')) {
+          groups['侦查'].push({ voiceId, name })
+        } else if (voiceId.startsWith('Voice_3')) {
+          groups['突击'].push({ voiceId, name })
+        } else if (voiceId.startsWith('Voice_4')) {
+          groups['工程'].push({ voiceId, name })
+        } else {
+          groups['其他'].push({ voiceId, name })
+        }
+      })
+
+      // 添加分组角色
+      for (const [category, characters] of Object.entries(groups)) {
+        if (characters.length > 0) {
+          let msg = `【${category}】\n\n`
+          characters.forEach((char, index) => {
+            msg += `${index + 1}. ${char.name}`
+            if (char.voiceId !== char.name) {
+              msg += ` (${char.voiceId})`
+            }
+            msg += '\n'
+          })
+          
+          forwardMsg.push({
+            ...userInfo,
+            message: msg
+          })
+        }
+      }
+
+      // 添加使用说明
+      forwardMsg.push({
+        ...userInfo,
+        message: '使用方法：\n• #三角洲语音 [角色名]\n• #三角洲语音 [角色名] [局内/局外]\n• #三角洲语音 [角色名] [局内/局外] [呼吸/战斗]\n\n提示：支持使用中文角色名和Voice ID'
+      })
+
+      // 发送转发消息
+      await this.e.reply(await Bot.makeForwardMsg(forwardMsg))
       return true
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 获取角色列表失败:', error)
       await this.e.reply('获取角色列表失败，请稍后重试。')
+      return true
+    }
+  }
+
+  /**
+   * 获取特殊标签列表 - 使用转发消息
+   * 命令：#三角洲标签列表
+   */
+  async getTagList() {
+    try {
+      await this.e.reply('正在获取特殊标签列表...')
+
+      const res = await this.api.getAudioTags()
+
+      if (await utils.handleApiError(res, this.e)) return true
+
+      if (!res.data || !res.data.tags) {
+        await this.e.reply('获取特殊标签列表失败。')
+        return true
+      }
+
+      // 构建转发消息
+      const userInfo = {
+        user_id: this.e.user_id,
+        nickname: this.e.sender.nickname
+      }
+
+      const forwardMsg = []
+
+      // 添加标题
+      forwardMsg.push({
+        ...userInfo,
+        message: `【三角洲特殊语音标签】\n共 ${res.data.tags.length} 个标签`
+      })
+
+      // 按类型分组
+      const groups = {
+        'Boss语音': [],
+        '任务语音': [],
+        '撤离语音': [],
+        '彩蛋语音': [],
+        '全面战场': [],
+        '其他': []
+      }
+
+      res.data.tags.forEach(tagInfo => {
+        const tag = tagInfo.tag || tagInfo
+        const desc = tagInfo.description || ''
+        const item = { tag, desc }
+
+        if (tag.startsWith('boss-')) {
+          groups['Boss语音'].push(item)
+        } else if (tag.startsWith('task-')) {
+          groups['任务语音'].push(item)
+        } else if (tag.startsWith('Evac-')) {
+          groups['撤离语音'].push(item)
+        } else if (tag.startsWith('eggs-')) {
+          groups['彩蛋语音'].push(item)
+        } else if (tag.startsWith('bf-') || tag.startsWith('BF_')) {
+          groups['全面战场'].push(item)
+        } else {
+          groups['其他'].push(item)
+        }
+      })
+
+      // 添加分组标签
+      for (const [category, tags] of Object.entries(groups)) {
+        if (tags.length > 0) {
+          let msg = `【${category}】\n\n`
+          tags.forEach((item, index) => {
+            msg += `${index + 1}. ${item.tag}`
+            if (item.desc) {
+              msg += ` - ${item.desc}`
+            }
+            msg += '\n'
+          })
+          
+          forwardMsg.push({
+            ...userInfo,
+            message: msg
+          })
+        }
+      }
+
+      // 添加使用说明
+      forwardMsg.push({
+        ...userInfo,
+        message: '使用方法：\n• #三角洲语音 [标签]\n• #三角洲语音 [中文名]\n\n示例：\n• #三角洲语音 渡鸦\n• #三角洲语音 boss-1\n• #三角洲语音 破壁'
+      })
+
+      // 发送转发消息
+      await this.e.reply(await Bot.makeForwardMsg(forwardMsg))
+      return true
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 获取特殊标签列表失败:', error)
+      await this.e.reply('获取特殊标签列表失败，请稍后重试。')
       return true
     }
   }
@@ -223,8 +409,6 @@ export class Voice extends plugin {
         const categoryName = categoryNameMap[cat.category] || cat.category
         message += `• ${categoryName} (${cat.category})\n`
       })
-
-      message += '\n当前仅支持角色语音(Voice)播放'
 
       await this.e.reply(message)
       return true

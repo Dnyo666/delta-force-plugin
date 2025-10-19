@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v1.6.0**
+**版本号：v1.6.1**
 
 ## 登录接口
 
@@ -1225,6 +1225,13 @@ GET /df/audio/random?category=Voice&character=红狼&scene=InGame&actionType=Bre
   - `Music`: 音乐
   - `SFX`: 音效
   - `Festivel`: 节日活动
+- `tag`：特殊标签（可选，用于特殊语音，与目录结构参数互斥）
+  - Boss语音：`boss-1`(赛伊德) / `boss-2`(雷斯) / `boss-4`(德穆兰) / `boss-5-1`(渡鸦) / `boss-5-2`(典狱长)
+  - 任务语音：`task-0`(契约任务) / `task-1`(破壁) / `task-2`(铁穹) / `task-4`(飞升者) / `task-5`(黑潮) / `task-5-0`(监狱行动)
+  - 撤离语音：`Evac-1`(直升机) / `Evac-2`(电梯) / `Evac-3`(火车)
+  - 彩蛋语音：`eggs-1`(大战场彩蛋) / `eggs-2`(大卫语音)
+  - 全面战场：`bf-1`(战场部署) / `bf-2`(战场就绪) / `BF_GTI`(GTI战场) / `BF_Haavk`(哈夫克战场)
+  - 其他：`haavk`(哈夫克全兵种) / `commander`(指令) / `babel`(巴别塔) / `Beginner`(新手教程)
 - `character`：角色名称（可选，中文名，如：红狼、威龙、蜂医等）
 - `characterId`：角色ID（可选，如：Voice_101, Voice_301等，与character二选一）
 - `scene`：场景（可选，如：InGame, OutGame）
@@ -1232,7 +1239,21 @@ GET /df/audio/random?category=Voice&character=红狼&scene=InGame&actionType=Bre
 - `actionDetail`：具体动作（可选）
 - `count`：返回数量（可选，默认1，范围1-5）
 
-**功能说明**：随机获取符合条件的音频文件，支持角色中文名称查询，自动生成七牛云私有下载链接（带时效性，由服务器配置控制，防止恶意刷流量）
+**重要说明：**
+- `tag` 参数与 `character/characterId/scene/actionType/actionDetail` 互斥
+- 提供 `tag` 时，其他目录结构参数会被忽略
+- `tag` 只用于获取Boss、任务、彩蛋等特殊语音
+
+**功能说明**：随机获取符合条件的音频文件，支持角色中文名称查询和特殊标签分类，自动生成七牛云私有下载链接（带时效性，由服务器配置控制，防止恶意刷流量）
+
+**使用示例：**
+```bash
+# 使用tag获取Boss语音
+GET /df/audio/random?tag=boss-1&count=3
+
+# 使用目录结构获取角色语音
+GET /df/audio/random?category=Voice&character=红狼&scene=InGame&count=3
+```
 
 **响应示例：**
 ```json
@@ -1373,12 +1394,41 @@ GET /df/audio/categories
 }
 ```
 
+### 获取特殊标签列表
+```http
+GET /df/audio/tags
+```
+
+**功能说明**：获取所有可用的特殊标签列表（用于Voice分类下的特殊语音查询）
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "获取标签列表成功",
+  "data": {
+    "tags": [
+      { "tag": "eggs-1", "description": "大战场彩蛋语音" },
+      { "tag": "eggs-2", "description": "大卫语音" },
+      { "tag": "boss-1", "description": "赛伊德" },
+      { "tag": "boss-2", "description": "雷斯/肘击王" },
+      { "tag": "boss-4", "description": "德穆兰/老太" },
+      { "tag": "task-0", "description": "契约任务/保险箱任务" },
+      { "tag": "task-1", "description": "破壁行动" },
+      { "tag": "Evac-1", "description": "撤离语音/直升机" },
+      { "tag": "bf-1", "description": "战场部署" },
+      { "tag": "commander", "description": "指令" }
+    ]
+  }
+}
+```
+
 ### 获取角色列表
 ```http
 GET /df/audio/characters
 ```
 
-**功能说明**：获取所有可用的角色ID列表（用于查询筛选）
+**功能说明**：获取所有可用的角色列表，包含Voice ID和中文名称映射
 
 **响应示例：**
 ```json
@@ -1387,18 +1437,21 @@ GET /df/audio/characters
   "message": "获取角色列表成功",
   "data": {
     "characters": [
-      "Voice_101",
-      "Voice_201",
-      "Voice_301",
-      "Voice_302",
-      "Voice_401",
-      "Voice_402",
-      "Voice_403",
-      "Voice_501",
-      "Voice_601",
-      "Voice_701",
-      "Voice_801",
-      "Voice_901"
+      { "voiceId": "Voice_101", "name": "蜂医" },
+      { "voiceId": "Voice_102", "name": "蛊" },
+      { "voiceId": "Voice_102_skinA", "name": "蛊A" },
+      { "voiceId": "Voice_201", "name": "露娜" },
+      { "voiceId": "Voice_202", "name": "骇爪" },
+      { "voiceId": "Voice_202_skinA", "name": "骇爪A" },
+      { "voiceId": "Voice_203", "name": "银翼" },
+      { "voiceId": "Voice_301", "name": "红狼" },
+      { "voiceId": "Voice_301_skinA", "name": "红狼A" },
+      { "voiceId": "Voice_302", "name": "威龙" },
+      { "voiceId": "Voice_303", "name": "无名" },
+      { "voiceId": "Voice_304", "name": "疾风" },
+      { "voiceId": "Voice_401", "name": "深蓝" },
+      { "voiceId": "Voice_402", "name": "乌鲁鲁" },
+      { "voiceId": "Voice_403", "name": "牧羊人" }
     ]
   }
 }
@@ -1479,18 +1532,22 @@ POST /df/audio/sync
    - 下载链接使用HMAC-SHA1签名认证
    - 配置的过期时间会被强制限制在安全范围内
    - 单次请求最多5个音频
-4. **角色名称支持**：支持使用中文角色名称查询，如 `character=红狼` 会自动映射为 `Voice_301`
-5. **可选参数**：所有筛选参数均为可选，不指定角色则随机获取任意角色语音
-6. **自动同步**：系统会自动从七牛云同步音频文件列表，无需手动操作
-7. **权限控制**：手动同步仅限管理员，查询接口无需认证
-8. **分类结构**：
-   - **Voice**：角色语音（按角色ID、场景、动作类型分类）
+4. **两种查询方式**：
+   - **目录结构查询**：使用 `character/characterId/scene/actionType` 等参数（适用于角色语音）
+   - **特殊标签查询**：使用 `tag` 参数（只支持 `/df/audio/random` 接口，用于Boss、任务、彩蛋等特殊语音）
+   - **互斥规则**：提供 `tag` 时会忽略目录结构参数
+5. **角色名称支持**：支持使用中文角色名称查询，如 `character=红狼` 会自动映射为 `Voice_301`
+6. **可选参数**：所有筛选参数均为可选，不指定角色则随机获取任意角色语音
+7. **自动同步**：系统会自动从七牛云同步音频文件列表，无需手动操作
+8. **权限控制**：手动同步仅限管理员，查询接口无需认证
+9. **分类结构**：
+   - **Voice**：角色语音（按角色ID、场景、动作类型分类）+ 特殊语音（按tag分类）
    - **CutScene**：过场动画（按游戏模式、场景分类）
    - **Amb**：环境音效
    - **Music**：背景音乐
    - **SFX**：音效
    - **Festivel**：节日活动音频
-9. **角色名称映射**（支持中文名查询）：
+10. **角色名称映射**（支持中文名查询）：
    - **医疗 (1xx)**：蜂医 → Voice_101 / 蛊 → Voice_102 / 蛊A → Voice_102_skinA
    - **侦查 (2xx)**：露娜 → Voice_201 / 骇爪 → Voice_202 / 骇爪A → Voice_202_skinA / 银翼 → Voice_203
    - **突击 (3xx)**：红狼 → Voice_301 / 红狼A/蚀金玫瑰 → Voice_301_skinA / 威龙 → Voice_302 / 无名 → Voice_303 / 疾风 → Voice_304

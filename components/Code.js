@@ -950,4 +950,12 @@ export default class Code {
   async getAudioStats() {
     return this.request('/df/audio/stats', {}, 'GET');
   }
+
+  /**
+   * 获取特殊标签列表
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioTags() {
+    return this.request('/df/audio/tags', {}, 'GET');
+  }
 }
