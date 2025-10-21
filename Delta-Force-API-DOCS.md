@@ -1,4 +1,4 @@
-# Delta Force API 业务测试文档
+ # Delta Force API 业务测试文档
 
 ## 概述
 
@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v1.6.1**
+**版本号：v1.6.5**
 
 ## 登录接口
 
@@ -24,28 +24,36 @@ GET /login/qq/qr
 {
   "code": 0,
   "msg": "ok",
-  "token": "frameworkToken",
+  "token": "6bb29277-4d2e-461b-86b4-c7c781c52352",
   "qr_image": "data:image/png;base64,...",
   "expire": 1703123456789
 }
 ```
 
+
+
 #### 2. 轮询扫码状态
 ```http
-GET /login/qq/status?token=frameworkToken
+GET /login/qq/status?token=6bb29277-4d2e-461b-86b4-c7c781c52352
 ```
 
 **状态码说明:**
-- `1`: 等待扫描
-- `2`: 已扫码
-- `3`: 扫码成功
-- `-2`: 二维码超时
-- `-3`: 扫码被拒绝
+- `1`: 等待扫码
+- `2`: 已扫码待确认
+- `0`: 授权成功
+- `-2`: 二维码已过期
+- `-3`: 安全风控拦截
 
 #### 3. 查看token状态
 ```http
 GET /login/qq/token?token=frameworkToken
 ```
+
+**状态码说明:**
+- `0`: token有效
+- `1`: token已过期
+- `2`: token不存在
+- `-1`: 查询失败/缺少参数
 
 #### 4. 手动刷新QQ登录状态
 ```http
@@ -87,13 +95,12 @@ POST /login/qq/ck
 
 #### 2. 轮询CK状态
 ```http
-GET /login/qq/ck/status
+GET /login/qq/ck/status?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
 ```
 
-#### 3. 查看CK token状态
-```http
-GET /login/qq/ck/token
-```
+**状态码说明:**
+- `0`: 已登录
+- `-2`: frameworkToken无效或已过期
 
 ### QQ OAuth 授权登录
 
@@ -146,10 +153,12 @@ POST /login/qq/oauth
 GET /login/qq/oauth/status?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
 ```
 
-#### 4. 查看OAuth token状态
-```http
-GET /login/qq/oauth/token?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
-```
+**状态码说明:**
+- `0`: 已完成/已授权
+- `1`: 等待OAuth授权
+- `2`: 正在处理授权
+- `-2`: OAuth会话已过期
+- `-1`: OAuth授权失败
 
 ### QQ 安全登录
 
@@ -160,18 +169,34 @@ GET /login/qqsafe/qr
 
 #### 2. 轮询安全登录状态
 ```http
-GET /login/qqsafe/status
+GET /login/qqsafe/status?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
 ```
+
+**状态码说明:**
+- `0`: 已登录/授权成功
+- `1`: 等待扫码
+- `2`: 已扫码待确认
+- `-2`: frameworkToken无效或已过期
 
 #### 3. 查看安全登录token状态
 ```http
-GET /login/qqsafe/token
+GET /login/qqsafe/token?token=frameworkToken
 ```
+
+**状态码说明:**
+- `0`: token有效
+- `1`: token已过期
+- `2`: token不存在
+- `-1`: 查询失败/缺少参数
 
 #### 4. 安全登录封禁检查
 ```http
 GET /login/qqsafe/ban
 ```
+
+**参数说明**
+
+- `frameworkToken`
 
 ### 微信扫码登录
 
@@ -182,13 +207,25 @@ GET /login/wechat/qr
 
 #### 2. 轮询扫码状态
 ```http
-GET /login/wechat/status?token=frameworkToken
+GET /login/wechat/status?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
 ```
+
+**状态码说明:**
+- `0`: 已登录/授权成功
+- `1`: 等待扫码
+- `2`: 已扫码待确认
+- `-2`: frameworkToken无效或已过期
 
 #### 3. 查看token状态
 ```http
 GET /login/wechat/token?token=frameworkToken
 ```
+
+**状态码说明:**
+- `0`: token有效
+- `1`: token已过期
+- `2`: token不存在
+- `-1`: 查询失败/缺少参数
 
 #### 4. 手动刷新登陆状态（其实每3小时会自动检测一次）
 ```http
@@ -269,10 +306,12 @@ POST /login/wechat/oauth
 GET /login/wechat/oauth/status?frameworkToken=403f7116-9285-4f6b-bb38-eff3f4f9f401
 ```
 
-#### 4. 查看OAuth token状态
-```http
-GET /login/wechat/oauth/token?frameworkToken=403f7116-9285-4f6b-bb38-eff3f4f9f401
-```
+**状态码说明:**
+- `0`: 已完成/已授权
+- `1`: 等待OAuth授权
+- `2`: 正在处理授权
+- `-2`: OAuth会话已过期
+- `-1`: OAuth授权失败
 
 ### WeGame 登录
 
@@ -283,13 +322,25 @@ GET /login/wegame/qr
 
 #### 2. 轮询WeGame扫码状态
 ```http
-GET /login/wegame/status
+GET /login/wegame/status?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
 ```
+
+**状态码说明:**
+- `0`: 已登录/授权成功
+- `1`: 等待扫码
+- `2`: 已扫码待确认
+- `-2`: frameworkToken无效或已过期
 
 #### 3. 查看WeGame token状态
 ```http
-GET /login/wegame/token
+GET /login/wegame/token?token=frameworkToken
 ```
+
+**状态码说明:**
+- `0`: token有效
+- `1`: token已过期
+- `2`: token不存在
+- `-1`: 查询失败/缺少参数
 
 #### 4. 获取WeGame礼品
 ```http
@@ -305,13 +356,25 @@ GET /login/wegame/wechat/qr
 
 #### 2. 轮询WeGame微信扫码状态
 ```http
-GET /login/wegame/wechat/status
+GET /login/wegame/wechat/status?frameworkToken=xxxxx-xxxxx-xxxxx-xxxxx
 ```
+
+**状态码说明:**
+- `0`: 已登录/授权成功
+- `1`: 等待扫码
+- `2`: 已扫码待确认
+- `-2`: frameworkToken无效或已过期
 
 #### 3. 查看WeGame微信token状态
 ```http
-GET /login/wegame/wechat/token
+GET /login/wegame/wechat/token?token=frameworkToken
 ```
+
+**状态码说明:**
+- `0`: token有效
+- `1`: token已过期
+- `2`: token不存在
+- `-1`: 查询失败/缺少参数
 
 #### 4. 获取WeGame微信礼品
 ```http
@@ -422,9 +485,18 @@ GET /login/oauth/token?frameworkToken=3691c0c9-7701-4496-8ddf-496fe6b9a705
 **Token不存在响应：**
 ```json
 {
-  "code": -2,
-  "msg": "token不存在或已过期",
+  "code": 2,
+  "msg": "token不存在",
   "frameworkToken": "invalid-token"
+}
+```
+
+**Token已过期响应：**
+```json
+{
+  "code": 1,
+  "msg": "token已过期",
+  "frameworkToken": "expired-token"
 }
 ```
 

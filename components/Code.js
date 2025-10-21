@@ -85,9 +85,17 @@ export default class Code {
       }
 
       const responseBody = await response.json().catch(() => ({}))
-      if (responseBody.code !== 0 && responseBody.success !== true) {
+      
+      // 判断是否为轮询接口：登录状态轮询等正常的中间状态不应该被当作错误
+      const isLoginStatusPolling = fullUrl.includes('/login/') && fullUrl.includes('/status');
+      const isOAuthStatusPolling = fullUrl.includes('/oauth/status') || fullUrl.includes('/oauth/platform-status');
+      const isNormalPollingStatus = isLoginStatusPolling || isOAuthStatusPolling;
+      
+      // 只有在非轮询接口或明确的错误状态时才打印警告
+      if (responseBody.code !== 0 && responseBody.success !== true && !isNormalPollingStatus) {
         logger.warn(`[DELTA FORCE PLUGIN] API 返回业务错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
       }
+      
       return responseBody
     } catch (error) {
       const errorMsg = '网络请求异常，请检查后端服务是否可用'
@@ -142,9 +150,17 @@ export default class Code {
       }
 
       const responseBody = await response.json().catch(() => ({}))
-      if (responseBody.code !== 0 && responseBody.success !== true) {
+      
+      // 判断是否为轮询接口：登录状态轮询等正常的中间状态不应该被当作错误
+      const isLoginStatusPolling = fullUrl.includes('/login/') && fullUrl.includes('/status');
+      const isOAuthStatusPolling = fullUrl.includes('/oauth/status') || fullUrl.includes('/oauth/platform-status');
+      const isNormalPollingStatus = isLoginStatusPolling || isOAuthStatusPolling;
+      
+      // 只有在非轮询接口或明确的错误状态时才打印警告
+      if (responseBody.code !== 0 && responseBody.success !== true && !isNormalPollingStatus) {
         logger.warn(`[DELTA FORCE PLUGIN] API 返回业务错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
       }
+      
       return responseBody
     } catch (error) {
       const errorMsg = '网络请求异常，请检查后端服务是否可用'
@@ -307,32 +323,6 @@ export default class Code {
    */
   async verifyOAuthToken(frameworkToken) {
     return this.request('/login/oauth/token', { frameworkToken }, 'GET');
-  }
-
-  // ========== 向后兼容的旧版API方法 ==========
-  
-  /**
-   * @deprecated 请使用 getQqOAuthAuth() 替代
-   * QQ Link登录 - 获取授权链接和frameworkToken (旧版兼容)
-   */
-  async getQqLinkAuth() {
-    return this.getQqOAuthAuth();
-  }
-
-  /**
-   * @deprecated 请使用 submitQqOAuthAuth() 替代  
-   * QQ Link登录 - 提交授权码完成登录 (旧版兼容)
-   */
-  async submitQqLinkAuth(frameworkToken, authCode) {
-    return this.submitQqOAuthAuth(null, frameworkToken, authCode);
-  }
-
-  /**
-   * @deprecated 请使用 getQqOAuthStatus() 替代
-   * 获取QQ Link登录状态 (旧版兼容)
-   */
-  async getQqLinkStatus(frameworkToken) {
-    return this.getQqOAuthStatus(frameworkToken);
   }
 
   // --- 用户数据 ---

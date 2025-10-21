@@ -80,16 +80,94 @@ export class Login extends plugin {
       qrImage = `base64://${qrImage.replace(/^data:image\/png;base64,/, '')}`;
   }
 
-  const qrMsg = await this.e.reply([
-    segment.at(this.e.user_id),
-    `\n请使用另一台设备上的【${platform.toUpperCase()}】扫描二维码登录，有效期约2分钟。\n`,
-    segment.image(qrImage),
-    '\n\n【免责声明】',
-    '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
-    '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
-    '\n害怕风险请勿扫码！',
-    '\n如果无法扫码，请私聊机器人发送【^ck登陆】获取Cookie登录教程。'
-  ]);
+  // 根据平台类型选择不同的提示信息
+  let loginTips;
+  
+  // 判断是否为群聊，私聊不需要艾特
+  const atUser = this.e.isGroup ? [segment.at(this.e.user_id), '\n'] : [];
+  
+  // 根据不同平台生成专属的登录提示
+  switch (platform) {
+    case 'qq':
+      // QQ登录 - 强调长按识别登录QQ账号
+      loginTips = [
+        ...atUser,
+        `请使用【QQ】长按识别二维码登录QQ账号，有效期约2分钟。\n`,
+        segment.image(qrImage),
+        '\n\n【免责声明】',
+        '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+        '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
+        '\n其他登陆方式请发送 ^帮助 查看菜单'
+      ];
+      break;
+      
+    case 'qqsafe':
+      // QQ安全中心登录 - 强调登录QQ安全中心
+      loginTips = [
+        ...atUser,
+        `请使用【QQ】长按识别二维码登录QQ安全中心账号，有效期约2分钟。\n`,
+        segment.image(qrImage),
+        '\n\n【免责声明】',
+        '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+        '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
+        '\n其他登陆方式请发送 ^帮助 查看菜单'
+      ];
+      break;
+      
+    case 'wechat':
+      // 微信登录 - 强调使用微信扫描
+      loginTips = [
+        ...atUser,
+        `请使用【微信】扫描二维码登录微信账号，有效期约2分钟。\n`,
+        segment.image(qrImage),
+        '\n\n【免责声明】',
+        '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+        '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
+        '\n如果无法扫码，请尝试使用其他方法登陆。'
+      ];
+      break;
+      
+    case 'wegame':
+      // WeGame登录 - 强调使用QQ扫描登录WeGame
+      loginTips = [
+        ...atUser,
+        `请使用【QQ】扫描二维码登录WeGame账号，有效期约2分钟。\n`,
+        segment.image(qrImage),
+        '\n\n【免责声明】',
+        '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+        '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
+        '\n如果无法扫码，请尝试使用其他方法登陆。'
+      ];
+      break;
+      
+    case 'wegame/wechat':
+      // WeGame微信登录 - 强调使用微信扫描登录WeGame
+      loginTips = [
+        ...atUser,
+        `请使用【微信】扫描二维码登录WeGame账号，有效期约2分钟。\n`,
+        segment.image(qrImage),
+        '\n\n【免责声明】',
+        '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+        '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
+        '\n如果无法扫码，请尝试使用其他方法登陆。'
+      ];
+      break;
+      
+    default:
+      // 其他未知平台 - 使用通用提示
+      loginTips = [
+        ...atUser,
+        `请扫描二维码登录${platform.toUpperCase()}账号，有效期约2分钟。\n`,
+        segment.image(qrImage),
+        '\n\n【免责声明】',
+        '\n您将通过扫码授权本插件后端服务器获取您的游戏数据。',
+        '\n扫码仅用于获取小程序数据，不涉及登录游戏，如果出现盗号等问题与我方完全无关。',
+        '\n如果无法扫码，请尝试使用其他方法登陆。'
+      ];
+      break;
+  }
+  
+  const qrMsg = await this.e.reply(loginTips);
   if (qrMsg?.message_id) messagesToRecall.push(qrMsg.message_id);
 
   // --- 开始健壮的轮询逻辑 ---
@@ -110,24 +188,37 @@ export class Login extends plugin {
         return;
       }
       
-      // 优先处理 Token 无效的错误情况
+      // 添加调试日志
+      logger.debug(`[DELTA FORCE PLUGIN] 轮询${platform}登录状态: code=${statusRes.code}, status=${statusRes.status}, msg=${statusRes.msg}`);
+      
+      // 优先处理错误码（根据API文档）
       if (statusRes.code === -2) {
-        return reject(new Error(statusRes.msg || '登录凭证无效或已过期'));
+        return reject(new Error(statusRes.msg || '二维码已过期'));
+      }
+      
+      if (statusRes.code === -3) {
+        return reject(new Error(statusRes.msg || '安全风控拦截'));
       }
 
-      switch (statusRes.status) {
-        case 'done': // 登录成功
+      // 获取状态码：优先使用 status 字段，fallback 到 code 字段
+      const status = statusRes.status !== undefined ? statusRes.status : statusRes.code;
+
+      // 根据API文档：0=授权成功, 1=等待扫码, 2=已扫码待确认, -2=已过期, -3=风控
+      switch (status) {
+        case 0: // 授权成功
           const finalToken = statusRes.token || statusRes.frameworkToken;
           if (finalToken) {
+            logger.info(`[DELTA FORCE PLUGIN] ${platform}登录成功，获取到token: ${finalToken.substring(0, 4)}****`);
             resolve(finalToken);
           } else {
             reject(new Error('登录成功但未能获取到最终Token'));
           }
           break;
 
-        case 'scanned': // 已扫码，待确认
+        case 2: // 已扫码，待确认
           if (!notifiedScanned) {
             notifiedScanned = true;
+            logger.info(`[DELTA FORCE PLUGIN] ${platform}二维码已被扫描，等待确认`);
             // 撤回二维码图片
             if (qrMsg?.message_id) {
               try {
@@ -145,16 +236,16 @@ export class Login extends plugin {
           setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
           break;
         
-        case 'pending': // 等待扫描
+        case 1: // 等待扫描
           setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
           break;
 
-        case 'expired': // 二维码超时
+        case -2: // 二维码超时
           reject(new Error('二维码已超时'));
           break;
 
-        default: // 其他未知状态或需要继续轮询的状态(如authed)
-          // logger.debug(`[DELTA FORCE PLUGIN] 轮询登录状态: ${statusRes.status}`); // Original code had this line commented out
+        default: // 其他未知状态或需要继续轮询的状态
+          logger.debug(`[DELTA FORCE PLUGIN] ${platform}登录遇到未知状态: ${status}，继续轮询`);
           setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
           break;
       }
@@ -290,7 +381,7 @@ export class Login extends plugin {
               charMsg += `全面战场等级: ${tdmlevel}\n`;
               charMsg += `防沉迷: ${isAdult}`;
               
-              await this.e.reply([segment.at(this.e.user_id), charMsg]);
+              await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', charMsg] : charMsg);
             } else {
               const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
               await this.e.reply(`自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
@@ -366,7 +457,7 @@ export class Login extends plugin {
             charMsg += `烽火地带等级: ${level}\n`;
             charMsg += `全面战场等级: ${tdmlevel}\n`;
             charMsg += `防沉迷: ${isAdult}`;
-            await this.e.reply([segment.at(this.e.user_id), charMsg]);
+            await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', charMsg] : charMsg);
           } else {
             const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
             await this.e.reply(`自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
@@ -412,7 +503,7 @@ export class Login extends plugin {
       msg += `全面战场等级: ${tdmlevel}\n`;
       msg += `防沉迷: ${isAdult}`;
       
-      await this.e.reply([segment.at(this.e.user_id), msg]);
+      await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', msg] : msg);
     } else {
       const apiMsg = res?.msg || res?.message || '未知错误';
       await this.e.reply(`角色绑定失败: ${apiMsg}`);
@@ -448,7 +539,7 @@ export class Login extends plugin {
           '⚠️ 新版OAuth登录更安全稳定，推荐使用！'
         ].join('\n');
 
-        const helpMessage = await this.e.reply([segment.at(this.e.user_id), '\n', helpMsg]);
+        const helpMessage = await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', helpMsg] : helpMsg);
         // 存储教程消息ID，用于后续可能的撤回，10分钟后自动清理
         if (helpMessage?.message_id) {
           userHelpMessages.set(this.e.user_id, helpMessage.message_id);
@@ -527,7 +618,7 @@ export class Login extends plugin {
             charMsg += `全面战场等级: ${tdmlevel}\n`;
             charMsg += `防沉迷: ${isAdult}`;
             
-            await this.e.reply([segment.at(this.e.user_id), charMsg]);
+            await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', charMsg] : charMsg);
           } else {
             const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
             await this.e.reply(`QQ OAuth登录成功！\n自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
@@ -572,7 +663,7 @@ export class Login extends plugin {
           '',
         ].join('\n');
 
-        const helpMessage = await this.e.reply([segment.at(this.e.user_id), '\n', helpMsg]);
+        const helpMessage = await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', helpMsg] : helpMsg);
         // 存储教程消息ID，用于后续可能的撤回，10分钟后自动清理
         if (helpMessage?.message_id) {
           userHelpMessages.set(this.e.user_id, helpMessage.message_id);
@@ -648,7 +739,7 @@ export class Login extends plugin {
             charMsg += `全面战场等级: ${tdmlevel}\n`;
             charMsg += `防沉迷: ${isAdult}`;
             
-            await this.e.reply([segment.at(this.e.user_id), charMsg]);
+            await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', charMsg] : charMsg);
           } else {
             const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
             await this.e.reply(`微信OAuth登录成功！\n自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
@@ -729,7 +820,7 @@ export class Login extends plugin {
       '选择QQ或微信进行登陆，三分钟内完成登陆将会自动绑定'
     ].join('\n');
 
-    const sentMsg = await this.e.reply([segment.at(this.e.user_id), '\n', loginMessage]);
+    const sentMsg = await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', loginMessage] : loginMessage);
 
     // 开始轮询登录状态
     const startTime = Date.now();
@@ -911,7 +1002,13 @@ export class Login extends plugin {
           
           // 检查结果
           for (const { token, type, status, sessionInfo } of results) {
-            if (status && status.status === 'done') {
+            // 获取状态码：优先使用 status.status 字段，fallback 到 status.code 字段
+            const statusCode = status?.status !== undefined ? status.status : status?.code;
+            
+            logger.debug(`[DELTA FORCE PLUGIN] 网页${type.toUpperCase()}登录轮询结果: token=${token.substring(0, 4)}****, statusCode=${statusCode}`);
+            
+            // 根据API文档：0=已完成/已授权, 1=等待OAuth授权, 2=正在处理授权, -2=已过期, -1=授权失败
+            if (statusCode === 0) {
               // 检查是否和当前激活token相同，如果相同则跳过这个token，继续检查其他token
               const currentToken = await utils.getAccount(this.e.user_id);
               if (currentToken === token) {
@@ -929,11 +1026,16 @@ export class Login extends plugin {
               isCompleted = true;
               await this.handleWebLoginSuccess(token, { sentMsg, pendingMsg }, type);
               return;
-            } else if (status && status.status === 'expired') {
+            } else if (statusCode === -2) {
               // 移除过期的token
               activeTokens.delete(token);
               sessionInfoMap.delete(token);
               logger.info(`[DELTA FORCE PLUGIN] 移除过期${type.toUpperCase()}token: ${token.substring(0, 4)}****`);
+            } else if (statusCode === -1) {
+              // 移除失败的token
+              activeTokens.delete(token);
+              sessionInfoMap.delete(token);
+              logger.warn(`[DELTA FORCE PLUGIN] 移除失败${type.toUpperCase()}token: ${token.substring(0, 4)}****`);
             }
           }
           
@@ -1037,7 +1139,7 @@ export class Login extends plugin {
             charMsg += `全面战场等级: ${tdmlevel}\n`;
             charMsg += `防沉迷: ${isAdult}`;
             
-            await this.e.reply([segment.at(this.e.user_id), charMsg]);
+            await this.e.reply(this.e.isGroup ? [segment.at(this.e.user_id), '\n', charMsg] : charMsg);
           } else {
             const apiMsg = characterBindRes?.msg || characterBindRes?.message || '未知错误';
             await this.e.reply(`网页${loginTypeText}登录成功！\n自动绑定角色失败: ${apiMsg}。\n您可以稍后使用 #三角洲角色绑定 手动绑定。`);
