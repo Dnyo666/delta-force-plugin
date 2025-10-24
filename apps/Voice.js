@@ -11,10 +11,6 @@ export class Voice extends plugin {
       priority: 100,
       rule: [
         {
-          reg: '^(#三角洲|\\^)语音\\s*(.*)$',
-          fnc: 'sendVoice'
-        },
-        {
           reg: '^(#三角洲|\\^)语音列表$',
           fnc: 'getCharacterList'
         },
@@ -29,6 +25,10 @@ export class Voice extends plugin {
         {
           reg: '^(#三角洲|\\^)语音统计$',
           fnc: 'getAudioStats'
+        },
+        {
+          reg: '^(#三角洲|\\^)语音\\s*(.*)$',
+          fnc: 'sendVoice'
         }
       ]
     })
