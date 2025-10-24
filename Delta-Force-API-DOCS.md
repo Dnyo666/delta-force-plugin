@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v1.6.5**
+**版本号：v1.6.6**
 
 ## 登录接口
 
@@ -1304,27 +1304,40 @@ GET /df/audio/random?category=Voice&character=红狼&scene=InGame&actionType=Bre
   - 彩蛋语音：`eggs-1`(大战场彩蛋) / `eggs-2`(大卫语音)
   - 全面战场：`bf-1`(战场部署) / `bf-2`(战场就绪) / `BF_GTI`(GTI战场) / `BF_Haavk`(哈夫克战场)
   - 其他：`haavk`(哈夫克全兵种) / `commander`(指令) / `babel`(巴别塔) / `Beginner`(新手教程)
-- `character`：角色名称（可选，中文名，如：红狼、威龙、蜂医等）
-- `characterId`：角色ID（可选，如：Voice_101, Voice_301等，与character二选一）
+- `character`：**统一角色参数**（可选，支持多种格式）
+  - **干员全局ID**：`20003`（蜂医）、`10007`（红狼）
+  - **Voice ID**：`Voice_101`（蜂医）、`Voice_301`（红狼）
+  - **皮肤Voice ID**：`Voice_301_SkinA`或`Voice_301_skinA`（红狼A皮肤，大小写不敏感）
+  - **中文名**：`红狼`（基础角色）、`红狼A`（皮肤角色）
 - `scene`：场景（可选，如：InGame, OutGame）
 - `actionType`：动作类型（可选，如：Breath, Combat等）
 - `actionDetail`：具体动作（可选）
 - `count`：返回数量（可选，默认1，范围1-5）
 
 **重要说明：**
-- `tag` 参数与 `character/characterId/scene/actionType/actionDetail` 互斥
+- `tag` 参数与 `character/scene/actionType/actionDetail` 互斥
 - 提供 `tag` 时，其他目录结构参数会被忽略
 - `tag` 只用于获取Boss、任务、彩蛋等特殊语音
+- `character` 参数已统一，支持4种格式（干员ID、Voice ID、皮肤ID、中文名），无需再使用 `characterId`
 
-**功能说明**：随机获取符合条件的音频文件，支持角色中文名称查询和特殊标签分类，自动生成七牛云私有下载链接（带时效性，由服务器配置控制，防止恶意刷流量）
+**功能说明**：随机获取符合条件的音频文件，支持多种角色查询方式和特殊标签分类，自动生成七牛云私有下载链接（带时效性，由服务器配置控制，防止恶意刷流量）
 
 **使用示例：**
 ```bash
 # 使用tag获取Boss语音
 GET /df/audio/random?tag=boss-1&count=3
 
-# 使用目录结构获取角色语音
+# 使用中文名获取角色语音
 GET /df/audio/random?category=Voice&character=红狼&scene=InGame&count=3
+
+# 使用干员ID获取角色语音
+GET /df/audio/random?character=10007&count=3
+
+# 使用皮肤ID获取角色皮肤语音
+GET /df/audio/random?character=Voice_301_SkinA&count=3
+
+# 使用皮肤中文名获取角色皮肤语音
+GET /df/audio/random?character=红狼A&count=3
 ```
 
 **响应示例：**
@@ -1336,10 +1349,14 @@ GET /df/audio/random?category=Voice&character=红狼&scene=InGame&count=3
     "audios": [
       {
         "fileId": "74cc3b1cfc4d2b6a",
-        "fileName": "Voice_101_Breath_Pain_01",
+        "fileName": "Voice_301_Breath_Pain_01",
         "category": "Voice",
-        "characterId": "Voice_301",
-        "characterName": "红狼",
+        "character": {
+          "voiceId": "Voice_301",
+          "operatorId": 10007,
+          "name": "红狼",
+          "profession": "突击"
+        },
         "scene": "InGame",
         "actionType": "Breath",
         "actionDetail": "Voice_301_Breath_Pain",
@@ -1351,7 +1368,7 @@ GET /df/audio/random?category=Voice&character=红狼&scene=InGame&count=3
           "expiresIn": 120
         },
         "metadata": {
-          "filePath": "Voice/Character/Voice_101/InGame/Breath/Voice_101_Breath_Pain/xxx.wav",
+          "filePath": "Voice/Character/Voice_301/InGame/Breath/Voice_301_Breath_Pain/xxx.wav",
           "fileExtension": "wav"
         }
       }
@@ -1359,7 +1376,12 @@ GET /df/audio/random?category=Voice&character=红狼&scene=InGame&count=3
     "query": {
       "category": "Voice",
       "character": "红狼",
-      "characterId": "Voice_301",
+      "resolved": {
+        "voiceId": "Voice_301",
+        "operatorId": 10007,
+        "name": "红狼",
+        "profession": "突击"
+      },
       "scene": "InGame",
       "actionType": "Breath"
     },
@@ -1383,14 +1405,36 @@ GET /df/audio/character?character=红狼&scene=InGame&actionType=Breath&count=1
 ```
 
 **参数说明：**
-- `character`：角色名称（可选，中文名，如：红狼、威龙、蜂医等）
-- `characterId`：角色ID（可选，如：Voice_101, Voice_301等，与character二选一）
+- `character`：**统一角色参数**（可选，支持多种格式）
+  - **干员全局ID**：`20003`（蜂医）、`10007`（红狼）
+  - **Voice ID**：`Voice_101`（蜂医）、`Voice_301`（红狼）
+  - **皮肤Voice ID**：`Voice_301_SkinA`或`Voice_301_skinA`（红狼A皮肤，大小写不敏感）
+  - **中文名**：`红狼`（基础角色）、`红狼A`（皮肤角色）
 - `scene`：场景（可选，如：InGame, OutGame）
 - `actionType`：动作类型（可选，如：Breath, Combat）
 - `actionDetail`：具体动作（可选）
 - `count`：返回数量（可选，默认1，范围1-5）
 
-**功能说明**：随机获取角色语音，支持角色中文名称查询，所有参数均为可选（不指定角色则随机获取任意角色语音），下载链接有效期由服务器配置控制
+**功能说明**：随机获取角色语音，支持多种角色查询方式，所有参数均为可选（不指定角色则随机获取任意角色语音），下载链接有效期由服务器配置控制
+
+**使用示例：**
+```bash
+# 使用中文名查询
+GET /df/audio/character?character=红狼&count=3
+
+# 使用干员ID查询
+GET /df/audio/character?character=10007&count=3
+
+# 使用皮肤ID查询（支持大小写）
+GET /df/audio/character?character=Voice_301_SkinA&count=3
+GET /df/audio/character?character=Voice_301_skinA&count=3
+
+# 使用皮肤中文名查询
+GET /df/audio/character?character=红狼A&count=3
+
+# 不指定角色，随机获取任意角色语音
+GET /df/audio/character?count=5
+```
 
 **响应示例：**
 ```json
@@ -1403,8 +1447,12 @@ GET /df/audio/character?character=红狼&scene=InGame&actionType=Breath&count=1
         "fileId": "74cc3b1cfc4d2b6a",
         "fileName": "Voice_301_Breath_Pain_01",
         "category": "Voice",
-        "characterId": "Voice_301",
-        "characterName": "红狼",
+        "character": {
+          "voiceId": "Voice_301",
+          "operatorId": 10007,
+          "name": "红狼",
+          "profession": "突击"
+        },
         "scene": "InGame",
         "actionType": "Breath",
         "actionDetail": "Voice_301_Breath_Pain",
@@ -1416,14 +1464,19 @@ GET /df/audio/character?character=红狼&scene=InGame&actionType=Breath&count=1
           "expiresIn": 120
         },
         "metadata": {
-          "filePath": "Voice/Character/Voice_101/InGame/Breath/xxx.wav",
+          "filePath": "Voice/Character/Voice_301/InGame/Breath/xxx.wav",
           "fileExtension": "wav"
         }
       }
     ],
     "query": {
       "character": "红狼",
-      "characterId": "Voice_301",
+      "resolved": {
+        "voiceId": "Voice_301",
+        "operatorId": 10007,
+        "name": "红狼",
+        "profession": "突击"
+      },
       "scene": "InGame",
       "actionType": "Breath"
     },
@@ -1500,7 +1553,7 @@ GET /df/audio/tags
 GET /df/audio/characters
 ```
 
-**功能说明**：获取所有可用的角色列表，包含Voice ID和中文名称映射
+**功能说明**：获取所有可用的角色列表，包含完整的角色信息（干员ID、Voice ID、皮肤ID、中文名、职业）
 
 **响应示例：**
 ```json
@@ -1509,22 +1562,41 @@ GET /df/audio/characters
   "message": "获取角色列表成功",
   "data": {
     "characters": [
-      { "voiceId": "Voice_101", "name": "蜂医" },
-      { "voiceId": "Voice_102", "name": "蛊" },
-      { "voiceId": "Voice_102_skinA", "name": "蛊A" },
-      { "voiceId": "Voice_201", "name": "露娜" },
-      { "voiceId": "Voice_202", "name": "骇爪" },
-      { "voiceId": "Voice_202_skinA", "name": "骇爪A" },
-      { "voiceId": "Voice_203", "name": "银翼" },
-      { "voiceId": "Voice_301", "name": "红狼" },
-      { "voiceId": "Voice_301_skinA", "name": "红狼A" },
-      { "voiceId": "Voice_302", "name": "威龙" },
-      { "voiceId": "Voice_303", "name": "无名" },
-      { "voiceId": "Voice_304", "name": "疾风" },
-      { "voiceId": "Voice_401", "name": "深蓝" },
-      { "voiceId": "Voice_402", "name": "乌鲁鲁" },
-      { "voiceId": "Voice_403", "name": "牧羊人" }
-    ]
+      {
+        "operatorId": 20003,
+        "voiceId": "Voice_101",
+        "name": "蜂医",
+        "profession": "医疗",
+        "skins": [],
+        "allVoiceIds": ["Voice_101"],
+        "allNames": ["蜂医"]
+      },
+      {
+        "operatorId": 20004,
+        "voiceId": "Voice_102",
+        "name": "蛊",
+        "profession": "医疗",
+        "skins": [
+          { "voiceId": "Voice_102_SkinA", "name": "蛊A" }
+        ],
+        "allVoiceIds": ["Voice_102", "Voice_102_SkinA"],
+        "allNames": ["蛊", "蛊A"]
+      },
+      {
+        "operatorId": 10007,
+        "voiceId": "Voice_301",
+        "name": "红狼",
+        "profession": "突击",
+        "skins": [
+          { "voiceId": "Voice_301_SkinA", "name": "红狼A" },
+          { "voiceId": "Voice_301_SkinB", "name": "红狼B" }
+        ],
+        "allVoiceIds": ["Voice_301", "Voice_301_SkinA", "Voice_301_SkinB"],
+        "allNames": ["红狼", "红狼A", "红狼B"]
+      }
+    ],
+    "totalCount": 12,
+    "tip": "character参数支持：干员ID(20003)、Voice ID(Voice_101)、皮肤ID(Voice_301_SkinA或skinA，大小写不敏感)、中文名(红狼/红狼A)"
   }
 }
 ```
@@ -1605,10 +1677,14 @@ POST /df/audio/sync
    - 配置的过期时间会被强制限制在安全范围内
    - 单次请求最多5个音频
 4. **两种查询方式**：
-   - **目录结构查询**：使用 `character/characterId/scene/actionType` 等参数（适用于角色语音）
+   - **目录结构查询**：使用 `character/scene/actionType` 等参数（适用于角色语音）
    - **特殊标签查询**：使用 `tag` 参数（只支持 `/df/audio/random` 接口，用于Boss、任务、彩蛋等特殊语音）
    - **互斥规则**：提供 `tag` 时会忽略目录结构参数
-5. **角色名称支持**：支持使用中文角色名称查询，如 `character=红狼` 会自动映射为 `Voice_301`
+5. **统一角色参数**：`character` 参数已统一，支持4种查询格式
+   - **干员全局ID**：`20003`（蜂医）、`10007`（红狼）
+   - **Voice ID**：`Voice_101`（蜂医）、`Voice_301`（红狼）
+   - **皮肤Voice ID**：`Voice_301_SkinA`或`Voice_301_skinA`（红狼A皮肤，**大小写不敏感**）
+   - **中文名**：`红狼`（基础角色）、`红狼A`（皮肤角色）
 6. **可选参数**：所有筛选参数均为可选，不指定角色则随机获取任意角色语音
 7. **自动同步**：系统会自动从七牛云同步音频文件列表，无需手动操作
 8. **权限控制**：手动同步仅限管理员，查询接口无需认证
@@ -1619,12 +1695,23 @@ POST /df/audio/sync
    - **Music**：背景音乐
    - **SFX**：音效
    - **Festivel**：节日活动音频
-10. **角色名称映射**（支持中文名查询）：
-   - **医疗 (1xx)**：蜂医 → Voice_101 / 蛊 → Voice_102 / 蛊A → Voice_102_skinA
-   - **侦查 (2xx)**：露娜 → Voice_201 / 骇爪 → Voice_202 / 骇爪A → Voice_202_skinA / 银翼 → Voice_203
-   - **突击 (3xx)**：红狼 → Voice_301 / 红狼A/蚀金玫瑰 → Voice_301_skinA / 威龙 → Voice_302 / 无名 → Voice_303 / 疾风 → Voice_304
-   - **工程 (4xx)**：深蓝 → Voice_401 / 乌鲁鲁 → Voice_402 / 牧羊人 → Voice_403
-   - **干员ID对应关系**：蜂医(20003) / 蛊(20004) / 露娜(40005) / 骇爪(40010) / 银翼(40011) / 红狼(10007) / 威龙(10010) / 无名(10011) / 疾风(10012) / 深蓝(30010) / 乌鲁鲁(30009) / 牧羊人(30008)
+10. **角色完整映射表**（所有可用查询格式）：
+   - **医疗 (1xx)**：
+     - 蜂医：干员ID `20003` / Voice ID `Voice_101` / 中文名 `蜂医`
+     - 蛊：干员ID `20004` / Voice ID `Voice_102` / 皮肤 `Voice_102_SkinA` (蛊A) / 中文名 `蛊`、`蛊A`
+   - **侦查 (2xx)**：
+     - 露娜：干员ID `40005` / Voice ID `Voice_201` / 皮肤 `Voice_201_SkinA` (露娜A) / 中文名 `露娜`、`露娜A`
+     - 骇爪：干员ID `40010` / Voice ID `Voice_202` / 皮肤 `Voice_202_SkinA` (骇爪A)、`Voice_202_SkinB` (骇爪B) / 中文名 `骇爪`、`骇爪A`、`骇爪B`
+     - 银翼：干员ID `40011` / Voice ID `Voice_203` / 中文名 `银翼`
+   - **突击 (3xx)**：
+     - 红狼：干员ID `10007` / Voice ID `Voice_301` / 皮肤 `Voice_301_SkinA` (红狼A)、`Voice_301_SkinB` (红狼B) / 中文名 `红狼`、`红狼A`、`红狼B`
+     - 威龙：干员ID `10010` / Voice ID `Voice_302` / 皮肤 `Voice_302_SkinA` (威龙A) / 中文名 `威龙`、`威龙A`
+     - 无名：干员ID `10011` / Voice ID `Voice_303` / 中文名 `无名`
+     - 疾风：干员ID `10012` / Voice ID `Voice_304` / 中文名 `疾风`
+   - **工程 (4xx)**：
+     - 深蓝：干员ID `30010` / Voice ID `Voice_401` / 中文名 `深蓝`
+     - 乌鲁鲁：干员ID `30009` / Voice ID `Voice_402` / 中文名 `乌鲁鲁`
+     - 牧羊人：干员ID `30008` / Voice ID `Voice_403` / 中文名 `牧羊人`
 
 ## 系统健康检查
 

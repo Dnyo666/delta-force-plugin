@@ -63,7 +63,13 @@ export class Voice extends plugin {
 
       // 调用对应的API
       let res
-      if (queryParams.tag) {
+      if (queryParams.category) {
+        // 使用category参数（音频分类）
+        res = await this.api.getRandomAudio({
+          category: queryParams.category,
+          count: 1
+        })
+      } else if (queryParams.tag) {
         // 使用tag参数（特殊语音）
         res = await this.api.getRandomAudio({
           tag: queryParams.tag,
@@ -133,11 +139,19 @@ export class Voice extends plugin {
       'pain': 'Pain'
     }
 
-    // 第一个参数：可能是角色名、标签或场景
+    // 第一个参数：可能是分类、标签、角色名或场景
     if (args[0]) {
       const firstArg = args[0]
       
-      // 1. 检查是否是特殊标签（使用DataManager）
+      // 1. 优先检查是否是音频分类（使用DataManager）
+      const mappedCategory = DataManager.getAudioCategory(firstArg)
+      if (mappedCategory) {
+        result.category = mappedCategory
+        result.hint = firstArg
+        return result
+      }
+      
+      // 2. 检查是否是特殊标签（使用DataManager）
       const mappedTag = DataManager.getAudioTag(firstArg)
       if (mappedTag) {
         result.tag = mappedTag
@@ -145,17 +159,21 @@ export class Voice extends plugin {
         return result
       }
       
-      // 2. 检查是否是场景
+      // 3. 检查是否是场景
       if (sceneMap[firstArg] || sceneMap[firstArg.toLowerCase()]) {
         result.scene = sceneMap[firstArg] || sceneMap[firstArg.toLowerCase()]
         hint = firstArg
       } 
-      // 3. 检查是否是动作类型
+      // 4. 检查是否是动作类型
       else if (actionMap[firstArg] || actionMap[firstArg.toLowerCase()]) {
         result.actionType = actionMap[firstArg] || actionMap[firstArg.toLowerCase()]
         hint = firstArg
       }
-      // 4. 默认当作角色名（可能是中文名或voiceId）
+      // 5. 默认当作角色参数（后端会自动识别以下格式）
+      //    - 干员全局ID：20003, 10007, 40005
+      //    - Voice ID：Voice_101, Voice_301, Voice_201
+      //    - 皮肤ID：Voice_301_SkinA, Voice_301_skinA（大小写不敏感）
+      //    - 中文名：红狼, 红狼A（含皮肤）
       else {
         result.character = firstArg
         hint = firstArg
@@ -230,20 +248,24 @@ export class Voice extends plugin {
       }
 
       res.data.characters.forEach(char => {
-        const voiceId = char.voiceId || char
-        const name = char.name || voiceId
+        const profession = char.profession || '其他'
+        const name = char.name || char.voiceId || '未知'
+        const voiceId = char.voiceId
+        const operatorId = char.operatorId
         
-        if (voiceId.startsWith('Voice_1')) {
-          groups['医疗'].push({ voiceId, name })
-        } else if (voiceId.startsWith('Voice_2')) {
-          groups['侦查'].push({ voiceId, name })
-        } else if (voiceId.startsWith('Voice_3')) {
-          groups['突击'].push({ voiceId, name })
-        } else if (voiceId.startsWith('Voice_4')) {
-          groups['工程'].push({ voiceId, name })
-        } else {
-          groups['其他'].push({ voiceId, name })
+        // 使用API返回的profession字段，如果没有则根据voiceId判断
+        let groupKey = profession
+        if (!groups[profession]) {
+          if (voiceId.startsWith('Voice_1')) groupKey = '医疗'
+          else if (voiceId.startsWith('Voice_2')) groupKey = '侦查'
+          else if (voiceId.startsWith('Voice_3')) groupKey = '突击'
+          else if (voiceId.startsWith('Voice_4')) groupKey = '工程'
+          else groupKey = '其他'
         }
+        
+        // 添加角色及其皮肤
+        const charInfo = { voiceId, name, operatorId, skins: char.skins || [] }
+        groups[groupKey].push(charInfo)
       })
 
       // 添加分组角色
@@ -251,10 +273,21 @@ export class Voice extends plugin {
         if (characters.length > 0) {
           let msg = `【${category}】\n\n`
           characters.forEach((char, index) => {
+            // 显示：名字 (Voice ID)
             msg += `${index + 1}. ${char.name}`
-            if (char.voiceId !== char.name) {
+            if (char.voiceId) {
               msg += ` (${char.voiceId})`
             }
+            
+            // 如果有皮肤，列出皮肤名字和Voice ID
+            if (char.skins && char.skins.length > 0) {
+              msg += '\n   皮肤: '
+              char.skins.forEach((skin, idx) => {
+                if (idx > 0) msg += ', '
+                msg += `${skin.name} (${skin.voiceId})`
+              })
+            }
+            
             msg += '\n'
           })
           
@@ -481,9 +514,14 @@ export class Voice extends plugin {
       // 构建提示信息
       let infoMsg = []
       
-      // 角色名称
-      if (audio.characterName) {
-        infoMsg.push(`【${audio.characterName}】`)
+      // 角色名称（新API格式：audio.character.name）
+      if (audio.character && audio.character.name) {
+        let charInfo = `【${audio.character.name}】`
+        // 如果有职业信息，也显示出来
+        if (audio.character.profession) {
+          charInfo += ` (${audio.character.profession})`
+        }
+        infoMsg.push(charInfo)
       }
       
       // 场景和动作
@@ -516,7 +554,8 @@ export class Voice extends plugin {
       ])
 
       // 记录日志
-      logger.info(`[DELTA FORCE PLUGIN] 发送语音: ${audio.fileName} (角色: ${audio.characterName || '未知'})`)
+      const characterName = audio.character?.name || '未知'
+      logger.info(`[DELTA FORCE PLUGIN] 发送语音: ${audio.fileName} (角色: ${characterName})`)
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 发送语音消息失败:', error)
       await this.e.reply('发送语音失败，请稍后重试。')
