@@ -200,11 +200,12 @@ export class Login extends plugin {
         return reject(new Error(statusRes.msg || '安全风控拦截'));
       }
 
-      // 获取状态码：优先使用 status 字段，fallback 到 code 字段
-      const status = statusRes.status !== undefined ? statusRes.status : statusRes.code;
+      const statusCode = statusRes.code;
+      
+      logger.debug(`[DELTA FORCE PLUGIN] 轮询${platform}登录状态: code=${statusCode}, status=${statusRes.status}`);
 
       // 根据API文档：0=授权成功, 1=等待扫码, 2=已扫码待确认, -2=已过期, -3=风控
-      switch (status) {
+      switch (statusCode) {
         case 0: // 授权成功
           const finalToken = statusRes.token || statusRes.frameworkToken;
           if (finalToken) {
@@ -245,7 +246,7 @@ export class Login extends plugin {
           break;
 
         default: // 其他未知状态或需要继续轮询的状态
-          logger.debug(`[DELTA FORCE PLUGIN] ${platform}登录遇到未知状态: ${status}，继续轮询`);
+          logger.debug(`[DELTA FORCE PLUGIN] ${platform}登录遇到未知状态: ${statusCode} (原始status=${statusRes.status})，继续轮询`);
           setTimeout(() => poll(resolve, reject), POLL_INTERVAL);
           break;
       }
@@ -1002,10 +1003,10 @@ export class Login extends plugin {
           
           // 检查结果
           for (const { token, type, status, sessionInfo } of results) {
-            // 获取状态码：优先使用 status.status 字段，fallback 到 status.code 字段
-            const statusCode = status?.status !== undefined ? status.status : status?.code;
+            // 直接使用 code 字段作为状态码（数字）
+            const statusCode = status?.code;
             
-            logger.debug(`[DELTA FORCE PLUGIN] 网页${type.toUpperCase()}登录轮询结果: token=${token.substring(0, 4)}****, statusCode=${statusCode}`);
+            logger.debug(`[DELTA FORCE PLUGIN] 网页${type.toUpperCase()}登录轮询结果: token=${token.substring(0, 4)}****, code=${statusCode}, status=${status?.status}`);
             
             // 根据API文档：0=已完成/已授权, 1=等待OAuth授权, 2=正在处理授权, -2=已过期, -1=授权失败
             if (statusCode === 0) {
