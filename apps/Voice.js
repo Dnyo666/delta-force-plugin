@@ -2,6 +2,9 @@ import Code from '../components/Code.js'
 import utils from '../utils/utils.js'
 import DataManager from '../utils/Data.js'
 
+// 音乐记忆存储（全局，用于跨消息记忆）
+const musicMemory = new Map()
+
 export class Voice extends plugin {
   constructor(e) {
     super({
@@ -25,6 +28,14 @@ export class Voice extends plugin {
         {
           reg: '^(#三角洲|\\^)语音统计$',
           fnc: 'getAudioStats'
+        },
+        {
+          reg: '^(#三角洲|\\^)(歌词|鼠鼠歌词|鼠鼠音乐歌词)$',
+          fnc: 'getLyrics'
+        },
+        {
+          reg: '^(#三角洲|\\^)鼠鼠音乐\\s*(.*)$',
+          fnc: 'sendShushuMusic'
         },
         {
           reg: '^(#三角洲|\\^)语音\\s*(.*)$',
@@ -560,6 +571,276 @@ export class Voice extends plugin {
       logger.error('[DELTA FORCE PLUGIN] 发送语音消息失败:', error)
       await this.e.reply('发送语音失败，请稍后重试。')
     }
+  }
+
+  /**
+   * 发送鼠鼠音乐
+   * 命令：#三角洲鼠鼠音乐 [艺术家/歌曲名/歌单]
+   */
+  async sendShushuMusic() {
+    try {
+      const match = this.e.msg.match(/^(#三角洲|\^)鼠鼠音乐\s*(.*)$/)
+      const params = match[2].trim()
+
+      // 如果没有参数，直接随机
+      if (!params) {
+        await this.e.reply('正在获取随机鼠鼠音乐...')
+        const res = await this.api.getShushuMusic({ count: 1 })
+        
+        if (await utils.handleApiError(res, this.e)) return true
+        
+        if (!res.data || !res.data.musics || res.data.musics.length === 0) {
+          await this.e.reply('未找到符合条件的音乐')
+          return true
+        }
+        
+        await this.sendMusicMessage(res.data.musics[0])
+        return true
+      }
+
+      // 有参数时，使用智能回退搜索
+      await this.e.reply(`正在搜索 "${params}"...`)
+      
+      // 定义搜索顺序：歌单 -> 艺术家 -> 歌曲名
+      const searchStrategies = [
+        { type: 'playlist', param: 'playlist', label: '歌单' },
+        { type: 'artist', param: 'artist', label: '艺术家' },
+        { type: 'title', param: 'title', label: '歌曲名' }
+      ]
+
+      let foundMusic = null
+      let successStrategy = null
+
+      // 依次尝试每种搜索策略
+      for (const strategy of searchStrategies) {
+        logger.debug(`[DELTA FORCE PLUGIN] 尝试按${strategy.label}搜索: ${params}`)
+        
+        const apiParams = { count: 1 }
+        apiParams[strategy.param] = params
+        
+        const res = await this.api.getShushuMusic(apiParams)
+        
+        // 检查是否成功且有结果
+        if (res.success && res.data && res.data.musics && res.data.musics.length > 0) {
+          foundMusic = res.data.musics[0]
+          successStrategy = strategy
+          logger.info(`[DELTA FORCE PLUGIN] ${strategy.label}搜索成功: ${params}`)
+          break
+        }
+        
+        logger.debug(`[DELTA FORCE PLUGIN] ${strategy.label}搜索失败，尝试下一个...`)
+      }
+
+      // 如果所有策略都失败
+      if (!foundMusic) {
+        await this.e.reply(`未找到与 "${params}" 相关的音乐\n已尝试搜索：歌单、艺术家、歌曲名`)
+        return true
+      }
+
+      // 发送找到的音乐
+      await this.sendMusicMessage(foundMusic)
+      
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 发送鼠鼠音乐失败:', error)
+      await this.e.reply('发送鼠鼠音乐失败，请稍后重试。')
+      return true
+    }
+  }
+
+  /**
+   * 发送音乐消息的核心方法
+   * @param {Object} music - 音乐对象
+   */
+  async sendMusicMessage(music) {
+    try {
+      if (!music.download || !music.download.url) {
+        logger.error('[DELTA FORCE PLUGIN] 音乐数据缺少下载链接:', music)
+        await this.e.reply('音乐数据异常，请稍后重试。')
+        return
+      }
+
+      // 构建消息
+      const msgParts = []
+      
+      // 歌曲名称和艺术家
+      if (music.fileName && music.artist) {
+        msgParts.push(`♪ ${music.fileName} - ${music.artist}`)
+      } else if (music.fileName) {
+        msgParts.push(`♪ ${music.fileName}`)
+      }
+
+      // 歌单信息
+      if (music.playlist && music.playlist.name) {
+        msgParts.push(`歌单: ${music.playlist.name}`)
+      }
+
+      // 热度信息
+      if (music.metadata && music.metadata.hot) {
+        msgParts.push(`🔥 ${music.metadata.hot}`)
+      }
+      
+      // 发送音乐
+      await this.e.reply(segment.record(music.download.url))
+
+      // 发送文字信息
+      if (msgParts.length > 0) {
+        await this.e.reply(msgParts.join('\n'))
+      }
+
+      // 保存音乐记忆（2分钟有效期）
+      this.saveMusicMemory(music)
+
+      // 记录日志
+      logger.info(`[DELTA FORCE PLUGIN] 发送鼠鼠音乐: ${music.fileName} - ${music.artist}`)
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 发送音乐消息失败:', error)
+      await this.e.reply('发送音乐失败，请稍后重试。')
+    }
+  }
+
+  /**
+   * 保存音乐记忆
+   * @param {Object} music - 音乐对象
+   */
+  saveMusicMemory(music) {
+    const userId = this.e.user_id
+    const memoryKey = `${userId}`
+    
+    // 保存音乐信息
+    musicMemory.set(memoryKey, {
+      music,
+      timestamp: Date.now()
+    })
+
+    // 2分钟后自动清除
+    setTimeout(() => {
+      musicMemory.delete(memoryKey)
+      logger.debug(`[DELTA FORCE PLUGIN] 清除用户 ${userId} 的音乐记忆`)
+    }, 2 * 60 * 1000)
+
+    logger.debug(`[DELTA FORCE PLUGIN] 保存用户 ${userId} 的音乐记忆: ${music.fileName}`)
+  }
+
+  /**
+   * 获取歌词
+   * 命令：^歌词 / ^鼠鼠歌词 / ^鼠鼠音乐歌词
+   */
+  async getLyrics() {
+    try {
+      const userId = this.e.user_id
+      const memoryKey = `${userId}`
+      
+      // 检查是否有记忆
+      const memory = musicMemory.get(memoryKey)
+      if (!memory) {
+        await this.e.reply('暂无最近播放的音乐记录\n请先使用 ^鼠鼠音乐 播放一首歌曲')
+        return true
+      }
+
+      // 检查记忆是否过期（2分钟）
+      const elapsed = Date.now() - memory.timestamp
+      if (elapsed > 2 * 60 * 1000) {
+        musicMemory.delete(memoryKey)
+        await this.e.reply('音乐记录已过期（超过2分钟）\n请重新播放音乐')
+        return true
+      }
+
+      const music = memory.music
+
+      // 检查是否有歌词链接
+      if (!music.metadata || !music.metadata.lrc) {
+        await this.e.reply(`歌曲「${music.fileName}」暂无歌词`)
+        return true
+      }
+
+      await this.e.reply(`正在获取「${music.fileName}」的歌词...`)
+
+      // 下载并解析歌词
+      const lrcContent = await this.fetchLyrics(music.metadata.lrc)
+      if (!lrcContent) {
+        await this.e.reply('获取歌词失败，请稍后重试')
+        return true
+      }
+
+      // 解析LRC格式
+      const parsedLyrics = this.parseLRC(lrcContent)
+
+      // 构建转发消息
+      const userInfo = {
+        user_id: this.e.user_id,
+        nickname: this.e.sender.nickname
+      }
+
+      const forwardMsg = [
+        {
+          ...userInfo,
+          message: `【${music.fileName}】${music.artist ? `\n演唱：${music.artist}` : ''}`
+        },
+        {
+          ...userInfo,
+          message: parsedLyrics
+        },
+        {
+          ...userInfo,
+          message: '鼠鼠音乐由 @Liusy 提供'
+        }
+      ]
+
+      await this.e.reply(await Bot.makeForwardMsg(forwardMsg))
+
+      return true
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 获取歌词失败:', error)
+      await this.e.reply('获取歌词失败，请稍后重试。')
+      return true
+    }
+  }
+
+  /**
+   * 下载歌词文件
+   * @param {string} lrcUrl - 歌词URL
+   * @returns {Promise<string>} - 歌词内容
+   */
+  async fetchLyrics(lrcUrl) {
+    try {
+      const response = await fetch(lrcUrl)
+      if (!response.ok) {
+        logger.error(`[DELTA FORCE PLUGIN] 下载歌词失败: ${response.status}`)
+        return null
+      }
+      const text = await response.text()
+      return text
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 下载歌词异常:', error)
+      return null
+    }
+  }
+
+  /**
+   * 解析LRC格式歌词
+   * @param {string} lrcContent - LRC格式的歌词内容
+   * @returns {string} - 纯文本歌词
+   */
+  parseLRC(lrcContent) {
+    // LRC格式：[00:12.00]歌词内容
+    const lines = lrcContent.split('\n')
+    const lyrics = []
+
+    for (const line of lines) {
+      // 移除时间标签，提取歌词
+      const match = line.match(/\[(\d+):(\d+)\.(\d+)\](.*)/)
+      if (match && match[4].trim()) {
+        lyrics.push(match[4].trim())
+      } else {
+        // 处理元数据行（如：[ti:歌名]）
+        const metaMatch = line.match(/\[(ti|ar|al|by):(.+)\]/)
+        if (!metaMatch && line.trim() && !line.startsWith('[')) {
+          lyrics.push(line.trim())
+        }
+      }
+    }
+
+    return lyrics.length > 0 ? lyrics.join('\n') : '（暂无歌词内容）'
   }
 }
 

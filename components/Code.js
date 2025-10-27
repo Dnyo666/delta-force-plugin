@@ -948,4 +948,13 @@ export default class Code {
   async getAudioTags() {
     return this.request('/df/audio/tags', {}, 'GET');
   }
+
+  /**
+   * 获取鼠鼠随机音乐
+   * @param {object} params - 查询参数
+   * @returns {Promise<object>} - API响应
+   */
+  async getShushuMusic(params = {}) {
+    return this.request('/df/audio/shushu', params, 'GET');
+  }
 }

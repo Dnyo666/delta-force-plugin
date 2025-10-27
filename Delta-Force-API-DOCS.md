@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v1.6.6**
+**版本号：v1.7.2**
 
 ## 登录接口
 
@@ -1627,6 +1627,87 @@ GET /df/audio/stats
 }
 ```
 
+### 获取鼠鼠随机音乐
+```http
+GET /df/audio/shushu?count=3&playlist=10
+```
+
+**参数说明：**
+- `count`：返回数量（可选，默认1，范围1-10）
+- `playlist`：歌单ID（可选，指定歌单）
+- `artist`：艺术家名称（可选，模糊搜索）
+- `title`：歌曲名称（可选，模糊搜索）
+
+**功能说明**：随机获取鼠鼠歌曲，系统每24小时自动同步最新歌单数据
+
+**使用示例：**
+```bash
+# 随机获取3首歌曲
+GET /df/audio/shushu?count=3
+
+# 获取指定歌单的随机歌曲
+GET /df/audio/shushu?playlist=10&count=5
+
+# 获取指定歌单的随机歌曲(模糊歌单名搜索)
+GET /df/audio/shushu?playlist=乌鲁鲁
+
+# 搜索特定艺术家的歌曲
+GET /df/audio/shushu?artist=沐源鸽&count=3
+
+# 搜索特定歌曲名称
+GET /df/audio/shushu?title=最后一哈
+```
+
+**响应示例：**
+```json
+{
+  "success": true,
+  "message": "成功获取3首随机音乐",
+  "data": {
+    "musics": [
+      {
+        "fileId": "100001",
+        "fileName": "最后一哈",
+        "category": "ShushuMusic",
+        "artist": "沐源鸽",
+        "playlist": {
+          "id": "10",
+          "name": "曼波の小曲"
+        },
+        "download": {
+          "url": "https://s3.oss.hengj.cn/one/autoup/5e79be85-b0d2-4d8c-b128-1fdc97bc00c3/20251013/KcY2zv/%E6%9C%80%E5%90%8E%E4%B8%80%E5%93%88.mp3",
+          "type": "direct",
+          "expiresIn": 0
+        },
+        "metadata": {
+          "cover": "https://s3.oss.hengj.cn/one/autoup/460a18cb-9c41-44ba-90af-b71fd35b1395/20251013/q7Lx2Z/%E6%9C%80%E5%90%8E%E4%B8%80%E5%93%88%E5%B0%81%E9%9D%A2.jpg",
+          "lrc": "https://s3.oss.hengj.cn/one/autoup/b766ff7a-b60c-49b7-94d6-245fbfcf2c10/20251013/DrzPHT/%E6%9C%80%E5%90%8E%E4%B8%80%E5%93%88%E6%AD%8C%E8%AF%8D.lrc",
+          "source": "bili",
+          "sourceUrl": "https://www.bilibili.com/video/BV1L6uszvE5u/",
+          "hot": "515170",
+          "updateTime": "2025-08-10 00:25:19"
+        }
+      }
+    ],
+    "query": {
+      "playlist": "10",
+      "artist": null,
+      "title": null
+    },
+    "statistics": {
+      "requested": 3,
+      "returned": 3,
+      "totalAvailable": 50
+    },
+    "source": {
+      "provider": "shushufan",
+      "api": "https://api.df.hengj.cn",
+      "syncInterval": "24小时"
+    }
+  }
+}
+```
+
 ### 同步音频文件（管理员）
 ```http
 POST /df/audio/sync
@@ -1669,13 +1750,12 @@ POST /df/audio/sync
 ```
 
 ### 音频接口说明
-1. **私有链接**：所有音频下载链接都是七牛云私有空间的临时签名链接，有时效性
-2. **链接过期时间**：由服务器配置文件控制（默认120秒，范围120-300秒），客户端无法自定义，防止恶意刷流量
+1. **私有链接**：游戏音频下载链接都是七牛云私有空间的临时签名链接，有时效性；数梳梳饭音乐为直链，永久有效
+2. **链接过期时间**：游戏音频由服务器配置文件控制（默认120秒，范围120-300秒），客户端无法自定义，防止恶意刷流量
 3. **安全机制**：
    - Token有效期由服务器统一管理
-   - 下载链接使用HMAC-SHA1签名认证
+   - 游戏音频下载链接使用HMAC-SHA1签名认证
    - 配置的过期时间会被强制限制在安全范围内
-   - 单次请求最多5个音频
 4. **两种查询方式**：
    - **目录结构查询**：使用 `character/scene/actionType` 等参数（适用于角色语音）
    - **特殊标签查询**：使用 `tag` 参数（只支持 `/df/audio/random` 接口，用于Boss、任务、彩蛋等特殊语音）
@@ -1686,7 +1766,9 @@ POST /df/audio/sync
    - **皮肤Voice ID**：`Voice_301_SkinA`或`Voice_301_skinA`（红狼A皮肤，**大小写不敏感**）
    - **中文名**：`红狼`（基础角色）、`红狼A`（皮肤角色）
 6. **可选参数**：所有筛选参数均为可选，不指定角色则随机获取任意角色语音
-7. **自动同步**：系统会自动从七牛云同步音频文件列表，无需手动操作
+7. **自动同步**：
+   - 游戏音频：系统会自动从七牛云同步音频文件列表
+   - 鼠鼠音乐：每24小时自动同步最新歌单数据
 8. **权限控制**：手动同步仅限管理员，查询接口无需认证
 9. **分类结构**：
    - **Voice**：角色语音（按角色ID、场景、动作类型分类）+ 特殊语音（按tag分类）
@@ -1695,6 +1777,7 @@ POST /df/audio/sync
    - **Music**：背景音乐
    - **SFX**：音效
    - **Festivel**：节日活动音频
+   - **ShushuMusic**：鼠鼠音乐（按歌单、艺术家、歌曲名分类）
 10. **角色完整映射表**（所有可用查询格式）：
    - **医疗 (1xx)**：
      - 蜂医：干员ID `20003` / Voice ID `Voice_101` / 中文名 `蜂医`
