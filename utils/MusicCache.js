@@ -151,7 +151,7 @@ class MusicCache {
 
       logger.info(`[Delta-Force 音乐缓存] 开始下载: ${music.fileName} - ${music.artist}`)
 
-      // 下载文件
+      // 下载音乐文件
       const response = await fetch(music.download.url)
       if (!response.ok) {
         logger.error(`[Delta-Force 音乐缓存] 下载失败: HTTP ${response.status}`)
@@ -163,6 +163,12 @@ class MusicCache {
       const buffer = Buffer.from(arrayBuffer)
       fs.writeFileSync(filePath, buffer)
 
+      // 下载并缓存封面图片
+      let coverPath = null
+      if (music.metadata && music.metadata.cover) {
+        coverPath = await this.downloadCover(musicKey, music.metadata.cover)
+      }
+
       // 保存元数据
       const metadataEntry = {
         fileName: music.fileName,
@@ -172,7 +178,9 @@ class MusicCache {
         fileSize: buffer.length,
         downloadTime: Date.now(),
         lastAccess: Date.now(),
-        sourceUrl: music.download.url
+        sourceUrl: music.download.url,
+        coverPath: coverPath,
+        coverUrl: music.metadata?.cover || null
       }
       
       this.metadata.set(musicKey, metadataEntry)
@@ -182,6 +190,40 @@ class MusicCache {
       return filePath
     } catch (error) {
       logger.error('[Delta-Force 音乐缓存] 下载缓存失败:', error)
+      return null
+    }
+  }
+
+  /**
+   * 下载封面图片
+   * @param {string} musicKey - 音乐唯一标识符
+   * @param {string} coverUrl - 封面图片URL
+   * @returns {Promise<string|null>} - 封面文件路径，失败返回null
+   */
+  async downloadCover(musicKey, coverUrl) {
+    try {
+      // 从URL推断文件扩展名
+      const urlExtension = path.extname(new URL(coverUrl).pathname).slice(1)
+      const extension = urlExtension || 'jpg'
+      const coverPath = path.join(this.cacheDir, `${musicKey}_cover.${extension}`)
+
+      logger.debug(`[Delta-Force 音乐缓存] 开始下载封面: ${coverUrl}`)
+
+      // 下载封面
+      const response = await fetch(coverUrl)
+      if (!response.ok) {
+        logger.warn(`[Delta-Force 音乐缓存] 封面下载失败: HTTP ${response.status}`)
+        return null
+      }
+
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+      fs.writeFileSync(coverPath, buffer)
+
+      logger.debug(`[Delta-Force 音乐缓存] 封面缓存成功: ${(buffer.length / 1024).toFixed(2)} KB`)
+      return coverPath
+    } catch (error) {
+      logger.error('[Delta-Force 音乐缓存] 下载封面失败:', error)
       return null
     }
   }
@@ -201,9 +243,14 @@ class MusicCache {
         if (age > maxAge) {
           const filePath = this.getCacheFilePath(musicKey, data.extension)
           
-          // 删除文件
+          // 删除音乐文件
           if (fs.existsSync(filePath)) {
             fs.unlinkSync(filePath)
+          }
+          
+          // 删除封面文件
+          if (data.coverPath && fs.existsSync(data.coverPath)) {
+            fs.unlinkSync(data.coverPath)
           }
           
           // 删除元数据
@@ -256,6 +303,11 @@ class MusicCache {
         if (fs.existsSync(filePath)) {
           fs.unlinkSync(filePath)
         }
+        
+        // 删除封面文件
+        if (data.coverPath && fs.existsSync(data.coverPath)) {
+          fs.unlinkSync(data.coverPath)
+        }
       }
 
       // 清空元数据
@@ -266,6 +318,22 @@ class MusicCache {
     } catch (error) {
       logger.error('[Delta-Force 音乐缓存] 清空缓存失败:', error)
     }
+  }
+
+  /**
+   * 获取缓存的封面路径
+   * @param {Object} music - 音乐对象
+   * @returns {string|null} - 封面文件路径，如果不存在则返回null
+   */
+  getCachedCoverPath(music) {
+    const musicKey = this.generateMusicKey(music)
+    const cachedData = this.metadata.get(musicKey)
+    
+    if (cachedData && cachedData.coverPath && fs.existsSync(cachedData.coverPath)) {
+      return cachedData.coverPath
+    }
+    
+    return null
   }
 }
 

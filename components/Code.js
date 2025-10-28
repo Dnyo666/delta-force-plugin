@@ -957,4 +957,13 @@ export default class Code {
   async getShushuMusic(params = {}) {
     return this.request('/df/audio/shushu', params, 'GET');
   }
+
+  /**
+   * 获取鼠鼠音乐列表
+   * @param {object} params - 查询参数 { sortBy: 'hot'|'default', playlist, artist }
+   * @returns {Promise<object>} - API响应
+   */
+  async getShushuMusicList(params = {}) {
+    return this.request('/df/audio/shushu/list', params, 'GET');
+  }
 }
