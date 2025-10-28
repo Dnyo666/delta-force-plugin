@@ -1,6 +1,7 @@
 import Code from '../components/Code.js'
 import utils from '../utils/utils.js'
 import DataManager from '../utils/Data.js'
+import MusicCache from '../utils/MusicCache.js'
 
 // 音乐记忆存储（全局，用于跨消息记忆）
 const musicMemory = new Map()
@@ -32,6 +33,14 @@ export class Voice extends plugin {
         {
           reg: '^(#三角洲|\\^)(歌词|鼠鼠歌词|鼠鼠音乐歌词)$',
           fnc: 'getLyrics'
+        },
+        {
+          reg: '^(#三角洲|\\^)音乐缓存(状态|统计)$',
+          fnc: 'getMusicCacheStats'
+        },
+        {
+          reg: '^(#三角洲|\\^)清理音乐缓存$',
+          fnc: 'cleanMusicCache'
         },
         {
           reg: '^(#三角洲|\\^)鼠鼠音乐\\s*(.*)$',
@@ -594,7 +603,8 @@ export class Voice extends plugin {
           return true
         }
         
-        await this.sendMusicMessage(res.data.musics[0])
+        // 随机模式：检查是否有本地缓存，如果有则使用缓存
+        await this.sendMusicMessage(res.data.musics[0], { useCache: true })
         return true
       }
 
@@ -637,8 +647,10 @@ export class Voice extends plugin {
         return true
       }
 
-      // 发送找到的音乐
-      await this.sendMusicMessage(foundMusic)
+      // 指定搜索模式：
+      // - useCache: true 表示优先使用本地缓存
+      // - foundMusic 包含从API获取的最新元数据（热度等信息）
+      await this.sendMusicMessage(foundMusic, { useCache: true })
       
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 发送鼠鼠音乐失败:', error)
@@ -649,14 +661,48 @@ export class Voice extends plugin {
 
   /**
    * 发送音乐消息的核心方法
-   * @param {Object} music - 音乐对象
+   * @param {Object} music - 音乐对象（包含最新的API数据：热度、歌单等）
+   * @param {Object} options - 选项
+   * @param {boolean} options.useCache - 是否使用本地缓存
    */
-  async sendMusicMessage(music) {
+  async sendMusicMessage(music, options = {}) {
     try {
+      const { useCache = false } = options
+
       if (!music.download || !music.download.url) {
         logger.error('[DELTA FORCE PLUGIN] 音乐数据缺少下载链接:', music)
         await this.e.reply('音乐数据异常，请稍后重试。')
         return
+      }
+
+      let musicUrl = music.download.url
+      let fromCache = false
+
+      // 使用缓存逻辑
+      if (useCache) {
+        // 检查是否已缓存
+        const cachedPath = MusicCache.getCachedMusicPath(music)
+        
+        if (cachedPath) {
+          // 命中缓存，使用本地文件
+          musicUrl = `file:///${cachedPath.replace(/\\/g, '/')}`
+          fromCache = true
+          logger.info(`[DELTA FORCE PLUGIN] 使用本地缓存: ${music.fileName}`)
+        } else {
+          // 未命中缓存，下载并缓存
+          logger.info(`[DELTA FORCE PLUGIN] 缓存未命中，开始下载: ${music.fileName}`)
+          const downloadedPath = await MusicCache.downloadAndCache(music)
+          
+          if (downloadedPath) {
+            // 下载成功，使用本地文件
+            musicUrl = `file:///${downloadedPath.replace(/\\/g, '/')}`
+            fromCache = true
+            logger.info(`[DELTA FORCE PLUGIN] 下载缓存成功: ${music.fileName}`)
+          } else {
+            // 下载失败，使用原始URL
+            logger.warn(`[DELTA FORCE PLUGIN] 缓存下载失败，使用直链: ${music.fileName}`)
+          }
+        }
       }
 
       // 构建消息
@@ -680,7 +726,7 @@ export class Voice extends plugin {
       }
       
       // 发送音乐
-      await this.e.reply(segment.record(music.download.url))
+      await this.e.reply(segment.record(musicUrl))
 
       // 发送文字信息
       if (msgParts.length > 0) {
@@ -691,7 +737,8 @@ export class Voice extends plugin {
       this.saveMusicMemory(music)
 
       // 记录日志
-      logger.info(`[DELTA FORCE PLUGIN] 发送鼠鼠音乐: ${music.fileName} - ${music.artist}`)
+      const cacheStatus = fromCache ? '[本地缓存]' : '[直链]'
+      logger.info(`[DELTA FORCE PLUGIN] 发送鼠鼠音乐: ${music.fileName} - ${music.artist} ${cacheStatus}`)
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 发送音乐消息失败:', error)
       await this.e.reply('发送音乐失败，请稍后重试。')
@@ -841,6 +888,60 @@ export class Voice extends plugin {
     }
 
     return lyrics.length > 0 ? lyrics.join('\n') : '（暂无歌词内容）'
+  }
+
+  /**
+   * 获取音乐缓存统计信息
+   * 命令：^音乐缓存状态 / ^音乐缓存统计
+   */
+  async getMusicCacheStats() {
+    try {
+      const stats = MusicCache.getCacheStats()
+
+      let message = '【鼠鼠音乐缓存统计】\n\n'
+      message += `缓存文件数: ${stats.totalFiles}\n`
+      message += `总缓存大小: ${stats.totalSizeMB} MB\n`
+      message += `元数据记录: ${stats.metadataCount}\n\n`
+      message += `使用 ^清理音乐缓存 可清空所有缓存`
+
+      await this.e.reply(message)
+      return true
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 获取缓存统计失败:', error)
+      await this.e.reply('获取缓存统计失败，请稍后重试。')
+      return true
+    }
+  }
+
+  /**
+   * 清理音乐缓存（清空所有缓存）
+   * 命令：^清理音乐缓存
+   */
+  async cleanMusicCache() {
+    try {
+      // 检查权限：只有主人可以清理缓存
+      if (!this.e.isMaster) {
+        await this.e.reply('只有主人可以清理音乐缓存')
+        return true
+      }
+
+      const beforeStats = MusicCache.getCacheStats()
+      await this.e.reply('正在清理音乐缓存...')
+
+      // 清空所有缓存
+      MusicCache.clearAllCache()
+
+      let message = '音乐缓存已清空\n\n'
+      message += `清理文件: ${beforeStats.totalFiles} 个\n`
+      message += `释放空间: ${beforeStats.totalSizeMB} MB`
+
+      await this.e.reply(message)
+      return true
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 清理缓存失败:', error)
+      await this.e.reply('清理缓存失败，请稍后重试。')
+      return true
+    }
   }
 }
 
