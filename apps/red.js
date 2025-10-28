@@ -90,7 +90,7 @@ export class Red extends plugin {
       return e.reply([segment.at(e.user_id), '您尚未绑定账号，请使用 #三角洲登录 进行绑定。'])
     }
 
-    const match = e.msg.match(/^(#三角洲|\^)(大红记录|藏品记录)\s+(.+)$/)
+    const match = e.msg.match(/^(#三角洲|\^)(出红记录|大红记录|藏品记录)\s+(.+)$/)
     const itemName = match[3].trim()
 
     await e.reply(`正在搜索物品"${itemName}"的藏品记录...`)
