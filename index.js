@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import DataManager from './utils/Data.js';
+import { getWebSocketService } from './utils/WebSocketService.js';
+import Config from './components/Config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -81,5 +83,22 @@ for (let i in files) {
 
 logger.info(logger.green("- DELTA-FORCE-PLUGIN 载入成功"));
 logger.info(logger.magenta(`- 欢迎加入三角洲行动插件交流群 932459332`));
+
+// 初始化 WebSocket 服务
+const wsConfig = Config.getConfig()?.delta_force?.websocket || {};
+if (wsConfig.auto_connect) {
+  logger.info('[DELTA-FORCE-PLUGIN] WebSocket 自动连接已启用');
+  const wsService = getWebSocketService();
+  await wsService.init({
+    autoConnect: true
+  });
+} else {
+  logger.info('[DELTA-FORCE-PLUGIN] WebSocket 自动连接未启用');
+  // 即使不自动连接，也要初始化服务以便后续手动连接
+  const wsService = getWebSocketService();
+  await wsService.init({
+    autoConnect: false
+  });
+}
 
 export { apps };

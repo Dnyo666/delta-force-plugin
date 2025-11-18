@@ -133,6 +133,27 @@ export const helpList = [
         ]
     },
     {
+        group: "战绩订阅推送",
+        list: [
+            { icon: 86, title: "^订阅 战绩 [模式]", desc: "订阅战绩（模式：sol/mp/both）" },
+            { icon: 80, title: "^取消订阅 战绩", desc: "取消战绩订阅" },
+            { icon: 78, title: "^订阅状态 战绩", desc: "查看订阅和推送状态" },
+            { icon: 61, title: "^开启私信订阅推送 战绩 [筛选]", desc: "开启私信推送（可选筛选条件）" },
+            { icon: 48, title: "^关闭私信订阅推送 战绩", desc: "关闭私信推送" },
+            { icon: 61, title: "^开启本群订阅推送 战绩 [筛选]", desc: "开启本群推送（可选筛选条件）" },
+            { icon: 48, title: "^关闭本群订阅推送 战绩", desc: "关闭本群推送" },
+            { icon: 79, title: "筛选条件", desc: "百万撤离/百万战损/天才少年" }
+        ]
+    },
+    {
+        group: "WebSocket连接",
+        list: [
+            { icon: 64, title: "^ws连接", desc: "手动连接WebSocket" },
+            { icon: 37, title: "^ws断开", desc: "断开WebSocket连接" },
+            { icon: 78, title: "^ws状态", desc: "查看WebSocket状态" }
+        ]
+    },
+    {
         group: "其他/帮助",
         list: [
             { icon: 92, title: "#三角洲(强制)更新", desc: "更新三角洲插件" },

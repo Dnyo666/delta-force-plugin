@@ -399,6 +399,50 @@ export default class Code {
     return this.request('/df/person/money', { frameworkToken }, 'GET')
   }
 
+  // --- 战绩订阅相关 ---
+
+  /**
+   * 订阅战绩
+   * @param {Object} params - 订阅参数
+   * @param {string} params.platformID - 平台用户ID (QQ号)
+   * @param {string} params.clientID - 客户端ID
+   * @param {string} params.subscriptionType - 订阅类型: sol/mp/both
+   * @returns {Promise<object>}
+   */
+  async subscribeRecord(params) {
+    const result = await this.requestJson('/df/record/subscribe', params, 'POST')
+    return result
+  }
+
+  /**
+   * 取消订阅战绩
+   * @param {Object} params - 取消订阅参数
+   * @param {string} params.platformID - 平台用户ID (QQ号)
+   * @param {string} params.clientID - 客户端ID
+   * @returns {Promise<object>}
+   */
+  async unsubscribeRecord(params) {
+    return this.requestJson('/df/record/unsubscribe', params, 'POST')
+  }
+
+  /**
+   * 查询战绩订阅状态
+   * @param {string} platformID - 平台用户ID (QQ号)
+   * @param {string} clientID - 客户端ID
+   * @returns {Promise<object>}
+   */
+  async getRecordSubscription(platformID, clientID) {
+    return this.request('/df/record/subscription', { platformID, clientID }, 'GET')
+  }
+
+  /**
+   * 获取战绩订阅统计
+   * @returns {Promise<object>}
+   */
+  async getRecordStats() {
+    return this.request('/df/record/stats', {}, 'GET')
+  }
+
   /**
    * 获取流水记录
    * @param {string} frameworkToken - 用户绑定的token

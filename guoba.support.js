@@ -113,6 +113,12 @@ export function supportGuoba() {
           component: 'Switch',
           bottomHelpMessage: '开启后，网页授权将不会再使用botID参数，可以同时登陆触发命令的多个机器人',
         },
+        {
+          field: 'websocket.auto_connect',
+          label: 'WebSocket自动连接',
+          component: 'Switch',
+          bottomHelpMessage: '开启后，插件启动时将自动连接WebSocket服务器（用于战绩推送）',
+        },
       ],
       getConfigData() {
         // 直接从文件读取最新的、未经缓存的配置
@@ -164,6 +170,13 @@ export function supportGuoba() {
             allow_share_with_other_bots: false,
           },
           df.web_login
+        );
+
+        df.websocket = lodash.merge(
+          {
+            auto_connect: false
+          },
+          df.websocket
         );
 
         return df;
