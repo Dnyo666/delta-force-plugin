@@ -12,6 +12,7 @@ import { getSubscriptionConfig } from '../utils/SubscriptionConfig.js'
 export class RecordSubscription extends plugin {
   static _listenerRegistered = false
   static _nicknameCache = new Map() // 缓存 frameworkToken -> 昵称的映射
+  static _pushedRecords = new Map() // 缓存已推送的战绩ID，防止短时间内重复推送
 
   constructor(e) {
     super({
@@ -548,6 +549,20 @@ export class RecordSubscription extends plugin {
       return
     }
 
+    // 生成战绩唯一标识，防止重复推送
+    const recordId = `${platformID}:${frameworkToken}:${recordType}:${record.dtEventTime || Date.now()}`
+    if (RecordSubscription._pushedRecords.has(recordId)) {
+      const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
+      logger.warn(`[战绩订阅] 检测到重复推送，已跳过: ${platformID} | 账号: ${maskedToken} | ID: ${recordId}`)
+      return
+    }
+
+    // 标记为已推送，5分钟后过期
+    RecordSubscription._pushedRecords.set(recordId, Date.now())
+    setTimeout(() => {
+      RecordSubscription._pushedRecords.delete(recordId)
+    }, 300000) // 5分钟
+
     try {
       // 1. 检查用户是否启用了战绩订阅
       const subStr = await redis.get(`delta-force:record-sub:${platformID}`)
@@ -785,9 +800,21 @@ export class RecordSubscription extends plugin {
 
     if (recordType === 'sol') {
       // 烽火地带战绩
-      const finalPrice = Number(record.FinalPrice || 0).toLocaleString()
+      // 从 RoomInfo 中获取本人数据（vopenid: true）
+      let myData = record
+      if (record.RoomInfo && Array.isArray(record.RoomInfo)) {
+        const selfData = record.RoomInfo.find(player => player.vopenid === true)
+        if (selfData) {
+          myData = selfData
+        }
+      }
+      
+      const finalPrice = Number(myData.FinalPrice || 0).toLocaleString()
       const income = record.flowCalGainedPrice ? Number(record.flowCalGainedPrice).toLocaleString() : '未知'
-      const duration = Math.floor(record.DurationS / 60)
+      const durationS = Number(myData.DurationS || record.DurationS || 0)
+      const hours = Math.floor(durationS / 3600)
+      const minutes = Math.floor((durationS % 3600) / 60)
+      const duration = hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`
       
       // 撤离状态
       const escapeReasons = {
@@ -802,23 +829,24 @@ export class RecordSubscription extends plugin {
       msg += `干员：${operatorName}\n`
       msg += `时间：${record.dtEventTime}\n`
       msg += `状态：${escapeStatus}\n`
+      msg += `存活：${duration}\n`
       msg += `带出价值：${finalPrice}\n`
       msg += `净收益：${income}\n`
-      msg += `击杀：${record.KillCount || 0}玩家/${record.KillAICount || 0}AI/${record.KillPlayerAICount || 0}AI玩家`
+      msg += `击杀：${myData.KillCount || 0}玩家/${myData.KillAICount || 0}AI/${myData.KillPlayerAICount || 0}AI玩家`
       
       // 显示队友信息（如果有）
-      if (record.RoomInfo) {
-        const teammates = this.extractTeammates(record.RoomInfo)
-        // 过滤掉本人
-        const filteredTeammates = teammates ? teammates.filter(mate => !mate.isCurrentUser) : []
-        if (filteredTeammates.length > 0) {
+      if (record.RoomInfo && Array.isArray(record.RoomInfo)) {
+        // 过滤掉本人（vopenid: true）
+        const teammates = record.RoomInfo.filter(mate => mate.vopenid !== true)
+        if (teammates.length > 0) {
           msg += `\n————————`
-          filteredTeammates.forEach((mate, index) => {
+          teammates.forEach((mate, index) => {
             // 解码昵称
             const nickName = this.decode(mate.nickName || mate.PlayerName) || '未知玩家'
-            const operatorName = DataManager.getOperatorName(mate.armedForceType || mate.ArmedForceId)
-            const kills = mate.killNum || mate.KillCount || 0
-            msg += `\n队友${index + 1}：${nickName}(${operatorName}/${kills}杀)`
+            const mateOperator = DataManager.getOperatorName(mate.ArmedForceId || mate.armedForceType)
+            const kills = mate.KillCount || mate.killNum || 0
+            const mateFinalPrice = Number(mate.FinalPrice || 0).toLocaleString()
+            msg += `\n队友${index + 1}：${nickName}(${mateOperator}/${kills}杀/${mateFinalPrice})`
           })
         }
       }
