@@ -7,6 +7,15 @@ const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 })
 
+// API 基础地址（统一配置）
+export const BASE_URL = 'https://df-api.shallow.ink'
+
+// 获取 WebSocket 连接地址
+export function getWebSocketURL() {
+  // 将 https:// 转换为 wss://，http:// 转换为 ws://
+  return BASE_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://') + '/ws'
+}
+
 export default class Code {
   constructor (e) {
     this.e = e
@@ -25,7 +34,6 @@ export default class Code {
   async request (url, params, method = 'GET', opts = {}) {
     const { responseType = 'json' } = opts
     const { api_key: apiKey } = this.cfg
-    const BASE_URL = 'https://df-api.shallow.ink' // 固定的API地址
 
     if (!apiKey || apiKey === 'sk-xxxxxxx') {
       const errorMsg = 'APIKey 未配置，请联系机器人管理员。'

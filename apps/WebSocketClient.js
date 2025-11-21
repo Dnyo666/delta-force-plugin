@@ -56,17 +56,18 @@ export class WebSocketClient extends plugin {
 
     await this.e.reply('正在连接 WebSocket 服务器...')
 
-    // 连接选项
-    const options = {
-      clientID: clientID,
-      platformID: this.e.user_id,
-      clientType: this.e.isGroup ? 'group' : 'private'
-    }
+    try {
+      // 连接选项
+      const options = {
+        clientID: clientID,
+        platformID: this.e.user_id,
+        clientType: this.e.isGroup ? 'group' : 'private'
+      }
 
-    const success = await this.wsManager.connect(options)
+      // connect现在返回Promise<boolean>
+      const success = await this.wsManager.connect(options)
 
-    if (success) {
-      // 等待连接就绪
+      // 等待连接就绪（最多5秒）
       await new Promise((resolve) => {
         const timeout = setTimeout(() => {
           resolve()
@@ -83,13 +84,14 @@ export class WebSocketClient extends plugin {
         await this.e.reply([
           '✅ WebSocket 连接成功！\n',
           '\n说明：WebSocket 已就绪，可用于战绩推送\n',
-          '使用 #三角洲战绩订阅 来订阅战绩推送'
+          '使用 #三角洲订阅战绩 来订阅战绩推送'
         ])
       } else {
-        await this.e.reply('WebSocket 连接超时，请查看日志')
+        await this.e.reply('WebSocket 连接超时，但可能仍在后台连接中\n请稍后使用 #三角洲ws状态 查看')
       }
-    } else {
-      await this.e.reply('WebSocket 连接失败，请检查配置和日志')
+    } catch (error) {
+      logger.error('[WebSocketClient] 连接失败:', error)
+      await this.e.reply(`WebSocket 连接失败: ${error.message}\n请检查配置和网络连接`)
     }
 
     return true

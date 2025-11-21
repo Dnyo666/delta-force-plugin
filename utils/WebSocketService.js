@@ -10,6 +10,7 @@ class WebSocketService {
   constructor() {
     this.wsManager = null
     this.isInitialized = false
+    this.listenersRegistered = false // 防止重复注册监听器
     this.pushSettings = new Map() // 用户推送设置缓存
     this.autoConnectEnabled = false
   }
@@ -55,27 +56,38 @@ class WebSocketService {
       return false
     }
 
-    logger.info('[Delta-Force WS Service] 自动连接 WebSocket...')
+    try {
+      logger.info('[Delta-Force WS Service] 自动连接 WebSocket...')
 
-    const success = await this.wsManager.connect({
-      clientID: clientID,
-      clientType: 'bot'
-    })
-
-    if (success) {
-      // 等待连接就绪
-      await new Promise((resolve) => {
-        const timeout = setTimeout(resolve, 5000)
-        this.wsManager.once('ready', () => {
-          clearTimeout(timeout)
-          resolve()
-        })
+      const success = await this.wsManager.connect({
+        clientID: clientID,
+        clientType: 'bot'
       })
 
-      logger.info('[Delta-Force WS Service] WebSocket 自动连接成功')
-      return true
-    } else {
-      logger.error('[Delta-Force WS Service] WebSocket 自动连接失败')
+      if (success) {
+        // 等待连接就绪（最多5秒）
+        await new Promise((resolve) => {
+          const timeout = setTimeout(() => {
+            logger.warn('[Delta-Force WS Service] 等待就绪超时，但连接可能仍然有效')
+            resolve()
+          }, 5000)
+          
+          this.wsManager.once('ready', () => {
+            clearTimeout(timeout)
+            resolve()
+          })
+        })
+
+        logger.info('[Delta-Force WS Service] WebSocket 自动连接成功')
+        return true
+      } else {
+        logger.warn('[Delta-Force WS Service] WebSocket 自动连接返回false')
+        return false
+      }
+    } catch (error) {
+      // 捕获所有错误，避免影响插件启动
+      logger.error('[Delta-Force WS Service] WebSocket 自动连接失败:', error.message)
+      logger.warn('[Delta-Force WS Service] 插件将继续加载，可稍后使用 #三角洲ws连接 手动连接')
       return false
     }
   }
@@ -84,7 +96,13 @@ class WebSocketService {
    * 注册全局消息监听器
    */
   registerGlobalListeners() {
-    // 战绩更新推送 - 由 RecordSubscription 插件处理
+    // 防止重复注册
+    if (this.listenersRegistered) {
+      logger.warn('[Delta-Force WS Service] 监听器已注册，跳过')
+      return
+    }
+
+    // 战绩更新推送 - 仅记录日志，实际处理由 RecordSubscription 插件负责
     this.wsManager.on('record_update', async (data) => {
       const { platformId, frameworkToken, recordType, isNew, isRecent } = data
       const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : ''
@@ -108,6 +126,12 @@ class WebSocketService {
       logger.error(`[Delta-Force WS Service] 服务器错误 [${error.code}]: ${error.message}`)
     })
 
+    // 连接错误（502等）
+    this.wsManager.on('error', (error) => {
+      logger.error(`[Delta-Force WS Service] 连接错误: ${error.message}`)
+    })
+
+    this.listenersRegistered = true
     logger.info('[Delta-Force WS Service] 全局监听器已注册')
   }
 

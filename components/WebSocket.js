@@ -1,6 +1,7 @@
 import Config from './Config.js'
 import WebSocket from 'ws'
-import EventEmitter from 'events'
+import { EventEmitter } from 'events'
+import { getWebSocketURL } from './Code.js'
 
 /**
  * WebSocket 管理器
@@ -16,11 +17,15 @@ export default class WebSocketManager extends EventEmitter {
     this.heartbeatTimer = null
     this.reconnectAttempts = 0
     this.maxReconnectAttempts = 10
+    this.defaultMaxReconnectAttempts = 10 // 保存默认值
     this.reconnectDelay = 5000 // 5秒
     this.heartbeatInterval = 30000 // 30秒
     this.subscriptions = new Set() // 当前订阅的频道
     this.availableChannels = [] // 可用频道列表
     this.connectionInfo = {} // 连接信息
+    this.lastConnectOptions = null // 保存最后的连接参数用于重连
+    this.connectionPromiseResolve = null // 用于连接状态回调
+    this.connectionPromiseReject = null
     
     // 消息处理器映射
     this.messageHandlers = new Map()
@@ -68,47 +73,70 @@ export default class WebSocketManager extends EventEmitter {
       return false
     }
 
+    // 保存连接参数用于重连
+    this.lastConnectOptions = options
     this.isConnecting = true
 
-    try {
-      // 构建连接URL
-      const baseUrl = 'wss://df-api.shallow.ink/ws'
-      const params = new URLSearchParams({
-        key: apiKey,
-        clientID: clientID
-      })
+    // 创建连接Promise用于外部等待
+    return new Promise((resolve, reject) => {
+      this.connectionPromiseResolve = resolve
+      this.connectionPromiseReject = reject
 
-      if (options.platformID) {
-        params.append('platformID', options.platformID)
+      try {
+        // 构建连接URL（使用统一的 API 地址配置）
+        const baseUrl = getWebSocketURL()
+        const params = new URLSearchParams({
+          key: apiKey,
+          clientID: clientID
+        })
+
+        if (options.platformID) {
+          params.append('platformID', options.platformID)
+        }
+        if (options.clientType) {
+          params.append('clientType', options.clientType)
+        } else {
+          params.append('clientType', 'bot')
+        }
+
+        const wsUrl = `${baseUrl}?${params.toString()}`
+
+        logger.info('[Delta-Force WebSocket] 正在连接...')
+        
+        this.ws = new WebSocket(wsUrl, {
+          handshakeTimeout: 10000, // 10秒握手超时
+        })
+
+        // 设置事件监听器
+        this.ws.on('open', this.onOpen.bind(this))
+        this.ws.on('message', this.onMessage.bind(this))
+        this.ws.on('close', this.onClose.bind(this))
+        this.ws.on('error', this.onError.bind(this))
+        this.ws.on('ping', this.onPing.bind(this))
+        this.ws.on('pong', this.onPong.bind(this))
+
+        // 10秒超时处理
+        setTimeout(() => {
+          if (this.isConnecting && !this.isConnected) {
+            logger.error('[Delta-Force WebSocket] 连接超时')
+            this.isConnecting = false
+            if (this.ws) {
+              this.ws.terminate()
+            }
+            if (this.connectionPromiseReject) {
+              this.connectionPromiseReject(new Error('连接超时'))
+              this.connectionPromiseReject = null
+              this.connectionPromiseResolve = null
+            }
+          }
+        }, 10000)
+
+      } catch (error) {
+        logger.error('[Delta-Force WebSocket] 连接失败:', error)
+        this.isConnecting = false
+        reject(error)
       }
-      if (options.clientType) {
-        params.append('clientType', options.clientType)
-      } else {
-        params.append('clientType', 'bot')
-      }
-
-      const wsUrl = `${baseUrl}?${params.toString()}`
-
-      logger.info('[Delta-Force WebSocket] 正在连接...')
-      
-      this.ws = new WebSocket(wsUrl, {
-        handshakeTimeout: 10000, // 10秒握手超时
-      })
-
-      // 设置事件监听器
-      this.ws.on('open', this.onOpen.bind(this))
-      this.ws.on('message', this.onMessage.bind(this))
-      this.ws.on('close', this.onClose.bind(this))
-      this.ws.on('error', this.onError.bind(this))
-      this.ws.on('ping', this.onPing.bind(this))
-      this.ws.on('pong', this.onPong.bind(this))
-
-      return true
-    } catch (error) {
-      logger.error('[Delta-Force WebSocket] 连接失败:', error)
-      this.isConnecting = false
-      return false
-    }
+    })
   }
 
   /**
@@ -118,7 +146,8 @@ export default class WebSocketManager extends EventEmitter {
   disconnect(preventReconnect = true) {
     if (preventReconnect) {
       this.clearReconnectTimer()
-      this.maxReconnectAttempts = 0 // 阻止重连
+      this.reconnectAttempts = 0 // 重置重连次数
+      // 不修改 maxReconnectAttempts，保留重连能力
     }
 
     this.clearHeartbeatTimer()
@@ -131,6 +160,13 @@ export default class WebSocketManager extends EventEmitter {
     this.isConnected = false
     this.isConnecting = false
     this.subscriptions.clear()
+    
+    // 清理连接Promise
+    if (this.connectionPromiseReject) {
+      this.connectionPromiseReject(new Error('连接已断开'))
+      this.connectionPromiseReject = null
+      this.connectionPromiseResolve = null
+    }
     
     logger.info('[Delta-Force WebSocket] 已断开连接')
     this.emit('disconnected')
@@ -273,6 +309,9 @@ export default class WebSocketManager extends EventEmitter {
     this.isConnecting = false
     this.reconnectAttempts = 0
     
+    // 恢复重连配置
+    this.maxReconnectAttempts = this.defaultMaxReconnectAttempts
+    
     // 启动心跳
     this.startHeartbeat()
     
@@ -336,6 +375,14 @@ export default class WebSocketManager extends EventEmitter {
   onError(error) {
     logger.error('[Delta-Force WebSocket] 发生错误:', error.message)
     this.emit('error', error)
+    
+    // 如果连接尚未建立，拒绝连接Promise
+    if (this.isConnecting && this.connectionPromiseReject) {
+      this.connectionPromiseReject(error)
+      this.connectionPromiseReject = null
+      this.connectionPromiseResolve = null
+      this.isConnecting = false
+    }
   }
 
   /**
@@ -368,6 +415,14 @@ export default class WebSocketManager extends EventEmitter {
     this.availableChannels = data.availableChannels || []
     
     logger.info('[Delta-Force WebSocket] 连接成功，可用频道:', this.availableChannels.length)
+    
+    // resolve连接Promise
+    if (this.connectionPromiseResolve) {
+      this.connectionPromiseResolve(true)
+      this.connectionPromiseResolve = null
+      this.connectionPromiseReject = null
+    }
+    
     this.emit('ready', data)
   }
 
@@ -473,13 +528,21 @@ export default class WebSocketManager extends EventEmitter {
     this.clearReconnectTimer()
     
     this.reconnectAttempts++
-    const delay = this.reconnectDelay * Math.min(this.reconnectAttempts, 5) // 最多延迟到25秒
+    // 指数退避但限制最大延迟
+    const delay = Math.min(
+      this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts - 1),
+      15000 // 最多15秒
+    )
     
-    logger.info(`[Delta-Force WebSocket] ${delay / 1000}秒后尝试第${this.reconnectAttempts}次重连...`)
+    logger.info(`[Delta-Force WebSocket] ${Math.round(delay / 1000)}秒后尝试第${this.reconnectAttempts}次重连...`)
     
-    this.reconnectTimer = setTimeout(() => {
+    this.reconnectTimer = setTimeout(async () => {
       logger.info(`[Delta-Force WebSocket] 开始第${this.reconnectAttempts}次重连`)
-      this.connect(this.lastConnectOptions)
+      try {
+        await this.connect(this.lastConnectOptions)
+      } catch (error) {
+        logger.error('[Delta-Force WebSocket] 重连失败:', error.message)
+      }
     }, delay)
   }
 
