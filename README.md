@@ -66,6 +66,7 @@ pnpm install --filter=delta-force-plugin
 - [x] 个人信息查询
 - [x] 日报/周报数据
 - [x] 战绩查询
+- [x] 战绩推送
 - [x] 藏品/资产查询
 - [x] 货币信息查询
 - [x] 封号记录查询
@@ -106,6 +107,7 @@ pnpm install --filter=delta-force-plugin
 - [ ] 摸金模拟器
 - [ ] 对局模拟器
 - [x] 随机音频
+- [x] 鼠鼠音乐（来自Liusy）
 - [ ] 随机表情包
 
 ## 命令示例
