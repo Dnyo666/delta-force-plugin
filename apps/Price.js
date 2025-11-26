@@ -1084,10 +1084,10 @@ export class Price extends plugin {
 
     // 特勤处四个制造场所
     const places = [
-      { key: 'tech', name: '科技中心' },
+      { key: 'tech', name: '技术中心' },
       { key: 'workbench', name: '工作台' },
-      { key: 'pharmacy', name: '药剂站' },
-      { key: 'armory', name: '军械库' }
+      { key: 'pharmacy', name: '制药台' },
+      { key: 'armory', name: '防具台' }
     ];
 
     const typeText = {

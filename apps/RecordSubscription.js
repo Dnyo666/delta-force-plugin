@@ -779,7 +779,14 @@ export class RecordSubscription extends plugin {
       if (durationS > 0) {
         const hours = Math.floor(durationS / 3600)
         const minutes = Math.floor((durationS % 3600) / 60)
-        duration = hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`
+        const seconds = durationS % 60
+        if (hours > 0) {
+          duration = `${hours}小时${minutes}分${seconds}秒`
+        } else if (minutes > 0) {
+          duration = `${minutes}分${seconds}秒`
+        } else {
+          duration = `${seconds}秒`
+        }
       }
       
       // 撤离状态
@@ -804,11 +811,28 @@ export class RecordSubscription extends plugin {
       const killAI = record.KillAICount ?? '未知'
       const killPlayerAI = record.KillPlayerAICount ?? '未知'
       msg += `击杀：${killCount}玩家/${killAI}AI/${killPlayerAI}AI玩家`
+      
+      // 救援次数（如果有）
+      if (record.Rescue != null && record.Rescue > 0) {
+        msg += `\n救援：${record.Rescue}次`
+      }
     } else {
       // 全面战场战绩（v1 格式）
       // 使用 gametime 而不是 DurationS
       const gameTimeS = Number(record.gametime || 0)
-      const duration = Math.floor(gameTimeS / 60)
+      const hours = Math.floor(gameTimeS / 3600)
+      const minutes = Math.floor((gameTimeS % 3600) / 60)
+      const seconds = gameTimeS % 60
+      let duration = '未知'
+      if (gameTimeS > 0) {
+        if (hours > 0) {
+          duration = `${hours}小时${minutes}分${seconds}秒`
+        } else if (minutes > 0) {
+          duration = `${minutes}分${seconds}秒`
+        } else {
+          duration = `${seconds}秒`
+        }
+      }
       
       // 对局结果
       const mpResults = {
@@ -824,7 +848,12 @@ export class RecordSubscription extends plugin {
       msg += `结果：${result}\n`
       msg += `K/D/A：${record.KillNum}/${record.Death}/${record.Assist}\n`
       msg += `得分：${record.TotalScore.toLocaleString()}\n`
-      msg += `时长：${duration}分钟`
+      msg += `时长：${duration}`
+      
+      // 救援次数（如果有）
+      if (record.RescueTeammateCount != null && record.RescueTeammateCount > 0) {
+        msg += `\n救援：${record.RescueTeammateCount}次`
+      }
     }
 
     return msg
