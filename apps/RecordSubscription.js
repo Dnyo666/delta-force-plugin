@@ -745,38 +745,6 @@ export class RecordSubscription extends plugin {
   }
 
   /**
-   * 从 RoomInfo 中提取队友信息
-   * @param {Object} roomInfo - 房间信息对象
-   * @returns {Array|null} 队友信息数组
-   */
-  extractTeammates(roomInfo) {
-    if (!roomInfo) return null
-    
-    // 尝试不同的可能结构
-    // 1. RoomInfo.data.mpDetailList（全面战场格式）
-    if (roomInfo.data?.mpDetailList && Array.isArray(roomInfo.data.mpDetailList)) {
-      return roomInfo.data.mpDetailList
-    }
-    
-    // 2. RoomInfo.data.teammates（可能的烽火地带格式）
-    if (roomInfo.data?.teammates && Array.isArray(roomInfo.data.teammates)) {
-      return roomInfo.data.teammates
-    }
-    
-    // 3. RoomInfo.data 直接是数组
-    if (Array.isArray(roomInfo.data)) {
-      return roomInfo.data
-    }
-    
-    // 4. RoomInfo 本身是数组
-    if (Array.isArray(roomInfo)) {
-      return roomInfo
-    }
-    
-    return null
-  }
-
-  /**
    * 格式化战绩消息
    * @param {string} recordType - 战绩类型 (sol/mp)
    * @param {Object} record - 战绩对象
@@ -785,7 +753,9 @@ export class RecordSubscription extends plugin {
    */
   async formatRecordMessage(recordType, record, frameworkToken) {
     const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
-    const mapName = DataManager.getMapName(record.MapId)
+    // 全面战场使用 MapID，烽火地带使用 MapId
+    const mapId = record.MapID || record.MapId
+    const mapName = DataManager.getMapName(mapId)
     const operatorName = DataManager.getOperatorName(record.ArmedForceId)
 
     // 获取昵称
@@ -799,22 +769,18 @@ export class RecordSubscription extends plugin {
     let msg = `${displayName}-战绩订阅-${modeText}\n`
 
     if (recordType === 'sol') {
-      // 烽火地带战绩
-      // 从 RoomInfo 中获取本人数据（vopenid: true）
-      let myData = record
-      if (record.RoomInfo && Array.isArray(record.RoomInfo)) {
-        const selfData = record.RoomInfo.find(player => player.vopenid === true)
-        if (selfData) {
-          myData = selfData
-        }
-      }
-      
-      const finalPrice = Number(myData.FinalPrice || 0).toLocaleString()
+      // 烽火地带战绩（v1 格式，数据直接在 record 顶层）
+      const finalPrice = Number(record.FinalPrice || 0).toLocaleString()
       const income = record.flowCalGainedPrice ? Number(record.flowCalGainedPrice).toLocaleString() : '未知'
-      const durationS = Number(myData.DurationS || record.DurationS || 0)
-      const hours = Math.floor(durationS / 3600)
-      const minutes = Math.floor((durationS % 3600) / 60)
-      const duration = hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`
+      
+      // 处理存活时间（DurationS 可能为 null）
+      const durationS = Number(record.DurationS || 0)
+      let duration = '未知'
+      if (durationS > 0) {
+        const hours = Math.floor(durationS / 3600)
+        const minutes = Math.floor((durationS % 3600) / 60)
+        duration = hours > 0 ? `${hours}小时${minutes}分钟` : `${minutes}分钟`
+      }
       
       // 撤离状态
       const escapeReasons = {
@@ -832,27 +798,17 @@ export class RecordSubscription extends plugin {
       msg += `存活：${duration}\n`
       msg += `带出价值：${finalPrice}\n`
       msg += `净收益：${income}\n`
-      msg += `击杀：${myData.KillCount || 0}玩家/${myData.KillAICount || 0}AI/${myData.KillPlayerAICount || 0}AI玩家`
       
-      // 显示队友信息（如果有）
-      if (record.RoomInfo && Array.isArray(record.RoomInfo)) {
-        // 过滤掉本人（vopenid: true）
-        const teammates = record.RoomInfo.filter(mate => mate.vopenid !== true)
-        if (teammates.length > 0) {
-          msg += `\n————————`
-          teammates.forEach((mate, index) => {
-            // 解码昵称
-            const nickName = this.decode(mate.nickName || mate.PlayerName) || '未知玩家'
-            const mateOperator = DataManager.getOperatorName(mate.ArmedForceId || mate.armedForceType)
-            const kills = mate.KillCount || mate.killNum || 0
-            const mateFinalPrice = Number(mate.FinalPrice || 0).toLocaleString()
-            msg += `\n队友${index + 1}：${nickName}(${mateOperator}/${kills}杀/${mateFinalPrice})`
-          })
-        }
-      }
+      // 击杀数据可能为 null
+      const killCount = record.KillCount ?? '未知'
+      const killAI = record.KillAICount ?? '未知'
+      const killPlayerAI = record.KillPlayerAICount ?? '未知'
+      msg += `击杀：${killCount}玩家/${killAI}AI/${killPlayerAI}AI玩家`
     } else {
-      // 全面战场战绩
-      const duration = Math.floor(record.DurationS / 60)
+      // 全面战场战绩（v1 格式）
+      // 使用 gametime 而不是 DurationS
+      const gameTimeS = Number(record.gametime || 0)
+      const duration = Math.floor(gameTimeS / 60)
       
       // 对局结果
       const mpResults = {

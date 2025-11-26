@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v2.1.1**（1.9.1~2.0.0为ws测试版本，请帮忙测试ws功能）
+**版本号：v2.1.2**
 
 ## WebSocket 服务
 
@@ -578,9 +578,8 @@ GET /df/record/subscription?platformID=12346&clientID=114514
 ```
 
 **字段说明**：
-- `frameworkTokenRecords`: 按游戏账号（frameworkToken）存储的战绩记录
-  - 每个 frameworkToken 对应一个游戏账号
-  - 包含该账号的最新3条战绩ID和上次轮询时间
+- **注意**：战绩ID不再存储在 MongoDB 中，改为存储在 Redis（`record:last:{platformID}:{frameworkToken}:{sol|mp}`）
+- `frameworkToken` 从 `api_user_binding` 实时查询，确保使用最新的账号绑定
 
 #### 4. 获取统计信息
 ```http
@@ -704,12 +703,11 @@ const ws = new WebSocket('wss://your-api-domain:port/ws?key=YOUR_API_KEY&clientI
 ```
 
 **注意**：
-- 部分字段可能为 `null`（如 `DurationS`、`KillCount` 等），这是正常的战绩数据
+- **每个 frameworkToken 独立推送 3 条历史战绩**（例如：2个账号 × 6条 = 12条）
 - `meta` 字段由 WebSocketManager 自动添加，包含连接元信息
-- **`RoomInfo` 字段**：仅烽火地带（SOL）模式包含房间详情
-  - **SOL（烽火地带）**：包含队友信息数组（使用 v2 房间接口）
-  - **MP（全面战场）**：不包含 `RoomInfo` 字段
-  - 如果房间信息查询失败，该字段为 `null`
+- **数据过滤**：推送数据只包含**个人战绩**，不包含队友和房间信息
+  - **烽火地带（sol）**：移除了 `teammateArr` 字段（v1 接口原始包含）
+  - **全面战场（mp）**：不包含 `RoomInfo` 字段
 
 #### 3. 新战绩推送（实时）
 
@@ -755,16 +753,16 @@ const ws = new WebSocket('wss://your-api-domain:port/ws?key=YOUR_API_KEY&clientI
 
 **业务字段**：
 - **`messageType`**: 消息类型，固定为 `record_update`
-- **`platformId`**: 平台用户ID（符合JavaScript驼峰命名规范）
+- **`platformId`**: 平台用户ID
 - **`frameworkToken`**: 游戏账号框架令牌（用于区分同一 platformID 下的多个游戏账号）
 - **`recordType`**: 战绩类型（用于区分游戏模式）
-  - `sol` - 烽火地带
-  - `mp` - 全面战场
-- **`record`**: 完整的战绩对象，包含所有字段
-  - 包含基础战绩字段（MapId, RoomId, dtEventTime 等）
-  - **`RoomInfo`**: 房间详情（仅 SOL 模式）
-    - SOL: 队友信息数组（v2 接口）
-    - MP: 不包含此字段
+  - `sol` - 烽火地带（type=4）
+  - `mp` - 全面战场（type=5）
+- **`record`**: 个人战绩对象（已过滤队友和房间数据）
+  - 包含基础战绩字段（MapId, RoomId, dtEventTime, KillCount 等）
+  - **不包含** `teammateArr` 字段（烽火地带的队友数据已移除）
+  - **不包含** `RoomInfo` 字段（两种模式都不查询房间信息）
+  - 仅包含个人战绩数据，数据更纯净
 - **`isRecent`**: `true` 表示缓存战绩（订阅时推送）
 - **`isNew`**: `true` 表示新战绩（实时检测到）
 
@@ -786,20 +784,32 @@ const ws = new WebSocket('wss://your-api-domain:port/ws?key=YOUR_API_KEY&clientI
 #### 1. 后台轮询（RecordSubManager）
 
 - **轮询间隔**：每 60 秒轮询一次
-- **并发控制**：最多 10 个订阅并发轮询
-- **多账号支持**：一个用户可绑定多个游戏账号，系统会轮询所有有效账号
-- **数据缓存**：最新 3 条战绩缓存在 Redis，7 天过期
+- **智能查询策略**：
+  - **≤60 个账号**：顺序查询，均匀分布在 60 秒内（每个间隔约 1 秒）
+  - **>60 个账号**：分批并发，每批最多 3 个账号，分散到 60 秒内
+  - 避免瞬间大量并发导致 API 拦截
+- **多账号支持**：
+  - 一个用户可绑定多个游戏账号（多个 frameworkToken）
+  - 系统从 `api_user_binding` **实时查询**当前有效的账号，确保使用最新绑定
+  - 用户更新登录信息后，下次轮询会自动使用新账号
+- **数据缓存**：
+  - 最新 3 条战绩缓存在 Redis（`record:recent:{platformID}:{frameworkToken}:{sol|mp}`），7 天过期
+  - 战绩ID存储在 Redis（`record:last:{platformID}:{frameworkToken}:{sol|mp}`），不存储在 MongoDB
 - **新战绩检测**：对比 `RoomId_dtEventTime` 识别新战绩
-- **房间信息查询**：仅烽火地带（SOL）自动查询房间详情
-  - SOL（烽火地带）：使用 v2 房间接口，获取队友信息
-  - MP（全面战场）：不查询房间信息
+- **战绩接口**：使用 v1 接口（iChartId: 319386）
+  - 数据更准确，烽火地带直接包含队友数据
+- **数据过滤**：
+  - **烽火地带（sol/type=4）**：移除 `teammateArr` 字段（队友数据）
+  - **全面战场（mp/type=5）**：不查询房间信息
+  - 只推送个人战绩数据，减少网络传输和存储
 
 #### 2. 实时推送（RecordSubNotifier）
 
 - **推送频率**：每 5 秒检查一次新战绩队列
-- **历史推送**：订阅时立即推送最近 3 条战绩
-- **完整数据**：推送完整战绩对象，不省略任何字段
+- **历史推送**：订阅时立即推送每个账号的最近 3 条战绩（独立推送，不合并）
+- **数据过滤**：推送个人战绩数据（已移除 `teammateArr` 和 `RoomInfo` 字段）
 - **自动清理**：推送后清空 Redis 新战绩队列
+- **实时查询**：从 `api_user_binding` 实时查询 frameworkToken，确保推送的是当前绑定账号的战绩
 
 ### 注意事项
 
@@ -808,16 +818,14 @@ const ws = new WebSocket('wss://your-api-domain:port/ws?key=YOUR_API_KEY&clientI
 3. **多账号绑定**：系统支持一个用户绑定多个游戏账号，会轮询所有账号的战绩
 4. **消息去重**：建议根据 `RoomId` + `dtEventTime` 去重
 5. **连接保活**：建议实现心跳和自动重连机制
-5a. **推送延迟**：
-   - SOL：62-68 秒（轮询 60秒 + 房间查询 2-3秒 + 推送检查 5秒）
-   - MP：60-65 秒（轮询 60秒 + 推送检查 5秒）
+5a. **推送延迟**（基于智能查询策略）：
+   - **少量账号（≤60）**：0-65 秒（顺序查询分散在 60秒 + 推送检查 5秒）
+   - **大量账号（>60）**：0-65 秒（分批并发分散在 60秒 + 推送检查 5秒）
+   - 你的账号在队列中的位置越靠前，收到推送越快
+   - 两种模式延迟相同（不再查询房间信息）
 6. **权限验证**：需要有效的 API Key 和 clientID，且 API Key 对应的用户必须是 pro 订阅等级
-7. **数据完整性**：推送的 `record` 对象包含所有战绩字段，不做任何省略
+7. **数据纯净性**：推送的 `record` 对象**仅包含个人战绩数据**，不包含队友和房间信息
 8. **权限不足错误**：如果订阅等级不足，会收到错误码 `3011` 的错误消息
-9. **房间信息查询**（仅 SOL 模式）：
-   - 烽火地带战绩会自动批量查询房间详情，可能增加 2-3 秒的轮询时间
-   - 如果房间接口查询失败，`RoomInfo` 字段为 `null`，不影响战绩推送
-   - 全面战场不包含 `RoomInfo` 字段，推送延迟约 60-65 秒
 
 ---
 
