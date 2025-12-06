@@ -8,5 +8,7 @@ const pluginName = path.basename(path.join(import.meta.url, '../../'))
 const pluginRoot = path.join(_path, 'plugins', pluginName)
 // 插件资源目录
 const pluginResources = path.join(pluginRoot, 'resources')
+// 插件缓存目录（Yunzai的temp目录）
+const pluginCache = path.join(_path, 'temp', 'delta-force-plugin')
 
-export { _path, pluginName, pluginRoot, pluginResources }
+export { _path, pluginName, pluginRoot, pluginResources, pluginCache }

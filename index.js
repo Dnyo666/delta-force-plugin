@@ -2,6 +2,8 @@ import fs from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import DataManager from './utils/Data.js';
+import { getWebSocketService } from './utils/WebSocketService.js';
+import Config from './components/Config.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -11,6 +13,44 @@ const appsDir = path.join(pluginRoot, 'apps');
 let ret = [];
 
 logger.info(logger.yellow("- 正在载入 DELTA-FORCE-PLUGIN"));
+
+// 初始化 global.segment（如果不存在）
+if (!global.segment) {
+  try {
+    // 尝试从 icqq 导入
+    const icqq = await import("icqq");
+    global.segment = icqq.segment;
+    logger.info("[DELTA-FORCE-PLUGIN] 已从 icqq 加载 segment");
+  } catch (err) {
+    try {
+      // 尝试从 oicq 导入
+      const oicq = await import("oicq");
+      global.segment = oicq.segment;
+      logger.info("[DELTA-FORCE-PLUGIN] 已从 oicq 加载 segment");
+    } catch (err2) {
+      logger.debug("[DELTA-FORCE-PLUGIN] 无法加载 segment，可能已由其他插件加载");
+    }
+  }
+}
+
+// 初始化 global.core（如果不存在）
+if (!global.core) {
+  try {
+    // 尝试从 icqq 导入
+    const icqq = await import("icqq");
+    global.core = icqq.core;
+    logger.info("[DELTA-FORCE-PLUGIN] 已从 icqq 加载 core，音乐卡片功能已启用");
+  } catch (err) {
+    try {
+      // 尝试从 oicq 导入
+      const oicq = await import("oicq");
+      global.core = oicq.core;
+      logger.info("[DELTA-FORCE-PLUGIN] 已从 oicq 加载 core，音乐卡片功能已启用");
+    } catch (err2) {
+      logger.warn("[DELTA-FORCE-PLUGIN] 无法加载 core，音乐卡片功能将不可用（将使用语音备用方案）");
+    }
+  }
+}
 
 // 强制等待数据缓存初始化
 DataManager.init();
@@ -42,6 +82,23 @@ for (let i in files) {
 }
 
 logger.info(logger.green("- DELTA-FORCE-PLUGIN 载入成功"));
-logger.info(logger.magenta(`- 欢迎加入三角洲行动插件交流群 936712625`));
+logger.info(logger.magenta(`- 欢迎加入三角洲行动插件交流群 932459332`));
+
+// 初始化 WebSocket 服务
+const wsConfig = Config.getConfig()?.delta_force?.websocket || {};
+if (wsConfig.auto_connect) {
+  logger.info('[DELTA-FORCE-PLUGIN] WebSocket 自动连接已启用');
+  const wsService = getWebSocketService();
+  await wsService.init({
+    autoConnect: true
+  });
+} else {
+  logger.info('[DELTA-FORCE-PLUGIN] WebSocket 自动连接未启用');
+  // 即使不自动连接，也要初始化服务以便后续手动连接
+  const wsService = getWebSocketService();
+  await wsService.init({
+    autoConnect: false
+  });
+}
 
 export { apps };

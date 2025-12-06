@@ -114,6 +114,46 @@ export const helpList = [
         ]
     },
     {
+        group: "语音娱乐",
+        list: [
+            { icon: 87, title: "#三角洲语音", desc: "随机播放语音" },
+            { icon: 87, title: "#三角洲语音 [角色名/标签]", desc: "播放指定内容" },
+            { icon: 87, title: "#三角洲语音 [角色] [场景]", desc: "播放指定场景语音" },
+            { icon: 87, title: "#三角洲语音 [角色] [场景] [动作]", desc: "播放指定动作语音" },
+            { icon: 78, title: "#三角洲语音列表", desc: "查看所有可用角色" },
+            { icon: 79, title: "#三角洲标签列表", desc: "查看特殊语音标签" },
+            { icon: 86, title: "#三角洲语音统计", desc: "查看音频统计信息" },
+            { icon: 87, title: "#三角洲鼠鼠音乐", desc: "随机播放鼠鼠音乐" },
+            { icon: 87, title: "#三角洲鼠鼠音乐 [关键词]", desc: "搜索并播放音乐" },
+            { icon: 88, title: "#三角洲鼠鼠音乐列表", desc: "查看热度排行榜" },
+            { icon: 89, title: "#三角洲鼠鼠歌单 [名称]", desc: "查看指定歌单" },
+            { icon: 90, title: "#三角洲点歌 [序号]", desc: "播放列表中的歌曲" },
+      { icon: 78, title: "#三角洲音乐缓存统计", desc: "查看音乐缓存状态" },
+      { icon: 48, title: "#三角洲清理音乐缓存", desc: "清空所有缓存(主人)" }
+        ]
+    },
+    {
+        group: "战绩订阅推送",
+        list: [
+            { icon: 86, title: "^订阅 战绩 [模式]", desc: "订阅战绩（模式：sol/mp/both）" },
+            { icon: 80, title: "^取消订阅 战绩", desc: "取消战绩订阅" },
+            { icon: 78, title: "^订阅状态 战绩", desc: "查看订阅和推送状态" },
+            { icon: 61, title: "^开启私信订阅推送 战绩 [筛选]", desc: "开启私信推送（可选筛选条件）" },
+            { icon: 48, title: "^关闭私信订阅推送 战绩", desc: "关闭私信推送" },
+            { icon: 61, title: "^开启本群订阅推送 战绩 [筛选]", desc: "开启本群推送（可选筛选条件）" },
+            { icon: 48, title: "^关闭本群订阅推送 战绩", desc: "关闭本群推送" },
+            { icon: 79, title: "筛选条件", desc: "百万撤离/百万战损/天才少年" }
+        ]
+    },
+    {
+        group: "WebSocket连接",
+        list: [
+            { icon: 64, title: "^ws连接", desc: "手动连接WebSocket" },
+            { icon: 37, title: "^ws断开", desc: "断开WebSocket连接" },
+            { icon: 78, title: "^ws状态", desc: "查看WebSocket状态" }
+        ]
+    },
+    {
         group: "其他/帮助",
         list: [
             { icon: 92, title: "#三角洲(强制)更新", desc: "更新三角洲插件" },

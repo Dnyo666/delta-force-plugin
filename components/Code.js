@@ -7,6 +7,15 @@ const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 })
 
+// API 基础地址（统一配置）
+export const BASE_URL = 'https://df-api.shallow.ink'
+
+// 获取 WebSocket 连接地址
+export function getWebSocketURL() {
+  // 将 https:// 转换为 wss://，http:// 转换为 ws://
+  return BASE_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://') + '/ws'
+}
+
 export default class Code {
   constructor (e) {
     this.e = e
@@ -25,7 +34,6 @@ export default class Code {
   async request (url, params, method = 'GET', opts = {}) {
     const { responseType = 'json' } = opts
     const { api_key: apiKey } = this.cfg
-    const BASE_URL = 'https://df-api.shallow.ink' // 固定的API地址
 
     if (!apiKey || apiKey === 'sk-xxxxxxx') {
       const errorMsg = 'APIKey 未配置，请联系机器人管理员。'
@@ -85,9 +93,17 @@ export default class Code {
       }
 
       const responseBody = await response.json().catch(() => ({}))
-      if (responseBody.code !== 0 && responseBody.success !== true) {
+      
+      // 判断是否为轮询接口：登录状态轮询等正常的中间状态不应该被当作错误
+      const isLoginStatusPolling = fullUrl.includes('/login/') && fullUrl.includes('/status');
+      const isOAuthStatusPolling = fullUrl.includes('/oauth/status') || fullUrl.includes('/oauth/platform-status');
+      const isNormalPollingStatus = isLoginStatusPolling || isOAuthStatusPolling;
+      
+      // 只有在非轮询接口或明确的错误状态时才打印警告
+      if (responseBody.code !== 0 && responseBody.success !== true && !isNormalPollingStatus) {
         logger.warn(`[DELTA FORCE PLUGIN] API 返回业务错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
       }
+      
       return responseBody
     } catch (error) {
       const errorMsg = '网络请求异常，请检查后端服务是否可用'
@@ -142,9 +158,17 @@ export default class Code {
       }
 
       const responseBody = await response.json().catch(() => ({}))
-      if (responseBody.code !== 0 && responseBody.success !== true) {
+      
+      // 判断是否为轮询接口：登录状态轮询等正常的中间状态不应该被当作错误
+      const isLoginStatusPolling = fullUrl.includes('/login/') && fullUrl.includes('/status');
+      const isOAuthStatusPolling = fullUrl.includes('/oauth/status') || fullUrl.includes('/oauth/platform-status');
+      const isNormalPollingStatus = isLoginStatusPolling || isOAuthStatusPolling;
+      
+      // 只有在非轮询接口或明确的错误状态时才打印警告
+      if (responseBody.code !== 0 && responseBody.success !== true && !isNormalPollingStatus) {
         logger.warn(`[DELTA FORCE PLUGIN] API 返回业务错误: ${responseBody.msg || responseBody.message || '未知错误'} - ${fullUrl}`)
       }
+      
       return responseBody
     } catch (error) {
       const errorMsg = '网络请求异常，请检查后端服务是否可用'
@@ -309,32 +333,6 @@ export default class Code {
     return this.request('/login/oauth/token', { frameworkToken }, 'GET');
   }
 
-  // ========== 向后兼容的旧版API方法 ==========
-  
-  /**
-   * @deprecated 请使用 getQqOAuthAuth() 替代
-   * QQ Link登录 - 获取授权链接和frameworkToken (旧版兼容)
-   */
-  async getQqLinkAuth() {
-    return this.getQqOAuthAuth();
-  }
-
-  /**
-   * @deprecated 请使用 submitQqOAuthAuth() 替代  
-   * QQ Link登录 - 提交授权码完成登录 (旧版兼容)
-   */
-  async submitQqLinkAuth(frameworkToken, authCode) {
-    return this.submitQqOAuthAuth(null, frameworkToken, authCode);
-  }
-
-  /**
-   * @deprecated 请使用 getQqOAuthStatus() 替代
-   * 获取QQ Link登录状态 (旧版兼容)
-   */
-  async getQqLinkStatus(frameworkToken) {
-    return this.getQqOAuthStatus(frameworkToken);
-  }
-
   // --- 用户数据 ---
   
   /**
@@ -407,6 +405,50 @@ export default class Code {
    */
   async getMoney (frameworkToken) {
     return this.request('/df/person/money', { frameworkToken }, 'GET')
+  }
+
+  // --- 战绩订阅相关 ---
+
+  /**
+   * 订阅战绩
+   * @param {Object} params - 订阅参数
+   * @param {string} params.platformID - 平台用户ID (QQ号)
+   * @param {string} params.clientID - 客户端ID
+   * @param {string} params.subscriptionType - 订阅类型: sol/mp/both
+   * @returns {Promise<object>}
+   */
+  async subscribeRecord(params) {
+    const result = await this.requestJson('/df/record/subscribe', params, 'POST')
+    return result
+  }
+
+  /**
+   * 取消订阅战绩
+   * @param {Object} params - 取消订阅参数
+   * @param {string} params.platformID - 平台用户ID (QQ号)
+   * @param {string} params.clientID - 客户端ID
+   * @returns {Promise<object>}
+   */
+  async unsubscribeRecord(params) {
+    return this.requestJson('/df/record/unsubscribe', params, 'POST')
+  }
+
+  /**
+   * 查询战绩订阅状态
+   * @param {string} platformID - 平台用户ID (QQ号)
+   * @param {string} clientID - 客户端ID
+   * @returns {Promise<object>}
+   */
+  async getRecordSubscription(platformID, clientID) {
+    return this.request('/df/record/subscription', { platformID, clientID }, 'GET')
+  }
+
+  /**
+   * 获取战绩订阅统计
+   * @returns {Promise<object>}
+   */
+  async getRecordStats() {
+    return this.request('/df/record/stats', {}, 'GET')
   }
 
   /**
@@ -905,5 +947,75 @@ export default class Code {
    */
   async getUserStats(clientID) {
     return this.request('/stats/users', { clientID }, 'GET');
+  }
+
+  // ==================== 音频语音接口 ====================
+
+  /**
+   * 随机获取音频
+   * @param {object} params - 查询参数
+   * @returns {Promise<object>} - API响应
+   */
+  async getRandomAudio(params = {}) {
+    return this.request('/df/audio/random', params, 'GET');
+  }
+
+  /**
+   * 获取角色随机音频
+   * @param {object} params - 查询参数
+   * @returns {Promise<object>} - API响应
+   */
+  async getCharacterAudio(params = {}) {
+    return this.request('/df/audio/character', params, 'GET');
+  }
+
+  /**
+   * 获取音频分类列表
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioCategories() {
+    return this.request('/df/audio/categories', {}, 'GET');
+  }
+
+  /**
+   * 获取角色列表
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioCharacters() {
+    return this.request('/df/audio/characters', {}, 'GET');
+  }
+
+  /**
+   * 获取音频统计信息
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioStats() {
+    return this.request('/df/audio/stats', {}, 'GET');
+  }
+
+  /**
+   * 获取特殊标签列表
+   * @returns {Promise<object>} - API响应
+   */
+  async getAudioTags() {
+    return this.request('/df/audio/tags', {}, 'GET');
+  }
+
+  /**
+   * 获取鼠鼠随机音乐
+   * @param {object} params - 查询参数
+   * @returns {Promise<object>} - API响应
+   */
+  async getShushuMusic(params = {}) {
+    return this.request('/df/audio/shushu', params, 'GET');
+  }
+
+  /**
+   * 获取鼠鼠音乐列表
+   * @param {object} params - 查询参数 { sortBy: 'hot'|'default', playlist, artist }
+   * @returns {Promise<object>} - API响应
+   */
+  async getShushuMusicList(params = {}) {
+    return this.request('/df/audio/shushu/list', params, 'GET');
   }
 }

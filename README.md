@@ -66,6 +66,7 @@ pnpm install --filter=delta-force-plugin
 - [x] 个人信息查询
 - [x] 日报/周报数据
 - [x] 战绩查询
+- [x] 战绩推送
 - [x] 藏品/资产查询
 - [x] 货币信息查询
 - [x] 封号记录查询
@@ -105,7 +106,8 @@ pnpm install --filter=delta-force-plugin
 
 - [ ] 摸金模拟器
 - [ ] 对局模拟器
-- [ ] 随机音频
+- [x] 随机音频
+- [x] 鼠鼠音乐（来自Liusy）
 - [ ] 随机表情包
 
 ## 命令示例
@@ -144,6 +146,12 @@ pnpm install --filter=delta-force-plugin
   - [三角洲行动官方](https://df.qq.com)：感谢官方的数据（）
   - [白狼安雅](https://www.pixiv.net/users/22723243)：授权提供readme中的麦晓雯Q版图
   - [繁星攻略组](https://space.bilibili.com/3546853731731919)：授权提供计算器算法和数据
+
+## 其他框架
+
+- **云崽**:[delta-force-plugin](https://github.com/Dnyo666/delta-force-plugin)
+- **Nonebot2**：[nonebot-plugin-delta-force](https://github.com/Entropy-Increase-Team/nonebot-plugin-delta-force)
+
 
 ## 支持与贡献
 
