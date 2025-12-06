@@ -13,7 +13,7 @@ let ret = [];
 logger.info(logger.yellow("- 正在载入 DELTA-FORCE-PLUGIN"));
 
 // 强制等待数据缓存初始化
-await DataManager.init();
+DataManager.init();
 
 let files = [];
 try {
