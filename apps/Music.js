@@ -843,19 +843,10 @@ export class Music extends plugin {
       }
 
       // 使用Render组件渲染图片
-      const img = await Render.render('Template/musicList/musicList', templateData, {
+      return await Render.render('Template/musicList/musicList', templateData, {
         e: this.e,
         scale: 1.2
       })
-
-      if (img) {
-        // 发送图片
-        await this.e.reply(img)
-        
-        logger.info(`[DELTA FORCE PLUGIN] 音乐列表渲染成功: ${title} 第${page}页 (共${musicList.length}首歌曲)`)
-      } else {
-        throw new Error('渲染返回空结果')
-      }
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 渲染音乐列表失败:', error)
       // 渲染失败时使用文字消息作为备用方案

@@ -14,46 +14,8 @@ let ret = [];
 
 logger.info(logger.yellow("- 正在载入 DELTA-FORCE-PLUGIN"));
 
-// 初始化 global.segment（如果不存在）
-if (!global.segment) {
-  try {
-    // 尝试从 icqq 导入
-    const icqq = await import("icqq");
-    global.segment = icqq.segment;
-    logger.info("[DELTA-FORCE-PLUGIN] 已从 icqq 加载 segment");
-  } catch (err) {
-    try {
-      // 尝试从 oicq 导入
-      const oicq = await import("oicq");
-      global.segment = oicq.segment;
-      logger.info("[DELTA-FORCE-PLUGIN] 已从 oicq 加载 segment");
-    } catch (err2) {
-      logger.debug("[DELTA-FORCE-PLUGIN] 无法加载 segment，可能已由其他插件加载");
-    }
-  }
-}
-
-// 初始化 global.core（如果不存在）
-if (!global.core) {
-  try {
-    // 尝试从 icqq 导入
-    const icqq = await import("icqq");
-    global.core = icqq.core;
-    logger.info("[DELTA-FORCE-PLUGIN] 已从 icqq 加载 core，音乐卡片功能已启用");
-  } catch (err) {
-    try {
-      // 尝试从 oicq 导入
-      const oicq = await import("oicq");
-      global.core = oicq.core;
-      logger.info("[DELTA-FORCE-PLUGIN] 已从 oicq 加载 core，音乐卡片功能已启用");
-    } catch (err2) {
-      logger.warn("[DELTA-FORCE-PLUGIN] 无法加载 core，音乐卡片功能将不可用（将使用语音备用方案）");
-    }
-  }
-}
-
 // 强制等待数据缓存初始化
-await DataManager.init();
+DataManager.init();
 
 let files = [];
 try {

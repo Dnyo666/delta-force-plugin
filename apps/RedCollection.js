@@ -211,7 +211,7 @@ export class RedCollection extends plugin {
             }
 
             try {
-                const img = await Render.render('Template/redCollection/redCollection.html', renderData, {
+                return await Render.render('Template/redCollection/redCollection.html', renderData, {
                     e,
                     scale: 1.0,
                     renderCfg: {
@@ -221,14 +221,6 @@ export class RedCollection extends plugin {
                         }
                     }
                 })
-                if (img) {
-                    await e.reply(img)
-                    return true
-                } else {
-                    logger.error('[大红收藏馆] 渲染失败: 图片数据为空')
-                    await e.reply('图片渲染失败，请稍后重试。')
-                    return true
-                }
             } catch (renderError) {
                 logger.error('[大红收藏馆] 渲染失败:', renderError)
                 await e.reply(`图片渲染失败: ${renderError.message}`)
