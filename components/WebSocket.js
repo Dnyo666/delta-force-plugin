@@ -479,19 +479,18 @@ export default class WebSocketManager extends EventEmitter {
   }
 
   /**
-   * 处理通用消息（用于战绩推送等）
+   * 处理通用消息（直接发出原始消息，让各插件自己处理）
    */
   handleMessage(message) {
     const { data } = message
-    if (data.messageType === 'record_update') {
-      const maskedToken = data.frameworkToken ? `${data.frameworkToken.substring(0, 4)}****${data.frameworkToken.slice(-4)}` : ''
-      const accountInfo = maskedToken ? ` | 账号: ${maskedToken}` : ''
-      const statusInfo = data.isNew ? '新战绩' : (data.isRecent ? '缓存' : '')
-      logger.info(`[Delta-Force WebSocket] 战绩更新: ${data.platformId} - ${data.recordType}${accountInfo} - ${statusInfo}`)
-      this.emit('record_update', data)
-    } else {
-      this.emit('custom_message', message)
+    
+    // 直接发出 messageType 事件，让各插件自己注册监听
+    if (data.messageType) {
+      this.emit(data.messageType, data)
     }
+    
+    // 同时发出通用 message 事件供其他用途
+    this.emit('message', message)
   }
 
   // ==================== 心跳和重连机制 ====================

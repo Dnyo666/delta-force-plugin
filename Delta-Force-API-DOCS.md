@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v2.1.2**
+**版本号：v2.1.3**
 
 ## WebSocket 服务
 
@@ -826,6 +826,222 @@ const ws = new WebSocket('wss://your-api-domain:port/ws?key=YOUR_API_KEY&clientI
 6. **权限验证**：需要有效的 API Key 和 clientID，且 API Key 对应的用户必须是 pro 订阅等级
 7. **数据纯净性**：推送的 `record` 对象**仅包含个人战绩数据**，不包含队友和房间信息
 8. **权限不足错误**：如果订阅等级不足，会收到错误码 `3011` 的错误消息
+
+---
+
+## 广播通知系统
+
+### 概述
+
+广播通知系统允许**管理员**通过 WebSocket 向所有在线用户或特定频道发送系统通知。普通用户只能接收通知，无法发送。
+
+#### 1. 订阅通知频道
+
+**客户端发送**：
+```json
+{
+  "type": "subscribe",
+  "channel": "notification:broadcast"
+}
+```
+
+**服务器响应**：
+```json
+{
+  "type": "subscribed",
+  "data": {
+    "channel": "notification:broadcast",
+    "message": "订阅成功"
+  },
+  "timestamp": 1764147123456
+}
+```
+
+**说明**：
+- ✅ **必须先订阅**：只有订阅了频道的用户才能接收该频道的广播通知
+- ✅ **任何人可订阅**：`notification:broadcast` 频道无权限限制（`requiredTier: 'none'`）
+- ✅ **多频道订阅**：可以订阅多个公共频道（如 `channel:lobby`），全频道广播时都能收到
+- ❌ **未订阅无推送**：如果没有订阅频道，即使管理员发送广播，也不会收到任何消息
+
+#### 2. 管理员发送通知
+
+**单频道广播**：
+```json
+{
+  "type": "notification_send",
+  "title": "系统维护通知",
+  "content": "系统将于今晚 22:00 进行维护，预计持续 1 小时",
+  "priority": "high",
+  "notificationType": "warning",
+  "targetChannels": "notification:broadcast"
+}
+```
+
+**多频道广播**：
+```json
+{
+  "type": "notification_send",
+  "title": "活动通知",
+  "content": "新活动已上线，快来参加",
+  "priority": "normal",
+  "notificationType": "info",
+  "targetChannels": ["notification:broadcast", "channel:lobby-1", "channel:trade"]
+}
+```
+
+**频道名格式说明**：
+- ⚠️ **必须使用完整频道名**（包含命名空间前缀）
+- ✅ 正确示例：`channel:lobby-1`, `notification:broadcast`, `price:gun`
+- ❌ 错误示例：`lobby-1`（缺少 `channel:` 前缀）
+
+**可用频道列表**：
+- 广播通知：`notification:broadcast`
+- 聊天子频道：`channel:lobby-1` ~ `channel:lobby-10`
+- 其他频道：`channel:trade`, `channel:help`, `channel:chat`
+- 价格频道：`price:gun`, `price:protect`, `price:ammo` 等
+- 战绩频道：`record:sol_{platformID}`, `record:mp_{platformID}`
+- 房间频道：`room:chat_{roomId}`, `room:status_{roomId}` 等
+
+**全频道广播**：
+```json
+{
+  "type": "notification_send",
+  "title": "紧急公告",
+  "content": "服务器即将重启，请保存数据",
+  "priority": "urgent",
+  "notificationType": "error",
+  "targetChannels": "all"
+}
+```
+
+### 消息格式
+
+#### 发送参数说明
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `type` | string | ✅ | - | 固定为 `notification_send` |
+| `title` | string | ✅ | - | 通知标题 |
+| `content` | string | ✅ | - | 通知内容 |
+| `priority` | string | ❌ | `normal` | 优先级：`low`, `normal`, `high`, `urgent` |
+| `notificationType` | string | ❌ | `info` | 通知类型：`info`, `success`, `warning`, `error`, `announcement` |
+| `targetChannels` | string/array | ❌ | `["notification:broadcast"]` | 目标频道：字符串（单个）、数组（多个）、或 `"all"`（全频道） |
+
+#### 3. 成功响应（管理员接收）
+
+**服务器响应**：
+```json
+{
+  "type": "message",
+  "data": {
+    "messageType": "notification_send_success",
+    "success": true,
+    "message": "广播通知发送成功",
+    "notification": {
+      "id": "notif_1764147123456_abc123",
+      "title": "系统维护通知",
+      "content": "系统将于今晚 22:00 进行维护",
+      "priority": "high",
+      "type": "warning",
+      "timestamp": 1764147123456,
+      "sender": "system"
+    },
+    "recipientCount": 156,
+    "channelsSent": [
+      "notification:broadcast",
+      "channel:lobby",
+      "channel:trade",
+      "price:gun"
+    ],
+    "isGlobalBroadcast": true
+  },
+  "timestamp": 1764147123456
+}
+```
+
+**字段说明**：
+- `messageType` - 消息类型标识：`notification_send_success`
+- `success` - 发送是否成功
+- `message` - 成功提示信息
+- `notification` - 完整的通知对象
+- `recipientCount` - 实际接收人数（所有频道订阅者总数）
+- `channelsSent` - 实际发送到的频道列表（有订阅者的频道）
+- `isGlobalBroadcast` - 是否全频道广播（`targetChannels` 为 `"all"`）
+
+#### 4. 广播消息（所有订阅者接收）
+
+**服务器推送**：
+```json
+{
+  "type": "message",
+  "channel": "notification:broadcast",
+  "data": {
+    "messageType": "notification_broadcast",
+    "notification": {
+      "id": "notif_1764147123456_abc123",
+      "title": "系统维护通知",
+      "content": "系统将于今晚 22:00 进行维护，预计持续 1 小时",
+      "priority": "high",
+      "type": "warning",
+      "timestamp": 1764147123456,
+      "sender": "system"
+    }
+  },
+  "timestamp": 1764147123456
+}
+```
+
+**字段说明**：
+- `type` - 外层消息类型：`message`（表示这是一条推送消息）
+- `channel` - 当前频道名称
+- `messageType` - 业务消息类型：`notification_broadcast`
+- `notification.id` - 通知唯一标识（可用于去重）
+- `notification.type` - 通知类型（与发送时的 `notificationType` 一致）
+- `notification.sender` - 发送者标识，固定为 `system`
+
+#### 5. 错误响应
+
+**服务器响应**：
+```json
+{
+  "type": "error",
+  "data": {
+    "code": 3004,
+    "message": "缺少必填字段：title 或 content",
+    "messageType": "notification_send_error"
+  },
+  "timestamp": 1764147123456
+}
+```
+
+**错误码说明**：
+
+| 错误码 | 说明 | 触发条件 | 响应字段 |
+|--------|------|---------|---------|
+| `3004` | 参数错误 | 缺少必填字段 `title` 或 `content` | - |
+| `3010` | 权限不足 | 非管理员用户尝试发送通知 | - |
+| `4004` | 频道不存在 | 指定的频道未注册或不存在 | `invalidChannels`（无效频道列表）、`hint`（格式提示） |
+| `9000` | 系统错误 | 服务器内部错误 | `error`（错误详情） |
+
+**错误码 4004 示例**：
+```json
+{
+  "type": "error",
+  "data": {
+    "code": 4004,
+    "message": "部分频道不存在或未注册",
+    "messageType": "notification_send_error",
+    "invalidChannels": ["lobby-1", "trade"],
+    "hint": "频道名格式示例：channel:lobby-1, notification:broadcast, price:gun 等"
+  },
+  "timestamp": 1764221893255
+}
+```
+
+**说明**：
+- 只有**有订阅者**的频道才会实际发送（空频道会被跳过）
+- 全频道广播会遍历 `wsManager.channels` 中的所有频道
+- 子频道（如 `lobby-1`）会被独立处理，每个子频道的订阅者都会收到通知
 
 ---
 

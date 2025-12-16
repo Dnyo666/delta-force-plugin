@@ -16,15 +16,18 @@ export class WebSocketClient extends plugin {
       rule: [
         {
           reg: '^(#三角洲|\\^)(ws|WS|websocket|WebSocket)(连接|启动|开启)$',
-          fnc: 'connectWebSocket'
+          fnc: 'connectWebSocket',
+          permission: 'master' // 只有主人可以连接
         },
         {
           reg: '^(#三角洲|\\^)(ws|WS|websocket|WebSocket)(断开|关闭|停止)$',
-          fnc: 'disconnectWebSocket'
+          fnc: 'disconnectWebSocket',
+          permission: 'master' // 只有主人可以断开
         },
         {
           reg: '^(#三角洲|\\^)(ws|WS|websocket|WebSocket)(状态|status)$',
-          fnc: 'getWebSocketStatus'
+          fnc: 'getWebSocketStatus',
+          permission: 'master' // 只有主人可以查看状态
         }
       ]
     })
@@ -34,8 +37,15 @@ export class WebSocketClient extends plugin {
 
   /**
    * 连接 WebSocket
+   * 仅主人可用
    */
   async connectWebSocket() {
+    // 双重权限检查（框架已通过 permission: 'master' 检查，此处为额外保护）
+    if (!this.e.isMaster) {
+      await this.e.reply('⚠️ 抱歉，只有机器人主人才能管理 WebSocket 连接')
+      return true
+    }
+
     const clientID = Config.getConfig()?.delta_force?.clientID
 
     if (!clientID) {
@@ -99,8 +109,15 @@ export class WebSocketClient extends plugin {
 
   /**
    * 断开 WebSocket
+   * 仅主人可用
    */
   async disconnectWebSocket() {
+    // 双重权限检查
+    if (!this.e.isMaster) {
+      await this.e.reply('⚠️ 抱歉，只有机器人主人才能管理 WebSocket 连接')
+      return true
+    }
+
     const status = this.wsManager.getStatus()
     
     if (!status.isConnected && !status.isConnecting) {
@@ -115,8 +132,15 @@ export class WebSocketClient extends plugin {
 
   /**
    * 获取 WebSocket 状态
+   * 仅主人可用
    */
   async getWebSocketStatus() {
+    // 双重权限检查
+    if (!this.e.isMaster) {
+      await this.e.reply('⚠️ 抱歉，只有机器人主人才能查看 WebSocket 状态')
+      return true
+    }
+
     const status = this.wsManager.getStatus()
 
     let msg = '【WebSocket 状态】\n'

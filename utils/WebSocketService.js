@@ -1,6 +1,7 @@
 import { getWebSocketManager } from '../components/WebSocket.js'
 import Config from '../components/Config.js'
 import DataManager from './Data.js'
+import { initBroadcastNotificationListener } from '../apps/Notification.js'
 
 /**
  * WebSocket 服务管理器
@@ -13,6 +14,7 @@ class WebSocketService {
     this.listenersRegistered = false // 防止重复注册监听器
     this.pushSettings = new Map() // 用户推送设置缓存
     this.autoConnectEnabled = false
+    this.broadcastHandler = null // 广播通知处理器
   }
 
   /**
@@ -102,18 +104,12 @@ class WebSocketService {
       return
     }
 
-    // 战绩更新推送 - 仅记录日志，实际处理由 RecordSubscription 插件负责
-    this.wsManager.on('record_update', async (data) => {
-      const { platformId, frameworkToken, recordType, isNew, isRecent } = data
-      const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : ''
-      const accountInfo = maskedToken ? ` | 账号: ${maskedToken}` : ''
-      const statusInfo = isNew ? '新战绩' : (isRecent ? '缓存' : '')
-      logger.info(`[Delta-Force WS Service] 战绩更新: ${platformId} - ${recordType}${accountInfo} - ${statusInfo}`)
-    })
-
     // 连接就绪
-    this.wsManager.on('ready', (data) => {
+    this.wsManager.on('ready', async (data) => {
       logger.info(`[Delta-Force WS Service] WebSocket 就绪`)
+      
+      // 自动订阅广播通知频道（如果启用）
+      await this.autoSubscribeBroadcast()
     })
 
     // 连接关闭
@@ -131,10 +127,39 @@ class WebSocketService {
       logger.error(`[Delta-Force WS Service] 连接错误: ${error.message}`)
     })
 
+    // 注册广播通知监听器
+    try {
+      this.broadcastHandler = initBroadcastNotificationListener(this.wsManager)
+      logger.info('[Delta-Force WS Service] 广播通知监听器已注册')
+    } catch (error) {
+      logger.error('[Delta-Force WS Service] 广播通知监听器注册失败:', error)
+    }
+
     this.listenersRegistered = true
     logger.info('[Delta-Force WS Service] 全局监听器已注册')
   }
 
+
+  /**
+   * 自动订阅广播频道（如果启用）
+   */
+  async autoSubscribeBroadcast() {
+    const cfg = Config.getConfig()?.delta_force?.broadcast_notification || {}
+    
+    if (!cfg.enabled) {
+      logger.debug('[Delta-Force WS Service] 广播通知未启用')
+      return
+    }
+    
+    const channel = 'notification:broadcast'
+    
+    try {
+      await this.wsManager.subscribe(channel)
+      logger.info(`[Delta-Force WS Service] 已订阅广播频道: ${channel}`)
+    } catch (error) {
+      logger.error(`[Delta-Force WS Service] 订阅广播频道失败: ${channel}`, error)
+    }
+  }
 
   /**
    * 获取 WebSocket 管理器实例

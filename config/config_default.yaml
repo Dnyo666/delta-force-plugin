@@ -27,3 +27,9 @@ delta_force:
     allow_share_with_other_bots: false # 是否允许其他机器人共用网页登陆数据
   websocket:
     auto_connect: true # 是否在插件启动时自动连接 WebSocket
+  broadcast_notification:
+    enabled: true # 是否启用广播通知接收
+    push_to:
+      group: [] # 推送目标群号列表，如 [123456789, 987654321]
+      private_enabled: false # 是否启用私信推送
+      private: [] # 私信推送目标QQ号，留空则默认推送给主人

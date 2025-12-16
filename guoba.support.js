@@ -119,6 +119,36 @@ export function supportGuoba() {
           component: 'Switch',
           bottomHelpMessage: '开启后，插件启动时将自动连接WebSocket服务器（用于战绩推送）',
         },
+        {
+          field: 'broadcast_notification.enabled',
+          label: '开启广播通知接收',
+          component: 'Switch',
+          bottomHelpMessage: '开启后，将接收服务器推送的系统广播通知',
+        },
+        {
+          field: 'broadcast_notification.push_to.group',
+          label: '推送群号',
+          component: 'GSelectGroup',
+          bottomHelpMessage: '选择接收通知的群',
+          componentProps: {
+            placeholder: '点击选择要推送的群'
+          },
+        },
+        {
+          field: 'broadcast_notification.push_to.private_enabled',
+          label: '开启私信推送',
+          component: 'Switch',
+          bottomHelpMessage: '开启后将推送通知到私信，未配置QQ号则默认推送给主人',
+        },
+        {
+          field: 'broadcast_notification.push_to.private',
+          label: '私信推送QQ号',
+          component: 'GTags',
+          bottomHelpMessage: '输入QQ号后回车，留空则默认推送给主人',
+          componentProps: {
+            placeholder: '请输入QQ号后回车'
+          },
+        },
       ],
       getConfigData() {
         // 直接从文件读取最新的、未经缓存的配置
@@ -177,6 +207,23 @@ export function supportGuoba() {
             auto_connect: false
           },
           df.websocket
+        );
+
+        df.broadcast_notification = lodash.mergeWith(
+          {
+            enabled: false,
+            push_to: { 
+              group: [],
+              private_enabled: false,
+              private: []
+            }
+          },
+          df.broadcast_notification,
+          (objValue, srcValue) => {
+            if (lodash.isArray(srcValue)) {
+              return srcValue;
+            }
+          }
         );
 
         return df;
