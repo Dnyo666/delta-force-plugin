@@ -140,42 +140,16 @@ export class Info extends plugin {
         totalAssets: totalAssets > 0 ? totalAssets.toFixed(2) + 'M' : '-'
       };
 
-      try {
-        const img = await Render.render('Template/userInfo/userInfo.html', renderData, {
-          e: this.e,
-          retType: 'default',
-          renderCfg: {
-            viewport: {
-              width: 1365,
-              height: 640
-            }
+      return await Render.render('Template/userInfo/userInfo.html', renderData, {
+        e: this.e,
+        retType: 'default',
+        renderCfg: {
+          viewport: {
+            width: 1365,
+            height: 640
           }
-        })
-
-        // 检查图片数据是否有效 - 修复对象类型处理
-        if (img) {
-          try {
-            return await this.e.reply(img)
-          } catch (replyError) {
-            logger.error('[三角洲信息] 发送图片失败:', replyError)
-            // 如果发送失败，记录更详细的图片信息
-            logger.error('[三角洲信息] 图片数据详情:', {
-              type: typeof img,
-              isBuffer: Buffer.isBuffer(img),
-              isString: typeof img === 'string',
-              constructor: img?.constructor?.name,
-              keys: img && typeof img === 'object' ? Object.keys(img) : null
-            })
-            return await this.e.reply('图片发送失败，请稍后重试。')
-          }
-        } else {
-          logger.error('[三角洲信息] 渲染失败: 图片数据为空')
-          return await this.e.reply('图片渲染失败，请稍后重试。')
         }
-      } catch (renderError) {
-        logger.error('[三角洲信息] 渲染失败:', renderError)
-        return await this.e.reply(`图片渲染失败: ${renderError.message}`)
-      }
+      })
 
     } catch (error) {
       logger.error('[三角洲信息] 查询失败:', error)
