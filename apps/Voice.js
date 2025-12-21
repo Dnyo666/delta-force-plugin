@@ -8,7 +8,7 @@ export class Voice extends plugin {
       name: '三角洲随机语音',
       dsc: '三角洲行动游戏随机语音',
       event: 'message',
-      priority: 100,
+      priority: 0,
       rule: [
         {
           reg: '^(#三角洲|\\^)语音列表$',
