@@ -45,6 +45,49 @@ export class Price extends plugin {
   }
 
   /**
+   * 分批发送转发消息（每批最多200条）
+   * @param {Array} messages - 消息数组
+   * @param {number} batchSize - 每批消息数量，默认200
+   * @returns {Promise<boolean>}
+   */
+  async sendForwardMsgInBatches(messages, batchSize = 200) {
+    if (!messages || messages.length === 0) {
+      await this.e.reply('没有消息需要发送');
+      return false;
+    }
+
+    try {
+      // 如果消息数量不超过限制，直接发送
+      if (messages.length <= batchSize) {
+        await this.e.reply(await Bot.makeForwardMsg(messages));
+        return true;
+      }
+
+      // 分批发送
+      const totalBatches = Math.ceil(messages.length / batchSize);
+      
+      for (let i = 0; i < totalBatches; i++) {
+        const start = i * batchSize;
+        const end = Math.min(start + batchSize, messages.length);
+        const batch = messages.slice(start, end);
+        
+        await this.e.reply(await Bot.makeForwardMsg(batch));
+        
+        // 批次之间添加短暂延迟，避免发送过快
+        if (i < totalBatches - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      logger.error('[Price] 分批发送转发消息失败:', error);
+      await this.e.reply('发送消息时发生错误，请稍后重试。');
+      return false;
+    }
+  }
+
+  /**
    * 通用方法：将物品名称或ID查询转换为物品ID列表和名称映射
    * @param {string} query - 查询字符串，支持ID、名称、逗号分隔的混合查询
    * @param {number} maxResults - 最大返回结果数，默认5
@@ -303,7 +346,7 @@ export class Price extends plugin {
         }
       }
 
-      return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+      return await this.sendForwardMsgInBatches(forwardMsg);
 
     } catch (error) {
       logger.error(`[Price] 查询历史价格失败: ${error.message}`);
@@ -386,7 +429,7 @@ export class Price extends plugin {
           });
         });
 
-        return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+        return await this.sendForwardMsgInBatches(forwardMsg);
       }
 
     } catch (error) {
@@ -535,7 +578,7 @@ export class Price extends plugin {
         }
       }
 
-      return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+      return await this.sendForwardMsgInBatches(forwardMsg);
 
     } catch (error) {
       logger.error(`[Price] 查询材料价格失败: ${error.message}`);
@@ -657,7 +700,7 @@ export class Price extends plugin {
           }
         }
 
-        return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+        return await this.sendForwardMsgInBatches(forwardMsg);
       }
 
       const res = await this.api.getProfitHistory(params);
@@ -749,7 +792,7 @@ export class Price extends plugin {
         });
       }
 
-      return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+      return await this.sendForwardMsgInBatches(forwardMsg);
 
     } catch (error) {
       logger.error(`[Price] 查询利润历史失败: ${error.message}`);
@@ -899,7 +942,7 @@ export class Price extends plugin {
         message: helpMsg
       });
 
-      return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+      return await this.sendForwardMsgInBatches(forwardMsg);
 
     } catch (error) {
       logger.error(`[Price] 查询利润排行失败: ${error.message}`);
@@ -1058,7 +1101,7 @@ export class Price extends plugin {
         message: helpMsg
       });
 
-      return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+      return await this.sendForwardMsgInBatches(forwardMsg);
 
     } catch (error) {
       logger.error(`[Price] 查询最高利润排行失败: ${error.message}`);
@@ -1232,7 +1275,7 @@ export class Price extends plugin {
         message: summaryMsg
       });
 
-      return this.e.reply(await Bot.makeForwardMsg(forwardMsg));
+      return await this.sendForwardMsgInBatches(forwardMsg);
 
     } catch (error) {
       logger.error(`[Price] 查询特勤处利润失败: ${error.message}`);
