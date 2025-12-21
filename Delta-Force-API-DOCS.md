@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v2.1.5**
+**版本号：v2.1.6**
 
 ## WebSocket 服务
 
@@ -3753,14 +3753,42 @@ GET /df/person/redone?frameworkToken=xxxxx&objectid=15080050058
 }
 ```
 
-### AI战绩点评
+### AI锐评
 ```http
 POST /df/person/ai
 ```
+
+**功能说明**：使用Dify AI对玩家战绩进行智能分析和点评，支持烽火地带和全面战场两种游戏模式，每种模式使用独立的AI应用。
+
 **参数 (body/json)**：
-- frameworkToken：框架Token（必填）
-- type：游戏模式（sol/mp，必填）
-- conversation_id：对话ID（可选，用于继续对话）
+- `frameworkToken`：框架Token（必填）
+- `type`：游戏模式（必填）
+  - `sol`：烽火地带（使用烽火地带专用AI应用）
+  - `mp`：全面战场（使用全面战场专用AI应用）
+- `conversation_id`：对话ID（可选，用于继续对话）
+
+**请求示例（烽火地带）**：
+```json
+{
+  "frameworkToken": "xxxxx-xxxxx-xxxxx-xxxxx",
+  "type": "sol"
+}
+```
+
+**请求示例（全面战场）**：
+```json
+{
+  "frameworkToken": "xxxxx-xxxxx-xxxxx-xxxxx",
+  "type": "mp"
+}
+```
+
+**数据来源**：
+系统会自动获取以下数据并提交给AI分析：
+1. **个人数据**：基础战绩统计（击杀、死亡、KD等）
+2. **日报数据**：最近一天的战绩表现
+3. **周报数据**：最近一周的战绩趋势
+4. **最近战绩**：最近5场对局的详细数据
 
 ## 音频语音接口
 

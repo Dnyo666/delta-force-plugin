@@ -45,7 +45,7 @@ export const helpList = [
     {
         group: "实用工具",
         list: [
-            { icon: 61, title: "#三角洲ai锐评", desc: "使用AI锐评战绩等数据" },
+            { icon: 61, title: "#三角洲ai锐评 烽火/战场", desc: "使用AI锐评烽火地带和全面战场" },
             { icon: 41, title: "#三角洲违规记录", desc: "登陆QQ安全中心后可查询历史违规" },
             { icon: 48, title: "#三角洲特勤处状态", desc: "查询特勤处制造状态"},
             { icon: 86, title: "#三角洲开启特勤处推送", desc: "开启制造完成推送，需主人开启配置"},
