@@ -101,14 +101,20 @@ pnpm install --filter=delta-force-plugin
 - [x] 特勤处制造材料价格
 - [x] 每日密码定时推送
 - [x] 三角洲计算器（伤害、维修计算）
+- [ ] 赛季任务系统
+- [ ] 部门任务系统
+- [ ] 战备值获取
+- [ ] 卡战备
 
 ### 娱乐类功能
 
 - [ ] 摸金模拟器
+- [ ] 每日幸运道具
 - [ ] 对局模拟器
 - [x] 随机音频
 - [x] 鼠鼠音乐（来自Liusy）
 - [ ] 随机表情包
+- [ ] 随机挑战
 
 ## 命令示例
 
@@ -151,6 +157,8 @@ pnpm install --filter=delta-force-plugin
 
 - **云崽**:[delta-force-plugin](https://github.com/Dnyo666/delta-force-plugin)
 - **Nonebot2**：[nonebot-plugin-delta-force](https://github.com/Entropy-Increase-Team/nonebot-plugin-delta-force)
+- **Koishi**：[koishi-plugin-delta-force](https://github.com/Entropy-Increase-Team/koishi-plugin-delta-force)
+- 
 
 
 ## 支持与贡献
