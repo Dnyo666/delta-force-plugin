@@ -155,10 +155,10 @@ pnpm install --filter=delta-force-plugin
 
 ## 其他框架
 
-- **云崽**:[delta-force-plugin](https://github.com/Dnyo666/delta-force-plugin)
+- **云崽**：[delta-force-plugin](https://github.com/Dnyo666/delta-force-plugin)
 - **Nonebot2**：[nonebot-plugin-delta-force](https://github.com/Entropy-Increase-Team/nonebot-plugin-delta-force)
 - **Koishi**：[koishi-plugin-delta-force](https://github.com/Entropy-Increase-Team/koishi-plugin-delta-force)
-- 
+- **Karin**: [karin-plugin-delta-force](https://github.com/Entropy-Increase-Team/karin-plugin-delta-force)
 
 
 ## 支持与贡献
