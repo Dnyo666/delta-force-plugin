@@ -16,6 +16,130 @@
   </div>
 </div>
 
+{{if helpCfg.twoColumnLayout}}
+{{each topFullWidthGroups group}}
+{{set len = group?.list?.length || 0 }}
+<div class="cont-box">
+  <div class="help-group">{{group.group}}</div>
+  {{if len > 0}}
+  <div class="help-table">
+    <div class="tr">
+      {{each group.list help idx}}
+      <div class="td">
+        <span class="help-icon" style="{{@ help.css}}"></span>
+        <strong class="help-title">{{help.title}}</strong>
+        <span class="help-desc">{{help.desc}}</span>
+      </div>
+      {{set isRowEnd = (idx + 1) % colCount === 0}}
+      {{set isNotLast = idx < len - 1}}
+      {{if isRowEnd && isNotLast}}
+    </div>
+    <div class="tr">
+      {{/if}}
+      {{/each}}
+      <% const padding = (colCount - len % colCount) % colCount; %>
+      <% for(let i = 0; i < padding; i++) { %>
+        <div class="td"></div>
+      <% } %>
+    </div>
+  </div>
+  {{/if}}
+</div>
+{{/each}}
+<div class="help-content-wrapper">
+  <div class="help-column">
+    {{each leftGroups group}}
+    {{set len = group?.list?.length || 0 }}
+    <div class="cont-box">
+      <div class="help-group">{{group.group}}</div>
+      {{if len > 0}}
+      <div class="help-table">
+        <div class="tr">
+          {{each group.list help idx}}
+          <div class="td">
+            <span class="help-icon" style="{{@ help.css}}"></span>
+            <strong class="help-title">{{help.title}}</strong>
+            <span class="help-desc">{{help.desc}}</span>
+          </div>
+          {{set isRowEnd = (idx + 1) % colCount === 0}}
+          {{set isNotLast = idx < len - 1}}
+          {{if isRowEnd && isNotLast}}
+        </div>
+        <div class="tr">
+          {{/if}}
+          {{/each}}
+          <% const padding = (colCount - len % colCount) % colCount; %>
+          <% for(let i = 0; i < padding; i++) { %>
+            <div class="td"></div>
+          <% } %>
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+  <div class="help-column">
+    {{each rightGroups group}}
+    {{set len = group?.list?.length || 0 }}
+    <div class="cont-box">
+      <div class="help-group">{{group.group}}</div>
+      {{if len > 0}}
+      <div class="help-table">
+        <div class="tr">
+          {{each group.list help idx}}
+          <div class="td">
+            <span class="help-icon" style="{{@ help.css}}"></span>
+            <strong class="help-title">{{help.title}}</strong>
+            <span class="help-desc">{{help.desc}}</span>
+          </div>
+          {{set isRowEnd = (idx + 1) % colCount === 0}}
+          {{set isNotLast = idx < len - 1}}
+          {{if isRowEnd && isNotLast}}
+        </div>
+        <div class="tr">
+          {{/if}}
+          {{/each}}
+          <% const padding = (colCount - len % colCount) % colCount; %>
+          <% for(let i = 0; i < padding; i++) { %>
+            <div class="td"></div>
+          <% } %>
+        </div>
+      </div>
+      {{/if}}
+    </div>
+    {{/each}}
+  </div>
+</div>
+{{each bottomFullWidthGroups group}}
+{{set len = group?.list?.length || 0 }}
+<div class="cont-box">
+  <div class="help-group">{{group.group}}</div>
+  {{if len > 0}}
+  <div class="help-table">
+    <div class="tr">
+      {{each group.list help idx}}
+      <div class="td">
+        <span class="help-icon" style="{{@ help.css}}"></span>
+        <strong class="help-title">{{help.title}}</strong>
+        <span class="help-desc">{{help.desc}}</span>
+      </div>
+      {{set isRowEnd = (idx + 1) % colCount === 0}}
+      {{set isNotLast = idx < len - 1}}
+      {{if isRowEnd && isNotLast}}
+    </div>
+    <div class="tr">
+      {{/if}}
+      {{/each}}
+      <% const padding = (colCount - len % colCount) % colCount; %>
+      <% for(let i = 0; i < padding; i++) { %>
+        <div class="td"></div>
+      <% } %>
+    </div>
+  </div>
+  {{/if}}
+</div>
+{{/each}}
+{{else}}
 {{each helpGroup group}}
 {{set len = group?.list?.length || 0 }}
 <div class="cont-box">
@@ -45,4 +169,5 @@
   {{/if}}
 </div>
 {{/each}}
+{{/if}}
 {{/block}}

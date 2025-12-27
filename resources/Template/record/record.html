@@ -7,18 +7,71 @@
 {{block 'main'}}
 <div class="container">
     <div class="header">
-        <div class="title">战绩记录</div>
-        <div class="sub-title">第 {{page}} 页</div>
+        <div class="title">{{modeName}}战绩</div>
+        <div class="subtitle">第 {{page}} 页</div>
     </div>
 
     <div class="record-list">
-        {{if data && data.length > 0}}
-            {{each data item}}
-            <div class="record-item">
-                <p><strong>模式:</strong> {{item.matchType === 4 ? '烽火地带' : '全面战场'}}</p>
-                <p><strong>时间:</strong> {{item.gameTime}}</p>
-                <p><strong>结果:</strong> {{item.isWin ? '胜利' : '失败'}}</p>
-                <p><strong>KDA:</strong> {{item.killNum}} / {{item.deadNum}} / {{item.assistNum}}</p>
+        {{if records && records.length > 0}}
+            {{each records item index}}
+            <div class="record-card" style="{{if item.mapBg}}--map-bg-url: url({{item.mapBg}});{{/if}}{{if item.operatorImg}}--operator-img-url: url({{item.operatorImg}});{{/if}}">
+                <div class="card-header">
+                    <span class="record-index">#{{item.recordNum}}</span>
+                    <span class="record-time">{{item.time}}</span>
+                    <span class="record-status {{item.statusClass}}">{{item.status}}</span>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item">
+                        <strong>地图:</strong>
+                        <span>{{item.map}}</span>
+                    </div>
+                    <div class="stat-item">
+                        <strong>干员:</strong>
+                        <span>{{item.operator}}</span>
+                    </div>
+                    {{if item.duration}}
+                    <div class="stat-item">
+                        <strong>时长:</strong>
+                        <span>{{item.duration}}</span>
+                    </div>
+                    {{/if}}
+                    {{if item.kda}}
+                    <div class="stat-item">
+                        <strong>KDA:</strong>
+                        <span class="kda">{{item.kda}}</span>
+                    </div>
+                    {{/if}}
+                    {{if item.value}}
+                    <div class="stat-item">
+                        <strong>带出价值:</strong>
+                        <span>{{item.value}}</span>
+                    </div>
+                    {{/if}}
+                    {{if item.income}}
+                    <div class="stat-item">
+                        <strong>净收益:</strong>
+                        <span>{{item.income}}</span>
+                    </div>
+                    {{/if}}
+                    {{if item.score}}
+                    <div class="stat-item">
+                        <strong>得分:</strong>
+                        <span>{{item.score}}</span>
+                    </div>
+                    {{/if}}
+                    {{if item.rescue}}
+                    <div class="stat-item">
+                        <strong>救援:</strong>
+                        <span>{{item.rescue}}</span>
+                    </div>
+                    {{/if}}
+                    {{if item.killsHtml}}
+                    <div class="stat-item kills-stat">
+                        <strong>击杀:</strong>
+                        <span>{{@item.killsHtml}}</span>
+                    </div>
+                    {{/if}}
+                </div>
             </div>
             {{/each}}
         {{else}}
@@ -30,4 +83,4 @@
         由 DeltaForce-Plugin-Yunzai 强力驱动
     </div>
 </div>
-{{/block}} 
+{{/block}}

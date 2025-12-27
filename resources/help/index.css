@@ -1,10 +1,16 @@
 body {
   transform: scale(1);
   width: 830px;
-  background: url("./imgs/bg.jpg");
+  /* 背景图片通过 CSS 变量动态设置 */
+  background-image: var(--bg-url);
+  background-repeat: no-repeat;
+  background-size: cover;
 }
 .container {
-  background: url("./imgs/bg.jpg") top left no-repeat;
+  /* 背景图片通过 CSS 变量动态设置 */
+  background-image: var(--container-bg-url);
+  background-position: top left;
+  background-repeat: no-repeat;
   background-size: 100% auto;
   width: 830px;
 }
@@ -62,7 +68,8 @@ body {
   height: 40px;
   display: block;
   position: absolute;
-  background: url("icon.png") 0 0 no-repeat;
+  /* 图标路径通过 CSS 变量动态设置 */
+  background-image: var(--icon-url);
   background-size: 500px auto;
   border-radius: 5px;
   left: 6px;

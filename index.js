@@ -17,9 +17,25 @@ logger.info(logger.yellow("- 正在载入 DELTA-FORCE-PLUGIN"));
 // 强制等待数据缓存初始化
 DataManager.init();
 
+// 递归读取所有 .js 文件
+function getAllJsFiles(dir, baseDir = dir, fileList = []) {
+  const files = fs.readdirSync(dir);
+  files.forEach((file) => {
+    const filePath = path.join(dir, file);
+    const stat = fs.statSync(filePath);
+    if (stat.isDirectory()) {
+      getAllJsFiles(filePath, baseDir, fileList);
+    } else if (file.endsWith('.js')) {
+      const relativePath = path.relative(baseDir, filePath).replace(/\\/g, '/');
+      fileList.push(relativePath);
+    }
+  });
+  return fileList;
+}
+
 let files = [];
 try {
-  files = fs.readdirSync(appsDir).filter((file) => file.endsWith('.js'));
+  files = getAllJsFiles(appsDir);
 } catch (e) {
   logger.error(`[DELTA-FORCE-PLUGIN]插件加载失败，未找到 apps 目录：${appsDir}`);
   throw e;
@@ -34,7 +50,8 @@ ret = await Promise.allSettled(ret);
 let apps = {};
 
 for (let i in files) {
-  let name = files[i].replace('.js', '');
+  // 从路径中提取文件名（不含目录和扩展名）
+  let name = path.basename(files[i], '.js');
   if (ret[i].status !== 'fulfilled') {
     logger.error(`[DELTA-FORCE-PLUGIN]载入插件错误：${logger.red(name)}`);
     logger.error(ret[i].reason);

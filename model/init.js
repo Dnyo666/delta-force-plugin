@@ -14,7 +14,7 @@ class Init {
     const dataDir = path.join(_path, 'data', 'delta-force')
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true })
-      logger.mark('[DELTA FORCE PLUGIN] 数据目录创建成功:', dataDir)
+      logger.debug(`[DELTA FORCE PLUGIN] 数据目录创建成功: ${dataDir}`)
     }
   }
 }
