@@ -1,7 +1,34 @@
+# 依赖
 node_modules/
-config/config/*.yaml
-resources/Alias/custom/*.yaml
-.idea/
 
+# 用户配置目录（运行时生成的配置都在这里）
+# 外层 config/ 是默认配置，需要提交
+# 内层 config/config/ 是用户配置，不提交（保留 .keep 维持目录结构）
+config/config/*
+!config/config/.keep
+
+# 自定义别名
+resources/Alias/custom/*.yaml
+
+# 运行时数据
+resources/data/*.json
+
+# IDE 配置
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志和临时文件
+*.log
+*.tmp
+*.bak
+temp/
+
+# 开发/测试目录
 /参考/*
 /UI-TEST/*

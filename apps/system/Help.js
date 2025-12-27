@@ -156,7 +156,7 @@ export class Help extends plugin {
             }
         }
 
-        let themeData = await this.getThemeData(helpCfg, helpCfg);
+        let themeData = await this.getThemeData(helpCfg, helpCfg) || {};
         return await Render.render('help/index.html', {
             helpCfg,
             helpGroup,
@@ -237,7 +237,7 @@ export class Help extends plugin {
             }
         }
 
-        let themeData = await this.getThemeData(entertainmentHelpCfg, entertainmentHelpCfg);
+        let themeData = await this.getThemeData(entertainmentHelpCfg, entertainmentHelpCfg) || {};
         return await Render.render('help/index.html', {
             helpCfg: entertainmentHelpCfg,
             helpGroup,
@@ -343,10 +343,7 @@ export class Help extends plugin {
         css('.help-table .tr:nth-child(odd)', 'background', 'rowBgColor1', 'rgba(34, 41, 51, .2)');
         css('.help-table .tr:nth-child(even)', 'background', 'rowBgColor2', 'rgba(34, 41, 51, .4)');
         
-        // 记录生成的 CSS（用于调试）
         const finalStyle = ret.join('\n');
-        logger.info(`[DELTA FORCE PLUGIN] 生成的帮助菜单 CSS (主题: ${themeName}, 宽度: ${width}px, 列数: ${colCount}):\n${finalStyle}`);
-        
         return {
             style: `<style>${finalStyle}</style>`,
             colCount

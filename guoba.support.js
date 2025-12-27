@@ -21,10 +21,14 @@ export function supportGuoba() {
       // 图标颜色，例：#FF0000 或 rgb(255, 0, 0)
       //iconColor: '#0FF796 ',
       // 如果想要显示成图片，也可以填写图标路径（绝对路径）
-      iconPath: path.join(pluginRoot, 'resources/readme/icon.png'),
+      iconPath: path.join(pluginRoot, 'resources/imgs/readme/icon.png'),
     },
     configInfo: {
       schemas: [
+        {
+          component: 'Divider',
+          label: '基础配置',
+        },
         {
           field: "api_key",
           label: "API 密钥",
@@ -44,6 +48,25 @@ export function supportGuoba() {
           componentProps: {
             placeholder: '请输入客户端 ID',
           },
+        },
+        {
+          field: "api_mode",
+          label: "API地址模式",
+          bottomHelpMessage: "选择API服务器地址模式：auto-自动故障转移（推荐）| default-默认地址 | eo-eo版地址 | esa-esa版地址",
+          component: "Select",
+          componentProps: {
+            placeholder: '请选择API地址模式',
+            options: [
+              { label: '自动故障转移（推荐）', value: 'auto' },
+              { label: '默认地址', value: 'default' },
+              { label: 'EO版地址', value: 'eo' },
+              { label: 'ESA版地址', value: 'esa' },
+            ],
+          },
+        },
+        {
+          component: 'Divider',
+          label: '定时推送',
         },
         {
           field: 'push_daily_keyword.enabled',
@@ -108,6 +131,10 @@ export function supportGuoba() {
           bottomHelpMessage: '设置每周战报的推送时间 (通常为周一)',
         },
         {
+          component: 'Divider',
+          label: '高级设置',
+        },
+        {
           field: 'web_login.allow_share_with_other_bots',
           label: '允许同时登陆',
           component: 'Switch',
@@ -118,6 +145,10 @@ export function supportGuoba() {
           label: 'WebSocket自动连接',
           component: 'Switch',
           bottomHelpMessage: '开启后，插件启动时将自动连接WebSocket服务器（用于战绩推送）',
+        },
+        {
+          component: 'Divider',
+          label: '广播通知',
         },
         {
           field: 'broadcast_notification.enabled',
@@ -154,6 +185,11 @@ export function supportGuoba() {
         // 直接从文件读取最新的、未经缓存的配置
         const config = Config.loadYAML(Config.fileMaps.config) || {};
         const df = lodash.cloneDeep(config.delta_force || {});
+        
+        // 设置 api_mode 默认值
+        if (!df.api_mode) {
+          df.api_mode = 'auto';
+        }
         
         // 确保 push_daily_keyword 对象及其子属性存在，为UI提供完整的模型
         // 使用 mergeWith 自定义合并逻辑，确保数组直接被替换而不是合并

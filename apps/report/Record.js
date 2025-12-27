@@ -2,6 +2,7 @@ import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
 import DataManager from '../../utils/Data.js'
 import Render from '../../components/Render.js'
+import fs from 'fs'
 
 const escapeReason = {
   '1': '撤离成功', '2': '被玩家击杀', '3': '被人机击杀'
@@ -75,29 +76,89 @@ export class Record extends plugin {
       return true;
     }
 
+    // 限制每页显示10条记录
+    const recordsPerPage = 10;
+    const pageRecords = records.slice(0, recordsPerPage);
+    
+    if (pageRecords.length === 0) {
+      await e.reply(`您在 ${modeName} (第${page}页) 没有更多战绩记录。`);
+      return true;
+    }
+
     // --- 构造模板数据 ---
     const templateRecords = [];
 
-    // 构建地图背景图路径的辅助函数
+    // 构建地图背景图路径的辅助函数（使用新的统一路径，支持降级匹配）
     const getMapBgPath = (mapName, gameMode) => {
       const modePrefix = gameMode === 'sol' ? '烽火' : '全面';
-      // 去掉地图名称中的难度后缀（如：航天基地-绝密 -> 航天基地）
-      const cleanMapName = mapName.split('-')[0];
-      const bgFileName = `${modePrefix}-${cleanMapName}.jpg`;
-      const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/Template/record/bg/${bgFileName}`.replace(/\\/g, '/');
+      const baseDir = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map`.replace(/\\/g, '/');
+      
+      // 地图名称映射：沟壕战 -> 堑壕战（仅用于全面战场战绩，匹配图片文件名）
+      let normalizedMapName = mapName;
+      if (gameMode === 'mp' && normalizedMapName.includes('沟壕战')) {
+        normalizedMapName = normalizedMapName.replace(/沟壕战/g, '堑壕战');
+      }
+      
+      // 处理地图名称：尝试精确匹配和降级匹配
+      const parts = normalizedMapName.split('-');
+      let finalPath = null;
+      
+      if (parts.length >= 2) {
+        // 有难度级别的情况：尝试精确匹配，如果不存在则降级到常规
+        const baseMapName = parts[0];
+        const difficulty = parts.slice(1).join('-');
+        
+        // 优先级1: 精确匹配（如"巴克什-机密" -> "烽火-巴克什-机密.png"）
+        const exactPath = `${baseDir}/${modePrefix}-${baseMapName}-${difficulty}.png`;
+        if (fs.existsSync(exactPath)) {
+          finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`;
+        } else {
+          // 优先级2: 降级到常规版本（如"烽火-巴克什-常规.png"）
+          const regularPath = `${baseDir}/${modePrefix}-${baseMapName}-常规.png`;
+          if (fs.existsSync(regularPath)) {
+            finalPath = `imgs/map/${modePrefix}-${baseMapName}-常规.png`;
+          } else {
+            // 优先级3: 尝试基础地图名称（如"烽火-巴克什.jpg"）
+            const basePath = `${baseDir}/${modePrefix}-${baseMapName}.jpg`;
+            if (fs.existsSync(basePath)) {
+              finalPath = `imgs/map/${modePrefix}-${baseMapName}.jpg`;
+            } else {
+              // 如果都不存在，仍然返回精确匹配路径（让浏览器处理错误）
+              finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`;
+            }
+          }
+        }
+      } else {
+        // 只有基础地图名称的情况：直接使用基础名称
+        const cleanMapName = parts[0];
+        // 优先尝试 .jpg 格式（全面战场通常是 .jpg）
+        const jpgPath = `${baseDir}/${modePrefix}-${cleanMapName}.jpg`;
+        const pngPath = `${baseDir}/${modePrefix}-${cleanMapName}.png`;
+        
+        if (fs.existsSync(jpgPath)) {
+          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`;
+        } else if (fs.existsSync(pngPath)) {
+          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.png`;
+        } else {
+          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`; // 默认返回 .jpg
+        }
+      }
+      
+      const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${finalPath}`.replace(/\\/g, '/');
       return `file:///${bgPath}`;
     };
 
-    // 构建干员图片路径的辅助函数
+    // 构建干员图片路径的辅助函数（使用新的统一路径）
     const getOperatorImgPath = (operatorName) => {
-      const imgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/Template/record/operator/${operatorName}.jpg`.replace(/\\/g, '/');
+      const relativePath = utils.getOperatorImagePath(operatorName);
+      const imgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${relativePath}`.replace(/\\/g, '/');
       return `file:///${imgPath}`;
     };
 
     if (mode === 'sol') {
-      for (let i = 0; i < records.length; i++) {
-        const r = records[i];
-        const recordNum = (page - 1) * records.length + i + 1;
+      for (let i = 0; i < pageRecords.length; i++) {
+        const r = pageRecords[i];
+        const recordNum = (page - 1) * recordsPerPage + i + 1;
         const mapName = DataManager.getMapName(r.MapId);
         const operator = DataManager.getOperatorName(r.ArmedForceId);
         const status = escapeReason[r.EscapeFailReason] || '撤离失败';
@@ -134,9 +195,9 @@ export class Record extends plugin {
         });
       }
     } else { // mode === 'mp'
-      for (let i = 0; i < records.length; i++) {
-        const r = records[i];
-        const recordNum = (page - 1) * records.length + i + 1;
+      for (let i = 0; i < pageRecords.length; i++) {
+        const r = pageRecords[i];
+        const recordNum = (page - 1) * recordsPerPage + i + 1;
         const mapName = DataManager.getMapName(r.MapID);
         const operator = DataManager.getOperatorName(r.ArmedForceId);
         const result = mpResult[r.MatchResult] || '未知结果';

@@ -1,1 +1,8 @@
-{}
+record_push:
+  "2621529331":
+    groups:
+      - groupId: "1062359644"
+        filters: []
+        enabledAt: 1766838666297
+    private: false
+    filters: []

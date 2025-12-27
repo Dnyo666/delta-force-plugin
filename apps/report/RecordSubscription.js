@@ -4,6 +4,10 @@ import Code from '../../components/Code.js'
 import DataManager from '../../utils/Data.js'
 import utils from '../../utils/utils.js'
 import { getSubscriptionConfig } from '../../utils/SubscriptionConfig.js'
+import Render from '../../components/Render.js'
+import Runtime from '../../../../lib/plugins/runtime.js'
+import { segment } from 'oicq'
+import fs from 'fs'
 
 /**
  * 战绩订阅插件
@@ -541,19 +545,18 @@ export class RecordSubscription extends plugin {
   async handleRecordPush(data) {
     const { platformId, frameworkToken, recordType, record, isNew, isRecent } = data
     const platformID = platformId  // 兼容性：转换为内部使用的变量名
+    const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
 
     // 只处理新战绩，不处理缓存战绩
     if (!isNew) {
-      const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
-      logger.debug(`[战绩订阅] 跳过缓存战绩: ${platformID} | 账号: ${maskedToken}`)
+      logger.debug(`[战绩订阅] 跳过缓存战绩: ${platformID} | 账号: ${maskedToken} | 类型: ${recordType}`)
       return
     }
 
     // 生成战绩唯一标识，防止重复推送
     const recordId = `${platformID}:${frameworkToken}:${recordType}:${record.dtEventTime || Date.now()}`
     if (RecordSubscription._pushedRecords.has(recordId)) {
-      const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
-      logger.warn(`[战绩订阅] 检测到重复推送，已跳过: ${platformID} | 账号: ${maskedToken} | ID: ${recordId}`)
+      logger.debug(`[战绩订阅] 检测到重复推送，已跳过: ${platformID} | 账号: ${maskedToken} | 类型: ${recordType} | ID: ${recordId.substring(0, 50)}...`)
       return
     }
 
@@ -562,6 +565,9 @@ export class RecordSubscription extends plugin {
     setTimeout(() => {
       RecordSubscription._pushedRecords.delete(recordId)
     }, 300000) // 5分钟
+
+    // 记录需要处理的事件（在去重检查之后）
+    logger.info(`[战绩订阅] 收到推送事件: ${platformID} | 账号: ${maskedToken} | 类型: ${recordType} | isRecent: ${isRecent}`)
 
     try {
       // 1. 检查用户是否启用了战绩订阅
@@ -579,14 +585,29 @@ export class RecordSubscription extends plugin {
 
       // 2. 获取推送配置
       const pushConfig = this.subConfig.getUserPushConfig(platformID)
+      logger.info(`[战绩订阅] 推送配置: 私信=${pushConfig.private} | 群数=${pushConfig.groups?.length || 0}`)
 
       if (!pushConfig.private && (!pushConfig.groups || pushConfig.groups.length === 0)) {
-        logger.debug(`[战绩订阅] 没有推送目标: ${platformID}`)
+        logger.warn(`[战绩订阅] 没有推送目标: ${platformID}`)
         return
       }
 
-      // 3. 格式化战绩消息
-      const message = await this.formatRecordMessage(recordType, record, frameworkToken)
+      // 3. 格式化战绩消息（使用图片渲染）
+      logger.info(`[战绩订阅] 开始格式化战绩消息: ${platformID} | 类型: ${recordType}`)
+      let message
+      try {
+        message = await this.formatRecordMessage(recordType, record, frameworkToken, platformID)
+        logger.info(`[战绩订阅] 战绩消息格式化完成: ${platformID}`)
+      } catch (error) {
+        logger.error(`[战绩订阅] 格式化战绩消息失败: ${platformID}`, error)
+        // 使用文本消息作为降级
+        const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
+        const mapId = record.MapID || record.MapId
+        let mapName = DataManager.getMapName(mapId)
+        const operatorName = DataManager.getOperatorName(record.ArmedForceId)
+        const displayName = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家'
+        message = this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+      }
 
       // 4. 推送到私聊
       if (pushConfig.private) {
@@ -745,35 +766,152 @@ export class RecordSubscription extends plugin {
   }
 
   /**
-   * 格式化战绩消息
+   * 创建伪事件对象用于渲染
+   * @param {string} platformID - 用户ID
+   * @returns {Object} 伪事件对象
+   */
+  createFakeEvent(platformID) {
+    const fakeE = {
+      user_id: platformID,
+      isGroup: false,
+      isPrivate: true
+    }
+    try {
+      fakeE.runtime = new Runtime(fakeE)
+    } catch (error) {
+      logger.error('[战绩订阅] 创建 Runtime 失败:', error)
+      // 如果创建失败，返回 null，后续会降级为文本消息
+      return null
+    }
+    return fakeE
+  }
+
+  /**
+   * 格式化战绩消息（使用图片渲染）
    * @param {string} recordType - 战绩类型 (sol/mp)
    * @param {Object} record - 战绩对象
    * @param {string} frameworkToken - 游戏账号令牌（可选）
-   * @returns {Array|string}
+   * @param {string} platformID - 用户ID（用于创建伪事件对象）
+   * @returns {Promise<Array|string>}
    */
-  async formatRecordMessage(recordType, record, frameworkToken) {
+  async formatRecordMessage(recordType, record, frameworkToken, platformID) {
     const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
     // 全面战场使用 MapID，烽火地带使用 MapId
     const mapId = record.MapID || record.MapId
-    const mapName = DataManager.getMapName(mapId)
+    let mapName = DataManager.getMapName(mapId)
     const operatorName = DataManager.getOperatorName(record.ArmedForceId)
+
+    // 地图名称映射：沟壕战 -> 堑壕战（仅用于全面战场战绩，匹配图片文件名）
+    if (recordType === 'mp' && mapName && mapName.includes('沟壕战')) {
+      mapName = mapName.replace(/沟壕战/g, '堑壕战')
+    }
 
     // 获取昵称
     let nickname = null
     if (frameworkToken) {
-      nickname = await this.getNickname(frameworkToken)
+      try {
+        nickname = await this.getNickname(frameworkToken)
+      } catch (error) {
+        logger.warn(`[战绩订阅] 获取昵称失败: ${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`, error)
+        // 继续执行，使用默认显示名称
+      }
     }
     
     // 标题显示昵称或账号
     const displayName = nickname || (frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家')
-    let msg = `${displayName}-战绩订阅-${modeText}\n`
+
+    // 构建地图背景图路径的辅助函数（使用新的统一路径，支持降级匹配）
+    const getMapBgPath = (mapName, gameMode) => {
+      const modePrefix = gameMode === 'sol' ? '烽火' : '全面'
+      const baseDir = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map`.replace(/\\/g, '/')
+      
+      // 处理地图名称：尝试精确匹配和降级匹配
+      const parts = mapName.split('-')
+      let finalPath = null
+      
+      if (parts.length >= 2) {
+        // 有难度级别的情况：尝试精确匹配，如果不存在则降级到常规
+        const baseMapName = parts[0]
+        const difficulty = parts.slice(1).join('-')
+        
+        // 优先级1: 精确匹配
+        const exactPath = `${baseDir}/${modePrefix}-${baseMapName}-${difficulty}.png`
+        if (fs.existsSync(exactPath)) {
+          finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
+        } else {
+          // 优先级2: 降级到常规版本
+          const regularPath = `${baseDir}/${modePrefix}-${baseMapName}-常规.png`
+          if (fs.existsSync(regularPath)) {
+            finalPath = `imgs/map/${modePrefix}-${baseMapName}-常规.png`
+          } else {
+            // 优先级3: 尝试基础地图名称
+            const basePath = `${baseDir}/${modePrefix}-${baseMapName}.jpg`
+            if (fs.existsSync(basePath)) {
+              finalPath = `imgs/map/${modePrefix}-${baseMapName}.jpg`
+            } else {
+              // 如果都不存在，返回精确匹配路径（让浏览器处理错误）
+              finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
+            }
+          }
+        }
+      } else {
+        // 只有基础地图名称的情况
+        const cleanMapName = parts[0]
+        const jpgPath = `${baseDir}/${modePrefix}-${cleanMapName}.jpg`
+        const pngPath = `${baseDir}/${modePrefix}-${cleanMapName}.png`
+        
+        if (fs.existsSync(jpgPath)) {
+          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`
+        } else if (fs.existsSync(pngPath)) {
+          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.png`
+        } else {
+          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`
+        }
+      }
+      
+      const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${finalPath}`.replace(/\\/g, '/')
+      return `file:///${bgPath}`
+    }
+
+    // 构建干员图片路径的辅助函数
+    const getOperatorImgPath = (operatorName) => {
+      const relativePath = utils.getOperatorImagePath(operatorName)
+      const imgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${relativePath}`.replace(/\\/g, '/')
+      return `file:///${imgPath}`
+    }
+
+    // 创建伪事件对象
+    let fakeE
+    try {
+      fakeE = this.createFakeEvent(platformID)
+      if (!fakeE) {
+        logger.warn(`[战绩订阅] 创建伪事件对象失败: ${platformID}，使用文本消息降级`)
+        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+      }
+    } catch (error) {
+      logger.error(`[战绩订阅] 创建伪事件对象异常: ${platformID}`, error)
+      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+    }
+
+    // 准备模板数据
+    const templateData = {
+      displayName,
+      modeName: modeText,
+      time: record.dtEventTime,
+      map: mapName,
+      operator: operatorName,
+      mapBg: getMapBgPath(mapName, recordType),
+      operatorImg: getOperatorImgPath(operatorName)
+    }
 
     if (recordType === 'sol') {
-      // 烽火地带战绩（v1 格式，数据直接在 record 顶层）
+      // 烽火地带战绩
       const finalPrice = Number(record.FinalPrice || 0).toLocaleString()
-      const income = record.flowCalGainedPrice ? Number(record.flowCalGainedPrice).toLocaleString() : '未知'
+      const income = (record.flowCalGainedPrice != null && record.flowCalGainedPrice !== '') 
+        ? Number(record.flowCalGainedPrice).toLocaleString() 
+        : '未知'
       
-      // 处理存活时间（DurationS 可能为 null）
+      // 处理存活时间
       const durationS = Number(record.DurationS || 0)
       let duration = '未知'
       if (durationS > 0) {
@@ -797,28 +935,29 @@ export class RecordSubscription extends plugin {
         '10': '撤离失败'
       }
       const escapeStatus = escapeReasons[String(record.EscapeFailReason)] || '撤离失败'
+      
+      // 确定状态样式类
+      let statusClass = 'fail'
+      if (record.EscapeFailReason === 1 || record.EscapeFailReason === '1') statusClass = 'success'
+      else if (record.EscapeFailReason === 3 || record.EscapeFailReason === '3') statusClass = 'exit'
 
-      msg += `地图：${mapName}\n`
-      msg += `干员：${operatorName}\n`
-      msg += `时间：${record.dtEventTime}\n`
-      msg += `状态：${escapeStatus}\n`
-      msg += `存活：${duration}\n`
-      msg += `带出价值：${finalPrice}\n`
-      msg += `净收益：${income}\n`
-      
-      // 击杀数据可能为 null
-      const killCount = record.KillCount ?? '未知'
-      const killAI = record.KillAICount ?? '未知'
-      const killPlayerAI = record.KillPlayerAICount ?? '未知'
-      msg += `击杀：${killCount}玩家/${killAI}AI/${killPlayerAI}AI玩家`
-      
-      // 救援次数（如果有）
+      // 击杀数据
+      const killCount = record.KillCount ?? 0
+      const killAI = record.KillAICount ?? 0
+      const killPlayerAI = record.KillPlayerAICount ?? 0
+      const killsHtml = `<span class="kill-player">${killCount}玩家</span> / <span class="kill-ai-player">${killPlayerAI}AI玩家</span> / <span class="kill-ai">${killAI}AI</span>`
+
+      templateData.status = escapeStatus
+      templateData.statusClass = statusClass
+      templateData.duration = duration
+      templateData.value = finalPrice
+      templateData.income = income
+      templateData.killsHtml = killsHtml
       if (record.Rescue != null && record.Rescue > 0) {
-        msg += `\n救援：${record.Rescue}次`
+        templateData.rescue = record.Rescue
       }
     } else {
-      // 全面战场战绩（v1 格式）
-      // 使用 gametime 而不是 DurationS
+      // 全面战场战绩
       const gameTimeS = Number(record.gametime || 0)
       const hours = Math.floor(gameTimeS / 3600)
       const minutes = Math.floor((gameTimeS % 3600) / 60)
@@ -841,6 +980,120 @@ export class RecordSubscription extends plugin {
         '3': '中途退出'
       }
       const result = mpResults[String(record.MatchResult)] || '未知结果'
+      
+      // 确定状态样式类
+      let statusClass = 'fail'
+      if (record.MatchResult === 1 || record.MatchResult === '1') statusClass = 'success'
+      else if (record.MatchResult === 3 || record.MatchResult === '3') statusClass = 'exit'
+
+      templateData.status = result
+      templateData.statusClass = statusClass
+      templateData.duration = duration
+      templateData.kda = `${record.KillNum}/${record.Death}/${record.Assist}`
+      templateData.score = record.TotalScore.toLocaleString()
+      if (record.RescueTeammateCount != null && record.RescueTeammateCount > 0) {
+        templateData.rescue = record.RescueTeammateCount
+      }
+    }
+
+    // 渲染模板（使用 base64 模式获取图片数据，而不是自动发送）
+    try {
+      logger.info(`[战绩订阅] 开始渲染图片: ${platformID}`)
+      const base64Data = await Render.render('Template/recordPush/recordPush', templateData, {
+        e: fakeE,
+        scale: 1.2,
+        retType: 'base64'
+      })
+      logger.info(`[战绩订阅] 图片渲染完成: ${platformID}，结果: ${base64Data ? '成功' : '空值'}`)
+      
+      if (base64Data) {
+        return base64Data
+      } else {
+        // 如果渲染失败，返回文本消息作为降级
+        logger.warn(`[战绩订阅] 图片渲染返回空值，使用文本消息降级: ${platformID}`)
+        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+      }
+    } catch (error) {
+      logger.error(`[战绩订阅] 图片渲染异常: ${platformID}`, error)
+      // 如果渲染异常，返回文本消息作为降级
+      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+    }
+  }
+
+  /**
+   * 格式化战绩消息（文本格式，作为降级方案）
+   */
+  formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName) {
+    const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
+    let msg = `${displayName}-战绩订阅-${modeText}\n`
+
+    if (recordType === 'sol') {
+      const finalPrice = Number(record.FinalPrice || 0).toLocaleString()
+      const income = (record.flowCalGainedPrice != null && record.flowCalGainedPrice !== '') 
+        ? Number(record.flowCalGainedPrice).toLocaleString() 
+        : '未知'
+      
+      const durationS = Number(record.DurationS || 0)
+      let duration = '未知'
+      if (durationS > 0) {
+        const hours = Math.floor(durationS / 3600)
+        const minutes = Math.floor((durationS % 3600) / 60)
+        const seconds = durationS % 60
+        if (hours > 0) {
+          duration = `${hours}小时${minutes}分${seconds}秒`
+        } else if (minutes > 0) {
+          duration = `${minutes}分${seconds}秒`
+        } else {
+          duration = `${seconds}秒`
+        }
+      }
+      
+      const escapeReasons = {
+        '1': '撤离成功',
+        '2': '被玩家击杀',
+        '3': '被人机击杀',
+        '10': '撤离失败'
+      }
+      const escapeStatus = escapeReasons[String(record.EscapeFailReason)] || '撤离失败'
+
+      msg += `地图：${mapName}\n`
+      msg += `干员：${operatorName}\n`
+      msg += `时间：${record.dtEventTime}\n`
+      msg += `状态：${escapeStatus}\n`
+      msg += `存活：${duration}\n`
+      msg += `带出价值：${finalPrice}\n`
+      msg += `净收益：${income}\n`
+      
+      const killCount = record.KillCount ?? '未知'
+      const killAI = record.KillAICount ?? '未知'
+      const killPlayerAI = record.KillPlayerAICount ?? '未知'
+      msg += `击杀：${killCount}玩家/${killAI}AI/${killPlayerAI}AI玩家`
+      
+      if (record.Rescue != null && record.Rescue > 0) {
+        msg += `\n救援：${record.Rescue}次`
+      }
+    } else {
+      const gameTimeS = Number(record.gametime || 0)
+      const hours = Math.floor(gameTimeS / 3600)
+      const minutes = Math.floor((gameTimeS % 3600) / 60)
+      const seconds = gameTimeS % 60
+      let duration = '未知'
+      if (gameTimeS > 0) {
+        if (hours > 0) {
+          duration = `${hours}小时${minutes}分${seconds}秒`
+        } else if (minutes > 0) {
+          duration = `${minutes}分${seconds}秒`
+        } else {
+          duration = `${seconds}秒`
+        }
+      }
+      
+      const mpResults = {
+        '1': '胜利',
+        '2': '失败',
+        '3': '中途退出'
+      }
+      const result = mpResults[String(record.MatchResult)] || '未知结果'
 
       msg += `地图：${mapName}\n`
       msg += `干员：${operatorName}\n`
@@ -850,7 +1103,6 @@ export class RecordSubscription extends plugin {
       msg += `得分：${record.TotalScore.toLocaleString()}\n`
       msg += `时长：${duration}`
       
-      // 救援次数（如果有）
       if (record.RescueTeammateCount != null && record.RescueTeammateCount > 0) {
         msg += `\n救援：${record.RescueTeammateCount}次`
       }
