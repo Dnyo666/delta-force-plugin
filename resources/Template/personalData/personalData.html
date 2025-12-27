@@ -7,7 +7,7 @@
 {{block 'main'}}
 <div class="container">
     <div class="header">
-        <div class="title">个人数据统计</div>
+        <div class="title">{{nickname}}的个人统计 S{{season}}</div>
     </div>
 
     <div class="data-grid">
@@ -15,18 +15,19 @@
         <div class="card">
             <div class="card-title">烽火地带</div>
             <div class="card-content">
-                <p><strong>排位分:</strong> {{solDetail.levelScore || '-'}}</p>
-                <p><strong>总对局:</strong> {{solDetail.totalFight || '-'}}</p>
-                <p><strong>总撤离:</strong> {{solDetail.totalEscape || '-'}}</p>
-                <p><strong>总击杀 (干员):</strong> {{solDetail.totalKill || '-'}}</p>
-                <p><strong>赚损比:</strong> {{solDetail.profitLossRatio || '-'}}</p>
-                <p><strong>总游戏时长:</strong> {{solDetail.totalGameTime || '-'}}</p>
-                <p><strong>收藏大红价值:</strong> {{solDetail.redTotalMoney?.toLocaleString() || '-'}}</p>
-                <p><strong>收藏大红个数:</strong> {{solDetail.redTotalCount || '-'}}</p>
+                <p><strong>段位:</strong> <span>{{solRank}}</span></p>
+                <p><strong>总对局:</strong> <span>{{solDetail.totalFight || '-'}}</span></p>
+                <p><strong>总撤离:</strong> <span>{{solDetail.totalEscape || '-'}}</span></p>
+                <p><strong>总击杀 (干员):</strong> <span>{{solDetail.totalKill || '-'}}</span></p>
+                <p><strong>总带出价值:</strong> <span>{{solDetail.totalGainedPriceFormatted}}</span></p>
+                <p><strong>赚损比:</strong> <span>{{solDetail.profitLossRatioFormatted}}</span></p>
+                <p><strong>游戏时长:</strong> <span>{{solDetail.totalGameTime}}</span></p>
+                <p><strong>好友排行:</strong> <span>{{solDetail.userRank || '-'}}</span></p>
+                <p><strong>收藏大红价值:</strong> <span>{{solDetail.redTotalMoney?.toLocaleString() || '-'}} ({{solDetail.redTotalCount}}个)</span></p>
                 <div class="kd-ratios">
-                    <p><strong>战损比 (常规):</strong> {{solDetail.lowKillDeathRatio || '-'}}</p>
-                    <p><strong>战损比 (机密):</strong> {{solDetail.medKillDeathRatio || '-'}}</p>
-                    <p><strong>战损比 (绝密):</strong> {{solDetail.highKillDeathRatio || '-'}}</p>
+                    <p><strong>KD (常规):</strong> <span>{{solDetail.lowKD}}</span></p>
+                    <p><strong>KD (机密):</strong> <span>{{solDetail.medKD}}</span></p>
+                    <p><strong>KD (绝密):</strong> <span>{{solDetail.highKD}}</span></p>
                 </div>
             </div>
         </div>
@@ -36,22 +37,23 @@
         <div class="card">
             <div class="card-title">全面战场</div>
             <div class="card-content">
-                <p><strong>排位分:</strong> {{mpDetail.levelScore || '-'}}</p>
-                <p><strong>总对局:</strong> {{mpDetail.totalFight || '-'}}</p>
-                <p><strong>总胜场:</strong> {{mpDetail.totalWin || '-'}}</p>
-                <p><strong>胜率:</strong> {{mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}}</p>
-                <p><strong>总得分:</strong> {{mpDetail.totalScore || '-'}}</p>
-                <p><strong>分均击杀:</strong> {{mpDetail.avgKillPerMinute ? (mpDetail.avgKillPerMinute / 100).toFixed(2) : '-'}}</p>
-                <p><strong>分均得分:</strong> {{mpDetail.avgScorePerMinute || '-'}}</p>
-                <p><strong>总游戏时长:</strong> {{mpDetail.totalGameTime || '-'}}</p>
-                <p><strong>呼叫载具数:</strong> {{mpDetail.callVehicle || '-'}}</p>
-                <p><strong>部署重生信标数:</strong> {{mpDetail.callRebirth || '-'}}</p>
+                <p><strong>段位:</strong> <span>{{mpRank}}</span></p>
+                <p><strong>总对局:</strong> <span>{{mpDetail.totalFight || '-'}}</span></p>
+                <p><strong>总胜场:</strong> <span>{{mpDetail.totalWin || '-'}}</span></p>
+                <p><strong>胜率:</strong> <span>{{mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}}</span></p>
+                <p><strong>总得分:</strong> <span>{{mpDetail.totalScore?.toLocaleString() || '-'}}</span></p>
+                <p><strong>分均击杀:</strong> <span>{{mpDetail.avgKillPerMinuteFormatted}}</span></p>
+                <p><strong>分均得分:</strong> <span>{{mpDetail.avgScorePerMinuteFormatted}}</span></p>
+                <p><strong>游戏时长:</strong> <span>{{mpDetail.totalGameTime}}</span></p>
+                <p><strong>载具击杀:</strong> <span>{{mpDetail.totalVehicleKill || '-'}}</span></p>
+                <p><strong>破坏载具:</strong> <span>{{mpDetail.totalVehicleDestroyed || '-'}}</span></p>
             </div>
         </div>
         {{/if}}
     </div>
+    
     <div class="footer">
         由 DeltaForce-Plugin-Yunzai 强力驱动
     </div>
 </div>
-{{/block}} 
+{{/block}}

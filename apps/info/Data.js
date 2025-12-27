@@ -1,6 +1,7 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
 import DataManager from '../../utils/Data.js'
+import Render from '../../components/Render.js'
 
 export class Data extends plugin {
   constructor (e) {
@@ -98,41 +99,43 @@ export class Data extends plugin {
       return (parseFloat(kd) / 100).toFixed(2);
     }
     
-    // --- 消息拼接 ---
-    let msg = `【${this.e.sender.nickname}的个人统计 S${season === 'all' ? '全部' : season}】\n`
+    // --- 准备模板数据 ---
+    const templateData = {
+      nickname: this.e.sender.nickname,
+      season: season === 'all' ? '全部' : season
+    };
     
     if ((!mode || mode === 'sol') && solDetail) {
-        solDetail.totalGameTime = formatDuration(solDetail.totalGameTime);
-        const kdString = `KD: ${formatKd(solDetail.lowKillDeathRatio)} | ${formatKd(solDetail.medKillDeathRatio)} | ${formatKd(solDetail.highKillDeathRatio)}`;
         const solRank = solDetail.levelScore ? DataManager.getRankByScore(solDetail.levelScore, 'sol') : '-';
-
-        msg += '--- 烽火地带 ---\n'
-        msg += `段位: ${solRank}\n`
-        msg += `总对局: ${solDetail.totalFight || '-'} | 总撤离: ${solDetail.totalEscape || '-'}\n`
-        msg += `总击杀 (干员): ${solDetail.totalKill || '-'}\n`
-        msg += `总带出价值: ${formatGainedPrice(solDetail.totalGainedPrice)}\n`
-        msg += `赚损比: ${solDetail.profitLossRatio ? (parseFloat(solDetail.profitLossRatio) / 100000).toFixed(1) + 'K' : '-'}\n`
-        msg += `${kdString}\n`
-        msg += `游戏时长: ${solDetail.totalGameTime}\n`
-        msg += `好友排行: ${solDetail.userRank || '-'}\n`
-        msg += `收藏大红价值: ${solDetail.redTotalMoney?.toLocaleString() || '-'} (${solDetail.redTotalCount}个)\n`
+        
+        templateData.solDetail = {
+          ...solDetail,
+          totalGameTime: formatDuration(solDetail.totalGameTime),
+          totalGainedPriceFormatted: formatGainedPrice(solDetail.totalGainedPrice),
+          profitLossRatioFormatted: solDetail.profitLossRatio ? (parseFloat(solDetail.profitLossRatio) / 100000).toFixed(1) + 'K' : '-',
+          lowKD: formatKd(solDetail.lowKillDeathRatio),
+          medKD: formatKd(solDetail.medKillDeathRatio),
+          highKD: formatKd(solDetail.highKillDeathRatio)
+        };
+        templateData.solRank = solRank;
     }
 
     if ((!mode || mode === 'mp') && mpDetail) {
-        mpDetail.totalGameTime = formatDuration(mpDetail.totalGameTime * 60); // 文档中是秒，但示例像分钟，保持转换
         const mpRank = mpDetail.levelScore ? DataManager.getRankByScore(mpDetail.levelScore, 'tdm') : '-';
-        if (solDetail && !mode) msg += '\n'; // 如果前面有烽火数据且是查询全部，加个换行
-        msg += '--- 全面战场 ---\n'
-        msg += `段位: ${mpRank}\n`
-        msg += `总对局: ${mpDetail.totalFight || '-'} | 总胜场: ${mpDetail.totalWin || '-'}\n`
-        msg += `胜率: ${mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}\n`
-        msg += `分均击杀: ${mpDetail.avgKillPerMinute ? (parseFloat(mpDetail.avgKillPerMinute) / 100).toFixed(2) : '-'}\n`
-        msg += `分均得分: ${mpDetail.avgScorePerMinute ? (parseFloat(mpDetail.avgScorePerMinute) / 100).toFixed(2) : '-'}\n`
-        msg += `总得分: ${mpDetail.totalScore?.toLocaleString() || '-'}\n`
-        msg += `载具击杀: ${mpDetail.totalVehicleKill || '-'} | 破坏载具: ${mpDetail.totalVehicleDestroyed || '-'}\n`
-        msg += `游戏时长: ${mpDetail.totalGameTime}`
+        
+        templateData.mpDetail = {
+          ...mpDetail,
+          totalGameTime: formatDuration(mpDetail.totalGameTime * 60),
+          avgKillPerMinuteFormatted: mpDetail.avgKillPerMinute ? (parseFloat(mpDetail.avgKillPerMinute) / 100).toFixed(2) : '-',
+          avgScorePerMinuteFormatted: mpDetail.avgScorePerMinute ? (parseFloat(mpDetail.avgScorePerMinute) / 100).toFixed(2) : '-'
+        };
+        templateData.mpRank = mpRank;
     }
 
-    return await this.e.reply(msg.trim())
+    // 渲染模板
+    return await Render.render('Template/personalData/personalData', templateData, {
+      e: this.e,
+      scale: 1.2
+    });
   }
 }

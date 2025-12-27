@@ -1,6 +1,7 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
 import DataManager from '../../utils/Data.js'
+import Render from '../../components/Render.js'
 
 const escapeReason = {
   '1': '撤离成功', '2': '被玩家击杀', '3': '被人机击杀'
@@ -74,72 +75,110 @@ export class Record extends plugin {
       return true;
     }
 
-    // --- 构造转发消息 ---
-    const userInfo = {
-      user_id: e.user_id,
-      nickname: e.sender.nickname
+    // --- 构造模板数据 ---
+    const templateRecords = [];
+
+    // 构建地图背景图路径的辅助函数
+    const getMapBgPath = (mapName, gameMode) => {
+      const modePrefix = gameMode === 'sol' ? '烽火' : '全面';
+      // 去掉地图名称中的难度后缀（如：航天基地-绝密 -> 航天基地）
+      const cleanMapName = mapName.split('-')[0];
+      const bgFileName = `${modePrefix}-${cleanMapName}.jpg`;
+      const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/Template/record/bg/${bgFileName}`.replace(/\\/g, '/');
+      return `file:///${bgPath}`;
     };
-    
-    let forwardMsg = [];
-    const title = `【${modeName}战绩 - 第${page}页】`;
-    forwardMsg.push({ ...userInfo, message: title });
+
+    // 构建干员图片路径的辅助函数
+    const getOperatorImgPath = (operatorName) => {
+      const imgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/Template/record/operator/${operatorName}.jpg`.replace(/\\/g, '/');
+      return `file:///${imgPath}`;
+    };
 
     if (mode === 'sol') {
-      for (const r of records) {
-        const i = records.indexOf(r);
-        let msg = '';
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
         const recordNum = (page - 1) * records.length + i + 1;
         const mapName = DataManager.getMapName(r.MapId);
         const operator = DataManager.getOperatorName(r.ArmedForceId);
-        const status = escapeReason[r.EscapeFailReason] || '撤离失败'
-        const duration = utils.formatDuration(r.DurationS, 'seconds')
-        const value = Number(r.FinalPrice).toLocaleString()
-        const income = r.flowCalGainedPrice ? Number(r.flowCalGainedPrice).toLocaleString() : '未知'
-
-        msg += `#${recordNum}: ${r.dtEventTime}\n`
-        msg += `地图: ${mapName} | 干员: ${operator}\n`
-        msg += `状态: ${status} | 存活: ${duration}\n`
-        msg += `带出价值: ${value} | 净收益: ${income}\n`
-        msg += `击杀: 干员(${r.KillCount || 0}) / AI玩家(${r.KillPlayerAICount || 0}) / 其他AI(${r.KillAICount || 0})`
+        const status = escapeReason[r.EscapeFailReason] || '撤离失败';
+        const duration = utils.formatDuration(r.DurationS, 'seconds');
+        const value = Number(r.FinalPrice).toLocaleString();
+        const income = r.flowCalGainedPrice ? Number(r.flowCalGainedPrice).toLocaleString() : '未知';
         
-        forwardMsg.push({ ...userInfo, message: msg.trim() });
+        // 确定状态样式类（注意：EscapeFailReason 是数字类型）
+        let statusClass = 'fail';
+        if (r.EscapeFailReason === 1 || r.EscapeFailReason === '1') statusClass = 'success';
+        else if (r.EscapeFailReason === 3 || r.EscapeFailReason === '3') statusClass = 'exit';
+
+        // 获取地图背景图路径
+        const mapBg = getMapBgPath(mapName, 'sol');
+        // 获取干员图片路径
+        const operatorImg = getOperatorImgPath(operator);
+
+        // 格式化击杀数据，添加颜色
+        const killsHtml = `<span class="kill-player">干员(${r.KillCount || 0})</span> / <span class="kill-ai-player">AI玩家(${r.KillPlayerAICount || 0})</span> / <span class="kill-ai">其他AI(${r.KillAICount || 0})</span>`;
+
+        templateRecords.push({
+          recordNum,
+          time: r.dtEventTime,
+          status,
+          statusClass,
+          map: mapName,
+          operator,
+          duration,
+          value,
+          income,
+          killsHtml,
+          mapBg,
+          operatorImg
+        });
       }
     } else { // mode === 'mp'
-      for (const r of records) {
-        const i = records.indexOf(r);
-        let mainMsg = '';
-        let teamMsg = '';
+      for (let i = 0; i < records.length; i++) {
+        const r = records[i];
         const recordNum = (page - 1) * records.length + i + 1;
         const mapName = DataManager.getMapName(r.MapID);
         const operator = DataManager.getOperatorName(r.ArmedForceId);
-        const result = mpResult[r.MatchResult] || '未知结果'
-        const duration = utils.formatDuration(r.gametime, 'seconds')
-
-        mainMsg += `#${recordNum}: ${r.dtEventTime}\n`;
-        mainMsg += `地图: ${mapName} | 干员: ${operator}\n`;
-        mainMsg += `结果: ${result} | K/D/A: ${r.KillNum}/${r.Death}/${r.Assist}\n`;
-        mainMsg += `得分: ${r.TotalScore.toLocaleString()} | 时长: ${duration}\n`;
-        mainMsg += `救援: ${r.RescueTeammateCount}`;
+        const result = mpResult[r.MatchResult] || '未知结果';
+        const duration = utils.formatDuration(r.gametime, 'seconds');
         
-        forwardMsg.push({ ...userInfo, message: mainMsg.trim() });
+        // 确定状态样式类（注意：MatchResult 是数字类型）
+        let statusClass = 'fail';
+        if (r.MatchResult === 1 || r.MatchResult === '1') statusClass = 'success';
+        else if (r.MatchResult === 3 || r.MatchResult === '3') statusClass = 'exit';
 
-        const teamList = r.RoomInfo?.data?.mpDetailList;
-        if (teamList && teamList.length > 0) {
-            teamMsg += "--- 对局详情 ---\n";
-            for (const t of teamList) {
-                const teamOperator = DataManager.getOperatorName(t.armedForceType);
-                // 解码昵称
-                const nickName = decodeURIComponent(t.nickName || t.PlayerName || '未知玩家');
-                const isCurrentUser = t.isCurrentUser ? ' (我)' : '';
-                
-                teamMsg += `${nickName}${isCurrentUser} (${teamOperator}):\n`;
-                teamMsg += `  K/D/A: ${t.killNum}/${t.death}/${t.assist}, 得分: ${t.totalScore.toLocaleString()}\n`;
-            }
-            forwardMsg.push({ ...userInfo, message: teamMsg.trim() });
-        }
+        // 获取地图背景图路径
+        const mapBg = getMapBgPath(mapName, 'mp');
+        // 获取干员图片路径
+        const operatorImg = getOperatorImgPath(operator);
+
+        templateRecords.push({
+          recordNum,
+          time: r.dtEventTime,
+          status: result,
+          statusClass,
+          map: mapName,
+          operator,
+          duration,
+          kda: `${r.KillNum}/${r.Death}/${r.Assist}`,
+          score: r.TotalScore.toLocaleString(),
+          rescue: r.RescueTeammateCount,
+          mapBg,
+          operatorImg
+        });
       }
     }
 
-    return e.reply(await Bot.makeForwardMsg(forwardMsg))
+    // 渲染模板
+    const templateData = {
+      modeName,
+      page,
+      records: templateRecords
+    };
+
+    return await Render.render('Template/record/record', templateData, {
+      e: this.e,
+      scale: 1.2
+    });
   }
 } 
