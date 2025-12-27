@@ -89,8 +89,10 @@ img {
     font-size: 18px; 
     font-family: 'ProjectD Type Curve', 'Inter'; 
     font-weight: 700; 
-    word-wrap: break-word;
-    justify-content: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    align-items: flex-start;
     display: flex;
     flex-direction: column;
 }

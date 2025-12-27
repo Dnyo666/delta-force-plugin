@@ -1,7 +1,7 @@
 import { getWebSocketManager } from '../components/WebSocket.js'
 import Config from '../components/Config.js'
 import DataManager from './Data.js'
-import { initBroadcastNotificationListener } from '../apps/Notification.js'
+import { initBroadcastNotificationListener } from '../apps/push/Notification.js'
 
 /**
  * WebSocket 服务管理器

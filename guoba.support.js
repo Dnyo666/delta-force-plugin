@@ -251,7 +251,7 @@ export function supportGuoba() {
           });
           
           if (Config.setConfig(config)) {
-            logger.mark('[DELTA FORCE PLUGIN] 配置已更新 (Guoba):', JSON.stringify(config.delta_force));
+            logger.debug('[DELTA FORCE PLUGIN] 配置已更新 (Guoba)');
             return Result.ok({}, '保存成功~');
           } else {
             return Result.error('配置保存失败，请检查文件权限');

@@ -15,7 +15,7 @@ function getClientID () {
 async function handleApiError(res, e) {
   // Case 0: Null or non-object response
   if (!res || typeof res !== 'object') {
-    logger.mark('[API Error Handler] API响应为空或格式不正确。');
+    logger.warn('[API Error Handler] API响应为空或格式不正确');
     await e.reply('请求失败，API未返回任何数据或数据格式错误。');
     return true;
   }
@@ -24,35 +24,35 @@ async function handleApiError(res, e) {
 
   // Case 1: API Key/Auth invalid (code: 1000 or 1001)
   if (String(res.code) === '1000' || String(res.code) === '1001') {
-    logger.mark(`[API Error Handler] API Key无效或未配置。Response: ${resString}`);
+    logger.warn(`[API Error Handler] API Key无效或未配置`);
     await e.reply('API Key无效或已过期，请联系机器人管理员检查配置。');
     return true;
   }
   
   // Case 1.1: API Key permission insufficient (code: 1100)
   if (String(res.code) === '1100') {
-    logger.mark(`[API Error Handler] API Key权限不足。Response: ${resString}`);
+    logger.warn(`[API Error Handler] API Key权限不足`);
     await e.reply(`APIKey权限不足，请机器人升级订阅后使用。\n当前等级: ${res.currentTier || 'free'} | 需要等级: ${res.requiredTier || 'pro'}`);
     return true;
   }
 
   // Case 4: Login session invalid (ret: 101)
   if (res.data?.ret === 101 || res.error?.includes('请先完成QQ或微信登录') || res.sMsg?.includes('请先登录')) {
-    logger.mark(`[API Error Handler] 登录会话无效。Response: ${resString}`);
+    logger.warn(`[API Error Handler] 登录会话无效`);
     await e.reply('登录已失效，请重新登录。');
     return true;
   }
 
   // Case 3: Region not bound (ret: 99998)
   if (res.data?.ret === 99998 || res.message?.includes('先绑定大区')) {
-    logger.mark(`[API Error Handler] 大区未绑定。Response: ${resString}`);
+    logger.warn(`[API Error Handler] 大区未绑定`);
     await e.reply('您尚未绑定游戏大区，请先使用 #三角洲角色绑定 命令进行绑定。');
     return true;
   }
 
   // Case 2: frameworkToken not found or invalid
   if (res.success == false && (res.message?.includes('未找到有效token') || res.message?.includes('缺少frameworkToken参数'))) {
-    logger.mark(`[API Error Handler] Token无效或缺失。Response: ${resString}`);
+    logger.warn(`[API Error Handler] Token无效或缺失`);
     await e.reply('当前激活的账号无效，请重新登陆账号或使用 #三角洲账号切换 切换有效账号。');
     return true;
   }
@@ -67,11 +67,11 @@ async function handleApiError(res, e) {
       res.message.includes('删除成功') ||
       res.message.includes('更新成功')
     )) {
-      logger.info(`[API Error Handler] 检测到成功消息但标记为失败，忽略错误处理: ${res.message}`);
+      logger.debug(`[API Error Handler] 检测到成功消息但标记为失败，忽略错误处理: ${res.message}`);
       return false; // 不处理为错误
     }
     
-    logger.mark(`[API Error Handler] 捕获到通用API失败。Response: ${resString}`);
+    logger.warn(`[API Error Handler] API请求失败: ${res.message || res.msg || res.error || '未知错误'}`);
     await e.reply(`操作失败：${res.message || res.msg || res.error || '未知错误，请查看日志'}`);
     return true;
   }

@@ -43,18 +43,22 @@ const jsonDataFiles = {
  * @param {string} filePath - YAML文件路径
  * @returns {Map|null} - 加载的数据Map或null
  */
-function loadLocalData(filePath) {
+function loadLocalData(filePath, silent = false) {
     try {
         if (fs.existsSync(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
             const data = YAML.parse(fileContent);
             
             if (data && typeof data === 'object') {
-                logger.info(`[Delta-Force 数据管理器] 成功加载本地数据: ${filePath}`);
+                if (!silent) {
+                    logger.debug(`[Delta-Force 数据管理器] 成功加载本地数据: ${filePath}`);
+                }
                 return new Map(Object.entries(data));
             }
         } else {
-            logger.warn(`[Delta-Force 数据管理器] 本地数据文件不存在: ${filePath}`);
+            if (!silent) {
+                logger.warn(`[Delta-Force 数据管理器] 本地数据文件不存在: ${filePath}`);
+            }
         }
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 加载本地数据失败 (${filePath}):`, error);
@@ -67,18 +71,22 @@ function loadLocalData(filePath) {
  * @param {string} filePath - JSON文件路径
  * @returns {Object|null} - 加载的数据对象或null
  */
-function loadJsonData(filePath) {
+function loadJsonData(filePath, silent = false) {
     try {
         if (fs.existsSync(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
             const data = JSON.parse(fileContent);
             
             if (data && typeof data === 'object') {
-                logger.info(`[Delta-Force 数据管理器] 成功加载JSON数据: ${filePath}`);
+                if (!silent) {
+                    logger.debug(`[Delta-Force 数据管理器] 成功加载JSON数据: ${filePath}`);
+                }
                 return data;
             }
         } else {
-            logger.warn(`[Delta-Force 数据管理器] JSON数据文件不存在: ${filePath}`);
+            if (!silent) {
+                logger.warn(`[Delta-Force 数据管理器] JSON数据文件不存在: ${filePath}`);
+            }
         }
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 加载JSON数据失败 (${filePath}):`, error);
@@ -106,7 +114,7 @@ function saveLocalData(dataMap, filePath) {
         
         // 写入YAML文件
         fs.writeFileSync(filePath, YAML.stringify(dataObj), 'utf8');
-        logger.info(`[Delta-Force 数据管理器] 数据已保存到 ${filePath}`);
+        logger.debug(`[Delta-Force 数据管理器] 数据已保存到 ${filePath}`);
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 保存本地数据失败 (${filePath}):`, error);
     }
@@ -117,18 +125,22 @@ function saveLocalData(dataMap, filePath) {
  * @param {string} filePath - YAML文件路径
  * @returns {Object|null} - 加载的数据对象或null
  */
-function loadRankScoreData(filePath) {
+function loadRankScoreData(filePath, silent = false) {
     try {
         if (fs.existsSync(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
             const data = YAML.parse(fileContent);
             
             if (data && typeof data === 'object') {
-                logger.info(`[Delta-Force 数据管理器] 成功加载排位分数数据: ${filePath}`);
+                if (!silent) {
+                    logger.debug(`[Delta-Force 数据管理器] 成功加载排位分数数据: ${filePath}`);
+                }
                 return data;
             }
         } else {
-            logger.warn(`[Delta-Force 数据管理器] 排位分数数据文件不存在: ${filePath}`);
+            if (!silent) {
+                logger.warn(`[Delta-Force 数据管理器] 排位分数数据文件不存在: ${filePath}`);
+            }
         }
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 加载排位分数数据失败 (${filePath}):`, error);
@@ -153,7 +165,7 @@ function saveRankScoreData(dataObj, filePath) {
         
         // 写入YAML文件
         fs.writeFileSync(filePath, YAML.stringify(dataObj), 'utf8');
-        logger.info(`[Delta-Force 数据管理器] 排位分数数据已保存到 ${filePath}`);
+        logger.debug(`[Delta-Force 数据管理器] 排位分数数据已保存到 ${filePath}`);
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 保存排位分数数据失败 (${filePath}):`, error);
     }
@@ -169,7 +181,7 @@ async function fetchAndCache(dataType) {
                     mapData = new Map(res.data.map(item => [String(item.id), item.name]));
                     // 缓存成功后保存到本地
                     saveLocalData(mapData, localMapsFile);
-                    logger.info('[Delta-Force 数据管理器] 地图数据同步成功');
+                    logger.debug('[Delta-Force 数据管理器] 地图数据同步成功');
                 } else {
                     throw new Error('API返回失败状态');
                 }
@@ -180,7 +192,7 @@ async function fetchAndCache(dataType) {
                     const localData = loadLocalData(localMapsFile);
                     if (localData && localData.size > 0) {
                         mapData = localData;
-                        logger.info('[Delta-Force 数据管理器] 已从本地加载地图数据（降级）');
+                        logger.debug('[Delta-Force 数据管理器] 已从本地加载地图数据（降级）');
                     }
                 }
             }
@@ -191,7 +203,7 @@ async function fetchAndCache(dataType) {
                     operatorData = new Map(res.data.map(item => [String(item.id), item.name]));
                     // 缓存成功后保存到本地
                     saveLocalData(operatorData, localOperatorsFile);
-                    logger.info('[Delta-Force 数据管理器] 干员数据同步成功');
+                    logger.debug('[Delta-Force 数据管理器] 干员数据同步成功');
                 } else {
                     throw new Error('API返回失败状态');
                 }
@@ -202,7 +214,7 @@ async function fetchAndCache(dataType) {
                     const localData = loadLocalData(localOperatorsFile);
                     if (localData && localData.size > 0) {
                         operatorData = localData;
-                        logger.info('[Delta-Force 数据管理器] 已从本地加载干员数据（降级）');
+                        logger.debug('[Delta-Force 数据管理器] 已从本地加载干员数据（降级）');
                     }
                 }
             }
@@ -223,7 +235,7 @@ async function fetchAndCache(dataType) {
                     rankScoreData = processedData;
                     // 缓存成功后保存到本地
                     saveRankScoreData(rankScoreData, localRankScoreFile);
-                    logger.info('[Delta-Force 数据管理器] 排位分数数据同步成功');
+                    logger.debug('[Delta-Force 数据管理器] 排位分数数据同步成功');
                 } else {
                     throw new Error('API返回失败状态');
                 }
@@ -234,7 +246,7 @@ async function fetchAndCache(dataType) {
                     const localData = loadRankScoreData(localRankScoreFile);
                     if (localData && Object.keys(localData).length > 0) {
                         rankScoreData = localData;
-                        logger.info('[Delta-Force 数据管理器] 已从本地加载排位分数数据（降级）');
+                        logger.debug('[Delta-Force 数据管理器] 已从本地加载排位分数数据（降级）');
                     }
                 }
             }
@@ -285,7 +297,7 @@ async function fetchAndCache(dataType) {
                                 });
                             }
                         });
-                        logger.info(`[Delta-Force 数据管理器] 音频标签: ${Object.keys(audioData.tags).length}个tag, ${Object.keys(audioData.keywords).length}个关键词`);
+                        logger.debug(`[Delta-Force 数据管理器] 音频标签: ${Object.keys(audioData.tags).length}个tag, ${Object.keys(audioData.keywords).length}个关键词`);
                         hasAnyData = true;
                     }
                 } else {
@@ -315,7 +327,7 @@ async function fetchAndCache(dataType) {
                                 });
                             }
                         });
-                        logger.info(`[Delta-Force 数据管理器] 音频角色: ${Object.keys(audioData.characters).length}个映射`);
+                        logger.debug(`[Delta-Force 数据管理器] 音频角色: ${Object.keys(audioData.characters).length}个映射`);
                         hasAnyData = true;
                     }
                 } else {
@@ -349,7 +361,7 @@ async function fetchAndCache(dataType) {
                             // 英文小写 -> 英文category (支持输入 music、voice 等)
                             audioData.categories[category.toLowerCase()] = category;
                         });
-                        logger.info(`[Delta-Force 数据管理器] 音频分类: ${categoriesRes.data.categories.length}个分类`);
+                        logger.debug(`[Delta-Force 数据管理器] 音频分类: ${categoriesRes.data.categories.length}个分类`);
                         hasAnyData = true;
                     }
                 } else {
@@ -359,21 +371,23 @@ async function fetchAndCache(dataType) {
                 // 只有成功获取到至少一项数据时才保存
                 if (hasAnyData) {
                     saveRankScoreData(audioData, localAudioDataFile);
-                    logger.info('[Delta-Force 数据管理器] 音频数据已保存到本地');
+                    // 更新内存中的数据（如果API返回了数据就用新的，否则保留旧的）
+                    if (Object.keys(audioData.tags).length > 0 || Object.keys(audioData.keywords).length > 0) {
+                        audioTagsData = { _tags: audioData.tags, _keywords: audioData.keywords };
+                    }
+                    if (Object.keys(audioData.characters).length > 0) {
+                        audioCharactersData = audioData.characters;
+                    }
+                    if (Object.keys(audioData.categories).length > 0) {
+                        audioCategoriesData = audioData.categories;
+                    }
+                    // 汇总日志
+                    const tagCount = Object.keys(audioData.tags).length || 0;
+                    const keywordCount = Object.keys(audioData.keywords).length || 0;
+                    const charCount = Object.keys(audioData.characters).length || 0;
+                    const catCount = Object.keys(audioData.categories).length || 0;
+                    logger.debug(`[Delta-Force 数据管理器] 音频数据同步完成 (标签${tagCount}/${keywordCount}, 角色${charCount}, 分类${catCount})`);
                 }
-                
-                // 更新内存中的数据（如果API返回了数据就用新的，否则保留旧的）
-                if (Object.keys(audioData.tags).length > 0 || Object.keys(audioData.keywords).length > 0) {
-                    audioTagsData = { _tags: audioData.tags, _keywords: audioData.keywords };
-                }
-                if (Object.keys(audioData.characters).length > 0) {
-                    audioCharactersData = audioData.characters;
-                }
-                if (Object.keys(audioData.categories).length > 0) {
-                    audioCategoriesData = audioData.categories;
-                }
-                
-                logger.info('[Delta-Force 数据管理器] 音频数据同步完成');
             } catch (apiError) {
                 logger.error('[Delta-Force 数据管理器] 音频数据API请求异常:', apiError.message);
                 // API异常时，尝试从本地加载
@@ -381,16 +395,14 @@ async function fetchAndCache(dataType) {
                 if (localData && Object.keys(localData).length > 0) {
                     if (localData.tags && localData.keywords) {
                         audioTagsData = { _tags: localData.tags, _keywords: localData.keywords };
-                        logger.info('[Delta-Force 数据管理器] 已从本地加载音频标签数据（API异常降级）');
                     }
                     if (localData.characters) {
                         audioCharactersData = localData.characters;
-                        logger.info('[Delta-Force 数据管理器] 已从本地加载音频角色数据（API异常降级）');
                     }
                     if (localData.categories) {
                         audioCategoriesData = localData.categories;
-                        logger.info('[Delta-Force 数据管理器] 已从本地加载音频分类数据（API异常降级）');
                     }
+                    logger.debug('[Delta-Force 数据管理器] 已从本地加载音频数据（API异常降级）');
                 } else {
                     logger.warn('[Delta-Force 数据管理器] 音频数据API异常且无本地缓存，将使用空数据');
                 }
@@ -403,19 +415,19 @@ async function fetchAndCache(dataType) {
             const localData = loadLocalData(localMapsFile);
             if (localData && localData.size > 0) {
                 mapData = localData;
-                logger.info('[Delta-Force 数据管理器] 已从本地加载地图数据');
+                logger.debug('[Delta-Force 数据管理器] 已从本地加载地图数据');
             }
         } else if (dataType === 'operators') {
             const localData = loadLocalData(localOperatorsFile);
             if (localData && localData.size > 0) {
                 operatorData = localData;
-                logger.info('[Delta-Force 数据管理器] 已从本地加载干员数据');
+                logger.debug('[Delta-Force 数据管理器] 已从本地加载干员数据');
             }
         } else if (dataType === 'rankscore') {
             const localData = loadRankScoreData(localRankScoreFile);
             if (localData && Object.keys(localData).length > 0) {
                 rankScoreData = localData;
-                logger.info('[Delta-Force 数据管理器] 已从本地加载排位分数数据');
+                logger.debug('[Delta-Force 数据管理器] 已从本地加载排位分数数据');
             }
         } else if (dataType === 'audiodata') {
             const localData = loadRankScoreData(localAudioDataFile);
@@ -423,16 +435,14 @@ async function fetchAndCache(dataType) {
                 // 从统一文件中加载音频数据
                 if (localData.tags && localData.keywords) {
                     audioTagsData = { _tags: localData.tags, _keywords: localData.keywords };
-                    logger.info('[Delta-Force 数据管理器] 已从本地加载音频标签数据');
                 }
                 if (localData.characters) {
                     audioCharactersData = localData.characters;
-                    logger.info('[Delta-Force 数据管理器] 已从本地加载音频角色数据');
                 }
                 if (localData.categories) {
                     audioCategoriesData = localData.categories;
-                    logger.info('[Delta-Force 数据管理器] 已从本地加载音频分类数据');
                 }
+                logger.debug('[Delta-Force 数据管理器] 已从本地加载音频数据');
             }
         }
     }
@@ -440,71 +450,63 @@ async function fetchAndCache(dataType) {
 
 export default {
     async init() {
-        logger.mark('[Delta-Force 数据管理器] 正在初始化数据缓存...');
+        logger.info('[Delta-Force 数据管理器] 正在初始化数据缓存...');
         
         // 先尝试加载本地数据作为初始数据
-        const localMaps = loadLocalData(localMapsFile);
+        const localMaps = loadLocalData(localMapsFile, true);
         if (localMaps && localMaps.size > 0) {
             mapData = localMaps;
-            logger.mark(`[Delta-Force 数据管理器] 已从本地加载地图数据 (${localMaps.size}条记录)`);
         }
         
-        const localOperators = loadLocalData(localOperatorsFile);
+        const localOperators = loadLocalData(localOperatorsFile, true);
         if (localOperators && localOperators.size > 0) {
             operatorData = localOperators;
-            logger.mark(`[Delta-Force 数据管理器] 已从本地加载干员数据 (${localOperators.size}条记录)`);
         }
         
-        const localRankScore = loadRankScoreData(localRankScoreFile);
+        const localRankScore = loadRankScoreData(localRankScoreFile, true);
         if (localRankScore && Object.keys(localRankScore).length > 0) {
             rankScoreData = localRankScore;
-            logger.mark(`[Delta-Force 数据管理器] 已从本地加载排位分数数据 (${Object.keys(localRankScore).length}个模式)`);
         }
         
         // 加载音频相关数据（统一文件）
-        const localAudioData = loadRankScoreData(localAudioDataFile);
+        const localAudioData = loadRankScoreData(localAudioDataFile, true);
         if (localAudioData && Object.keys(localAudioData).length > 0) {
             if (localAudioData.tags && localAudioData.keywords) {
                 audioTagsData = { _tags: localAudioData.tags, _keywords: localAudioData.keywords };
-                logger.mark(`[Delta-Force 数据管理器] 已从本地加载音频标签数据 (${Object.keys(localAudioData.tags).length}个tag)`);
             }
             if (localAudioData.characters) {
                 audioCharactersData = localAudioData.characters;
-                logger.mark(`[Delta-Force 数据管理器] 已从本地加载音频角色数据 (${Object.keys(localAudioData.characters).length}个映射)`);
             }
             if (localAudioData.categories) {
                 audioCategoriesData = localAudioData.categories;
-                logger.mark(`[Delta-Force 数据管理器] 已从本地加载音频分类数据 (${Object.keys(localAudioData.categories).length}个映射)`);
             }
         }
         
         // 加载本地JSON游戏数据（静态数据，无需API同步）
-        logger.mark('[Delta-Force 数据管理器] 正在加载本地JSON游戏数据...');
-        weaponsData = loadJsonData(jsonDataFiles.weaponsSol);  // 保持向后兼容
-        weaponsSolData = loadJsonData(jsonDataFiles.weaponsSol);  // 烽火地带武器数据
-        weaponsMpData = loadJsonData(jsonDataFiles.weaponsMp);   // 全面战场武器数据
-        armorsData = loadJsonData(jsonDataFiles.armors);
-        bulletsData = loadJsonData(jsonDataFiles.bullets);
-        equipmentData = loadJsonData(jsonDataFiles.equipment);
-        battlefieldWeaponsData = loadJsonData(jsonDataFiles.battlefieldWeapons);
-        meleeWeaponsData = loadJsonData(jsonDataFiles.meleeWeapons);
+        weaponsData = loadJsonData(jsonDataFiles.weaponsSol, true);  // 保持向后兼容
+        weaponsSolData = loadJsonData(jsonDataFiles.weaponsSol, true);  // 烽火地带武器数据
+        weaponsMpData = loadJsonData(jsonDataFiles.weaponsMp, true);   // 全面战场武器数据
+        armorsData = loadJsonData(jsonDataFiles.armors, true);
+        bulletsData = loadJsonData(jsonDataFiles.bullets, true);
+        equipmentData = loadJsonData(jsonDataFiles.equipment, true);
+        battlefieldWeaponsData = loadJsonData(jsonDataFiles.battlefieldWeapons, true);
+        meleeWeaponsData = loadJsonData(jsonDataFiles.meleeWeapons, true);
         
-        // 记录JSON数据加载状态
-        const jsonDataStatus = {
-            weapons: weaponsData ? '成功' : '失败',
-            weaponsSol: weaponsSolData ? '成功' : '失败',
-            weaponsMp: weaponsMpData ? '成功' : '失败',
-            armors: armorsData ? '成功' : '失败',
-            bullets: bulletsData ? '成功' : '失败',
-            equipment: equipmentData ? '成功' : '失败',
-            battlefieldWeapons: battlefieldWeaponsData ? '成功' : '失败',
-            meleeWeapons: meleeWeaponsData ? '成功' : '失败'
+        // 汇总JSON数据加载状态
+        const jsonDataLoaded = {
+            weapons: !!weaponsData,
+            weaponsSol: !!weaponsSolData,
+            weaponsMp: !!weaponsMpData,
+            armors: !!armorsData,
+            bullets: !!bulletsData,
+            equipment: !!equipmentData,
+            battlefieldWeapons: !!battlefieldWeaponsData,
+            meleeWeapons: !!meleeWeaponsData
         };
         
-        logger.mark('[Delta-Force 数据管理器] 本地JSON数据加载状态:');
-        for (const [type, status] of Object.entries(jsonDataStatus)) {
-            logger.mark(`  - ${type}: ${status}`);
-        }
+        const successCount = Object.values(jsonDataLoaded).filter(v => v).length;
+        const totalCount = Object.keys(jsonDataLoaded).length;
+        logger.info(`[Delta-Force 数据管理器] 已加载本地数据 (${successCount}/${totalCount} 个JSON文件)`);
         
         // 然后尝试从API获取最新数据（使用 Promise.allSettled 确保即使API失败也不影响插件加载）
         try {
@@ -517,13 +519,19 @@ export default {
             
             // 检查每个结果，记录失败的任务
             const taskNames = ['地图', '干员', '排位分数', '音频数据'];
+            const failedTasks = [];
             results.forEach((result, index) => {
                 if (result.status === 'rejected') {
+                    failedTasks.push(taskNames[index]);
                     logger.warn(`[Delta-Force 数据管理器] ${taskNames[index]}同步失败:`, result.reason);
                 }
             });
             
-            logger.info('[Delta-Force 数据管理器] 数据缓存初始化完成。');
+            if (failedTasks.length === 0) {
+                logger.info('[Delta-Force 数据管理器] 数据缓存初始化完成');
+            } else {
+                logger.info(`[Delta-Force 数据管理器] 数据缓存初始化完成（${failedTasks.length}个任务失败，已使用本地缓存）`);
+            }
         } catch (error) {
             // 即使Promise.allSettled失败，也不应该影响插件加载
             logger.error('[Delta-Force 数据管理器] 数据同步过程异常:', error);
@@ -534,9 +542,9 @@ export default {
     getMapName(id) {
         // 如果mapData为空，尝试立即从本地加载
         if (!mapData) {
-            mapData = loadLocalData(localMapsFile);
+            mapData = loadLocalData(localMapsFile, true);
             if (mapData && mapData.size > 0) {
-                logger.info(`[Delta-Force 数据管理器] 已临时从本地加载地图数据 (${mapData.size}条记录)`);
+                logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载地图数据 (${mapData.size}条记录)`);
             } else {
                 logger.warn('[Delta-Force 数据管理器] 地图数据未就绪, 返回备用值。');
                 return `地图(${id})`;
@@ -548,9 +556,9 @@ export default {
     getOperatorName(id) {
         // 如果operatorData为空，尝试立即从本地加载
         if (!operatorData) {
-            operatorData = loadLocalData(localOperatorsFile);
+            operatorData = loadLocalData(localOperatorsFile, true);
             if (operatorData && operatorData.size > 0) {
-                logger.info(`[Delta-Force 数据管理器] 已临时从本地加载干员数据 (${operatorData.size}条记录)`);
+                logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载干员数据 (${operatorData.size}条记录)`);
             } else {
                 logger.warn('[Delta-Force 数据管理器] 干员数据未就绪, 返回备用值。');
                 return `干员(${id})`;
@@ -568,9 +576,9 @@ export default {
     getRankByScore(score, mode = 'sol') {
         // 如果rankScoreData为空，尝试立即从本地加载
         if (!rankScoreData) {
-            rankScoreData = loadRankScoreData(localRankScoreFile);
+            rankScoreData = loadRankScoreData(localRankScoreFile, true);
             if (rankScoreData && Object.keys(rankScoreData).length > 0) {
-                logger.info(`[Delta-Force 数据管理器] 已临时从本地加载排位分数数据 (${Object.keys(rankScoreData).length}个模式)`);
+                logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载排位分数数据 (${Object.keys(rankScoreData).length}个模式)`);
             } else {
                 logger.warn('[Delta-Force 数据管理器] 排位分数数据未就绪, 返回备用值。');
                 return `${score}分`;
@@ -705,7 +713,7 @@ export default {
         const imageNumber = selectedImage.match(/p4_img(\d+)/)[1];
         const cssClass = `character-bg-${imageNumber}`;
 
-        logger.info(`[Delta-Force 数据管理器] 随机选择人物背景: ${selectedImage} (CSS类: ${cssClass})`);
+        logger.debug(`[Delta-Force 数据管理器] 随机选择人物背景: ${selectedImage} (CSS类: ${cssClass})`);
 
         return {
             image: selectedImage,
@@ -1004,10 +1012,10 @@ export default {
     getAudioTag(keyword) {
         if (!audioTagsData) {
             // 从统一的音频数据文件加载
-            const localData = loadRankScoreData(localAudioDataFile);
+            const localData = loadRankScoreData(localAudioDataFile, true);
             if (localData && localData.tags && localData.keywords) {
                 audioTagsData = { _tags: localData.tags, _keywords: localData.keywords };
-                logger.info('[Delta-Force 数据管理器] 已临时从本地加载音频标签数据');
+                logger.debug('[Delta-Force 数据管理器] 已临时从本地加载音频标签数据');
             } else {
                 logger.warn('[Delta-Force 数据管理器] 音频标签数据未就绪');
                 return null;
@@ -1072,10 +1080,10 @@ export default {
     getAudioCharacter(keyword) {
         if (!audioCharactersData) {
             // 从统一的音频数据文件加载
-            const localData = loadRankScoreData(localAudioDataFile);
+            const localData = loadRankScoreData(localAudioDataFile, true);
             if (localData && localData.characters) {
                 audioCharactersData = localData.characters;
-                logger.info('[Delta-Force 数据管理器] 已临时从本地加载音频角色数据');
+                logger.debug('[Delta-Force 数据管理器] 已临时从本地加载音频角色数据');
             } else {
                 logger.warn('[Delta-Force 数据管理器] 音频角色数据未就绪');
                 return null;
@@ -1094,10 +1102,10 @@ export default {
     getAudioCategory(keyword) {
         if (!audioCategoriesData) {
             // 从统一的音频数据文件加载
-            const localData = loadRankScoreData(localAudioDataFile);
+            const localData = loadRankScoreData(localAudioDataFile, true);
             if (localData && localData.categories) {
                 audioCategoriesData = localData.categories;
-                logger.info('[Delta-Force 数据管理器] 已临时从本地加载音频分类数据');
+                logger.debug('[Delta-Force 数据管理器] 已临时从本地加载音频分类数据');
             } else {
                 logger.warn('[Delta-Force 数据管理器] 音频分类数据未就绪');
                 return null;

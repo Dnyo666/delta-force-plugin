@@ -2,18 +2,18 @@ import Config from './Config.js'
 import fetch from 'node-fetch'
 import https from 'https'
 import crypto from 'crypto'
+import { getApiUrlManager } from './ApiUrlManager.js'
 
 const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 })
 
-// API 基础地址（统一配置）
-export const BASE_URL = 'https://df-api.shallow.ink'
-
 // 获取 WebSocket 连接地址
 export function getWebSocketURL() {
+  const apiUrlManager = getApiUrlManager()
+  const baseUrl = apiUrlManager.getBaseUrl()
   // 将 https:// 转换为 wss://，http:// 转换为 ws://
-  return BASE_URL.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://') + '/ws'
+  return baseUrl.replace(/^https:\/\//, 'wss://').replace(/^http:\/\//, 'ws://') + '/ws'
 }
 
 export default class Code {
@@ -51,7 +51,9 @@ export default class Code {
       Authorization: `Bearer ${apiKey}`
     }
 
-    let fullUrl = `${BASE_URL}${url}`
+    const apiUrlManager = getApiUrlManager()
+    let baseUrl = apiUrlManager.getBaseUrl()
+    let fullUrl = `${baseUrl}${url}`
     const upperCaseMethod = method.toUpperCase()
     const fetchOptions = { method: upperCaseMethod, headers }
 
@@ -82,6 +84,30 @@ export default class Code {
         const errorBody = await response.json().catch(() => ({ message: `API 错误: ${response.statusText}` }))
         logger.error(`[DELTA FORCE PLUGIN] API 请求失败: ${response.status} ${response.statusText} - ${fullUrl}`)
         logger.error(`[DELTA FORCE PLUGIN] 错误详情: ${JSON.stringify(errorBody)}`)
+        
+        // 如果是网络错误或服务器错误（5xx），且为 auto 模式，标记地址失败并重试
+        if (response.status >= 500 && apiUrlManager.getMode() === 'auto') {
+          apiUrlManager.markUrlFailed(baseUrl)
+          // 如果还有可用地址，自动切换到下一个并重试一次
+          const newBaseUrl = apiUrlManager.getBaseUrl()
+          if (newBaseUrl !== baseUrl) {
+            logger.info(`[DELTA FORCE PLUGIN] 自动切换到新地址并重试: ${newBaseUrl}`)
+            const newFullUrl = `${newBaseUrl}${url}`
+            try {
+              const retryResponse = await fetch(newFullUrl, fetchOptions)
+              if (retryResponse.ok) {
+                if (responseType === 'stream') {
+                  return { stream: retryResponse.body, error: null }
+                }
+                const retryBody = await retryResponse.json().catch(() => ({}))
+                return retryBody
+              }
+            } catch (retryError) {
+              logger.error(`[DELTA FORCE PLUGIN] 重试请求也失败: ${retryError}`)
+            }
+          }
+        }
+        
         if (responseType === 'stream') {
           return { stream: null, error: errorBody }
         }
@@ -108,6 +134,43 @@ export default class Code {
     } catch (error) {
       const errorMsg = '网络请求异常，请检查后端服务是否可用'
       logger.error(`[DELTA FORCE PLUGIN] 网络请求异常: ${error} - ${fullUrl}`)
+      
+      // 如果是网络错误，且为 auto 模式，标记地址失败并重试
+      if (apiUrlManager.getMode() === 'auto') {
+        apiUrlManager.markUrlFailed(baseUrl)
+        // 如果还有可用地址，自动切换到下一个并重试一次
+        const newBaseUrl = apiUrlManager.getBaseUrl()
+        if (newBaseUrl !== baseUrl) {
+          logger.info(`[DELTA FORCE PLUGIN] 自动切换到新地址并重试: ${newBaseUrl}`)
+          // 重新构建 fullUrl（包括查询参数）
+          let newFullUrl = `${newBaseUrl}${url}`
+          if (upperCaseMethod === 'GET' && params) {
+            const processedParams = new URLSearchParams()
+            for (const [key, value] of Object.entries(params)) {
+              if (Array.isArray(value)) {
+                processedParams.append(key, JSON.stringify(value))
+              } else if (value !== null && value !== undefined) {
+                processedParams.append(key, value)
+              }
+            }
+            const queryString = processedParams.toString()
+            newFullUrl += `?${queryString}`
+          }
+          try {
+            const retryResponse = await fetch(newFullUrl, fetchOptions)
+            if (retryResponse.ok) {
+              if (responseType === 'stream') {
+                return { stream: retryResponse.body, error: null }
+              }
+              const retryBody = await retryResponse.json().catch(() => ({}))
+              return retryBody
+            }
+          } catch (retryError) {
+            logger.error(`[DELTA FORCE PLUGIN] 重试请求也失败: ${retryError}`)
+          }
+        }
+      }
+      
       if (responseType === 'stream') {
         return { stream: null, error: { message: errorMsg } }
       }
@@ -124,7 +187,6 @@ export default class Code {
    */
   async requestJson (url, data, method = 'POST') {
     const { api_key: apiKey } = this.cfg
-    const BASE_URL = 'https://df-api.shallow.ink'
 
     if (!apiKey || apiKey === 'sk-xxxxxxx') {
       const errorMsg = 'APIKey 未配置，请联系机器人管理员。'
@@ -140,7 +202,9 @@ export default class Code {
       'Content-Type': 'application/json'
     }
 
-    const fullUrl = `${BASE_URL}${url}`
+    const apiUrlManager = getApiUrlManager()
+    let baseUrl = apiUrlManager.getBaseUrl()
+    const fullUrl = `${baseUrl}${url}`
     const fetchOptions = { 
       method: method.toUpperCase(), 
       headers,
@@ -154,6 +218,27 @@ export default class Code {
         const errorBody = await response.json().catch(() => ({ message: `API 错误: ${response.statusText}` }))
         logger.error(`[DELTA FORCE PLUGIN] API 请求失败: ${response.status} ${response.statusText} - ${fullUrl}`)
         logger.error(`[DELTA FORCE PLUGIN] 错误详情: ${JSON.stringify(errorBody)}`)
+        
+        // 如果是网络错误或服务器错误（5xx），且为 auto 模式，标记地址失败并重试
+        if (response.status >= 500 && apiUrlManager.getMode() === 'auto') {
+          apiUrlManager.markUrlFailed(baseUrl)
+          // 如果还有可用地址，自动切换到下一个并重试一次
+          const newBaseUrl = apiUrlManager.getBaseUrl()
+          if (newBaseUrl !== baseUrl) {
+            logger.info(`[DELTA FORCE PLUGIN] 自动切换到新地址并重试: ${newBaseUrl}`)
+            const newFullUrl = `${newBaseUrl}${url}`
+            try {
+              const retryResponse = await fetch(newFullUrl, fetchOptions)
+              if (retryResponse.ok) {
+                const retryBody = await retryResponse.json().catch(() => ({}))
+                return retryBody
+              }
+            } catch (retryError) {
+              logger.error(`[DELTA FORCE PLUGIN] 重试请求也失败: ${retryError}`)
+            }
+          }
+        }
+        
         return errorBody
       }
 
@@ -173,6 +258,27 @@ export default class Code {
     } catch (error) {
       const errorMsg = '网络请求异常，请检查后端服务是否可用'
       logger.error(`[DELTA FORCE PLUGIN] 网络请求异常: ${error} - ${fullUrl}`)
+      
+      // 如果是网络错误，且为 auto 模式，标记地址失败并重试
+      if (apiUrlManager.getMode() === 'auto') {
+        apiUrlManager.markUrlFailed(baseUrl)
+        // 如果还有可用地址，自动切换到下一个并重试一次
+        const newBaseUrl = apiUrlManager.getBaseUrl()
+        if (newBaseUrl !== baseUrl) {
+          logger.info(`[DELTA FORCE PLUGIN] 自动切换到新地址并重试: ${newBaseUrl}`)
+          const newFullUrl = `${newBaseUrl}${url}`
+          try {
+            const retryResponse = await fetch(newFullUrl, fetchOptions)
+            if (retryResponse.ok) {
+              const retryBody = await retryResponse.json().catch(() => ({}))
+              return retryBody
+            }
+          } catch (retryError) {
+            logger.error(`[DELTA FORCE PLUGIN] 重试请求也失败: ${retryError}`)
+          }
+        }
+      }
+      
       return false
     }
   }

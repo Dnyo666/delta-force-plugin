@@ -14,7 +14,7 @@ const defaultConfigPath = path.join(pluginRoot, 'config', 'config_default.yaml')
 
 if (!fs.existsSync(userConfigPath)) {
   fs.copyFileSync(defaultConfigPath, userConfigPath);
-  logger.mark('[DELTA FORCE PLUGIN] 自动创建 config.yaml 成功');
+  logger.info('[DELTA FORCE PLUGIN] 自动创建 config.yaml 成功');
 }
 
 class Config {
@@ -40,7 +40,7 @@ class Config {
       return null
     } catch (error) {
       const fileName = path.basename(filePath)
-      logger.mark(`[DELTA FORCE PLUGIN] 读取 ${fileName} 失败`, error)
+      logger.error(`[DELTA FORCE PLUGIN] 读取 ${fileName} 失败`, error)
       return null
     }
   }
@@ -51,7 +51,7 @@ class Config {
       return true
     } catch (error) {
       const fileName = path.basename(filePath)
-      logger.mark(`[DELTA FORCE PLUGIN] 写入 ${fileName} 失败`, error)
+      logger.error(`[DELTA FORCE PLUGIN] 写入 ${fileName} 失败`, error)
       return false
     }
   }
@@ -63,7 +63,7 @@ class Config {
         continue // 不监视不存在的默认配置文件
       }
       fs.watchFile(filePath, { interval: 1000 }, () => {
-        logger.mark(`[DELTA FORCE PLUGIN] ${path.basename(filePath)} 文件变动，重新加载`)
+        logger.debug(`[DELTA FORCE PLUGIN] ${path.basename(filePath)} 文件变动，重新加载`)
         this.cache[key] = null // 清空缓存，下次访问时重新加载
       })
     }
