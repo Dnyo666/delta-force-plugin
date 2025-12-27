@@ -1,0 +1,81 @@
+{{extend defaultLayout}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}Template/recordPush/recordPush.css"/>
+{{/block}}
+
+{{block 'main'}}
+<div class="container">
+    <div class="header">
+        <div class="title">{{displayName}}-战绩订阅-{{modeName}}</div>
+        <div class="subtitle">{{time}}</div>
+    </div>
+
+    <div class="record-card" style="{{if mapBg}}--map-bg-url: url({{mapBg}});{{/if}}{{if operatorImg}}--operator-img-url: url({{operatorImg}});{{/if}}">
+        <div class="card-header">
+            <span class="record-status {{statusClass}}">{{status}}</span>
+        </div>
+        <div class="card-body">
+            <div class="stat-item">
+                <strong>地图:</strong>
+                <span>{{map}}</span>
+            </div>
+            <div class="stat-item">
+                <strong>干员:</strong>
+                <span>{{operator}}</span>
+            </div>
+            <div class="stat-item">
+                <strong>时间:</strong>
+                <span>{{time}}</span>
+            </div>
+            {{if duration}}
+            <div class="stat-item">
+                <strong>时长:</strong>
+                <span>{{duration}}</span>
+            </div>
+            {{/if}}
+            {{if kda}}
+            <div class="stat-item">
+                <strong>KDA:</strong>
+                <span class="kda">{{kda}}</span>
+            </div>
+            {{/if}}
+            {{if value}}
+            <div class="stat-item">
+                <strong>带出价值:</strong>
+                <span>{{value}}</span>
+            </div>
+            {{/if}}
+            {{if income}}
+            <div class="stat-item">
+                <strong>净收益:</strong>
+                <span>{{income}}</span>
+            </div>
+            {{/if}}
+            {{if score}}
+            <div class="stat-item">
+                <strong>得分:</strong>
+                <span>{{score}}</span>
+            </div>
+            {{/if}}
+            {{if killsHtml}}
+            <div class="stat-item kills-stat">
+                <strong>击杀:</strong>
+                <span>{{@killsHtml}}</span>
+            </div>
+            {{/if}}
+            {{if rescue}}
+            <div class="stat-item">
+                <strong>救援:</strong>
+                <span>{{rescue}}次</span>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <div class="footer">
+        由 DeltaForce-Plugin-Yunzai 强力驱动
+    </div>
+</div>
+{{/block}}
+

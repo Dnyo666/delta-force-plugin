@@ -676,7 +676,7 @@ export default {
             return null;
         }
 
-        return `rank/${modeKey}/${rankCode}.webp`;
+        return `imgs/rank/${modeKey}/${rankCode}.webp`;
     },
 
     /**
@@ -684,9 +684,9 @@ export default {
      * @returns {string} - 背景图片路径
      */
     getRandomBackground() {
-        const backgrounds = ['bg2-1.webp', 'bg2-2.webp', 'bg2-3.webp', 'bg2-4.webp', 'bg2-5.webp', 'bg2-6.webp'];
+        const backgrounds = ['bg2-1.webp', 'bg2-2.webp', 'bg2-3.webp', 'bg2-4.webp', 'bg2-5.webp', 'bg2-6.webp', 'bg2-7.webp'];
         const randomIndex = Math.floor(Math.random() * backgrounds.length);
-        return `background/${backgrounds[randomIndex]}`;
+        return `imgs/background/${backgrounds[randomIndex]}`;
     },
 
     /**
@@ -696,13 +696,13 @@ export default {
     getRandomCharacterBackgroundConfig() {
         // 人物图片列表 - 只管理图片资源，不涉及样式
         const characterImages = [
-            'background/op/p4_img2.png',
-            'background/op/p4_img3.png', 
-            'background/op/p4_img5.png',
-            'background/op/p4_img6.png',
-            'background/op/p4_img7.png',
-            'background/op/p4_img8.png',
-            'background/op/p4_img9.png'
+            'imgs/background/op/p4_img2.png',
+            'imgs/background/op/p4_img3.png', 
+            'imgs/background/op/p4_img5.png',
+            'imgs/background/op/p4_img6.png',
+            'imgs/background/op/p4_img7.png',
+            'imgs/background/op/p4_img8.png',
+            'imgs/background/op/p4_img9.png'
         ];
 
         // 随机选择一张图片

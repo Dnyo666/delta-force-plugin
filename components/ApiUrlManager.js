@@ -14,10 +14,11 @@ class ApiUrlManager {
     }
     
     // auto 模式下的地址列表（用于故障转移）
+    // 优先使用 eo 和 esa，default 作为备用
     this.autoUrls = [
-      this.urls.default,
       this.urls.eo,
-      this.urls.esa
+      this.urls.esa,
+      this.urls.default
     ]
     
     // 当前使用的地址索引（仅用于 auto 模式）
