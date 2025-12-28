@@ -39,10 +39,10 @@ const Render = {
             pageGotoParams: {
               waitUntil: 'networkidle2',
               timeout: 60000, // 60秒超时
+            },
               viewport: cfg.renderCfg?.viewPort || cfg.viewport || {
                 width: 1200,
-                height: 'auto'
-              }
+              height: 5000 // 设置足够大的高度，让系统通过 boundingBox 自动截取
             }
           }
         }

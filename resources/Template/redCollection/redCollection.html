@@ -22,14 +22,17 @@
          src="{{_res_path}}imgs/template/redCollection/dw_bg.png" />
     
     <!-- 统计数据 -->
-    <div class="stat-value" style="left: 168px; top: 783px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{statistics.redGodCount}}</div>
-    <div class="stat-label" style="width: 220px; height: 44px; left: 107px; top: 910px; position: absolute; justify-content: center; display: flex; flex-direction: column">收藏大红种数</div>
+    <!-- 第一个卡片：left=38px, width=340px, center=38+170=208px -->
+    <div class="stat-value" style="width: 340px; left: 38px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">{{statistics.redGodCount}}</div>
+    <div class="stat-label" style="width: 340px; height: 44px; left: 38px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">收藏大红种数</div>
     
-    <div class="stat-value" style="left: 517px; top: 783px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{statistics.redTotalCount}}</div>
-    <div class="stat-label" style="width: 220px; height: 44px; left: 456px; top: 910px; position: absolute; justify-content: center; display: flex; flex-direction: column">收藏大红个数</div>
+    <!-- 第二个卡片：left=396px, width=340px, center=396+170=566px -->
+    <div class="stat-value" style="width: 340px; left: 396px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">{{statistics.redTotalCount}}</div>
+    <div class="stat-label" style="width: 340px; height: 44px; left: 396px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">收藏大红个数</div>
     
-    <div class="large-value" style="left: 780px; top: 798px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{statistics.redTotalValue}}</div>
-    <div class="stat-label" style="width: 220px; height: 44px; left: 814px; top: 910px; position: absolute; justify-content: center; display: flex; flex-direction: column">收藏大红价值</div>
+    <!-- 第三个卡片：left=754px, width=340px, center=754+170=924px -->
+    <div class="large-value" style="width: 340px; left: 754px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">{{statistics.redTotalValue}}</div>
+    <div class="stat-label" style="width: 340px; height: 44px; left: 754px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">收藏大红价值</div>
     
     <!-- 主标题和描述 -->
     <div class="title-primary" style="width: 600px; left: 52px; top: 521px; position: absolute">{{title}}</div>

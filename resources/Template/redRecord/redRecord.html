@@ -68,35 +68,35 @@
     <div class="records-container">
         <div class="records-header">
             <div class="records-title">出红记录</div>
-        {{if recordCount > 0}}
+            {{if recordCount > 0}}
             <div class="records-badge">?</div>
-        {{/if}}
-    </div>
-    
+            {{/if}}
+        </div>
+        
         <div class="records-content">
-        {{if records && records.length > 0}}
-            {{each records record index}}
+            {{if records && records.length > 0}}
+                {{each records record index}}
                 <div class="record-entry">
                     <div class="entry-index">{{index + 1}}</div>
                     <div class="entry-data">
                         <div class="entry-row">
                             <span class="entry-label">出红时间</span>
                             <span class="entry-value">{{record.time}}</span>
-                    </div>
+                        </div>
                         <div class="entry-row">
                             <span class="entry-label">出红地点</span>
                             <span class="entry-value">{{record.map}}</span>
-                    </div>
-                    {{if record.count}}
+                        </div>
+                        {{if record.count}}
                         <div class="entry-row">
                             <span class="entry-label">数量</span>
                             <span class="entry-value">{{record.count}}</span>
+                        </div>
+                        {{/if}}
                     </div>
-                    {{/if}}
                 </div>
-            </div>
-            {{/each}}
-        {{else}}
+                {{/each}}
+            {{else}}
                 <div class="empty-state">暂无相关解锁记录</div>
             {{/if}}
         </div>

@@ -81,8 +81,13 @@ body {
     font-size: 96px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
     text-align: center;
+    white-space: nowrap;
+    overflow: visible;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* 大数值 - 21,554,811 */
@@ -91,8 +96,14 @@ body {
     font-size: 64px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
     text-align: center;
+    white-space: nowrap;
+    overflow: visible;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: -1px;
 }
 
 /* 统计标签 - 收藏大红种数、收藏大红个数 */
@@ -111,7 +122,9 @@ body {
     font-size: 30px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 高亮文本 - 39个 */
