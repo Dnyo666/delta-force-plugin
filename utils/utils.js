@@ -1,5 +1,7 @@
 import Config from '../components/Config.js'
 import Code from '../components/Code.js'; // 引入Code以调用API
+import fs from 'fs';
+import path from 'path';
 
 function getClientID () {
     return Config.getConfig()?.delta_force?.clientID;
@@ -215,12 +217,24 @@ function getMapImagePath(mapName, gameMode = 'sol') {
 }
 
 /**
- * 获取干员图片路径
+ * 获取干员图片路径（优先使用 PNG，不存在则使用 JPG）
  * @param {string} operatorName - 干员名称（如："露娜"、"骇爪"）
  * @returns {string} - 图片相对路径（用于模板，需要加上 _res_path 前缀）
  */
 function getOperatorImagePath(operatorName) {
-    return `imgs/operator/${operatorName}.jpg`;
+    const pluginRoot = path.join(process.cwd(), 'plugins/delta-force-plugin/resources');
+    const pngPath = path.join(pluginRoot, `imgs/operator/${operatorName}.png`);
+    const jpgPath = path.join(pluginRoot, `imgs/operator/${operatorName}.jpg`);
+    
+    // 优先使用 PNG，如果不存在则使用 JPG
+    if (fs.existsSync(pngPath)) {
+        return `imgs/operator/${operatorName}.png`;
+    } else if (fs.existsSync(jpgPath)) {
+        return `imgs/operator/${operatorName}.jpg`;
+    } else {
+        // 如果都不存在，默认返回 PNG（让浏览器处理错误）
+        return `imgs/operator/${operatorName}.png`;
+    }
 }
 
 utils.getMapImagePath = getMapImagePath;

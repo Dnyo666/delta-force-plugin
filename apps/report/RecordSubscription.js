@@ -546,17 +546,18 @@ export class RecordSubscription extends plugin {
     const { platformId, frameworkToken, recordType, record, isNew, isRecent } = data
     const platformID = platformId  // 兼容性：转换为内部使用的变量名
     const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
+    const modeText = recordType === 'sol' ? '烽火地带' : recordType === 'mp' ? '全面战场' : `未知(${recordType})`
 
     // 只处理新战绩，不处理缓存战绩
     if (!isNew) {
-      logger.debug(`[战绩订阅] 跳过缓存战绩: ${platformID} | 账号: ${maskedToken} | 类型: ${recordType}`)
+      logger.debug(`[战绩订阅] 跳过缓存战绩: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} | 类型: ${recordType}`)
       return
     }
 
     // 生成战绩唯一标识，防止重复推送
     const recordId = `${platformID}:${frameworkToken}:${recordType}:${record.dtEventTime || Date.now()}`
     if (RecordSubscription._pushedRecords.has(recordId)) {
-      logger.debug(`[战绩订阅] 检测到重复推送，已跳过: ${platformID} | 账号: ${maskedToken} | 类型: ${recordType} | ID: ${recordId.substring(0, 50)}...`)
+      logger.debug(`[战绩订阅] 检测到重复推送，已跳过: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} | 类型: ${recordType} | ID: ${recordId.substring(0, 50)}...`)
       return
     }
 
@@ -567,7 +568,7 @@ export class RecordSubscription extends plugin {
     }, 300000) // 5分钟
 
     // 记录需要处理的事件（在去重检查之后）
-    logger.info(`[战绩订阅] 收到推送事件: ${platformID} | 账号: ${maskedToken} | 类型: ${recordType} | isRecent: ${isRecent}`)
+    logger.info(`[战绩订阅] 收到推送事件: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} | 类型: ${recordType} | isRecent: ${isRecent}`)
 
     try {
       // 1. 检查用户是否启用了战绩订阅
@@ -585,23 +586,22 @@ export class RecordSubscription extends plugin {
 
       // 2. 获取推送配置
       const pushConfig = this.subConfig.getUserPushConfig(platformID)
-      logger.info(`[战绩订阅] 推送配置: 私信=${pushConfig.private} | 群数=${pushConfig.groups?.length || 0}`)
+      logger.info(`[战绩订阅] 推送配置: 模式=${modeText} | 私信=${pushConfig.private} | 群数=${pushConfig.groups?.length || 0}`)
 
       if (!pushConfig.private && (!pushConfig.groups || pushConfig.groups.length === 0)) {
-        logger.warn(`[战绩订阅] 没有推送目标: ${platformID}`)
+        logger.warn(`[战绩订阅] 没有推送目标: ${platformID} | 模式: ${modeText}`)
         return
       }
 
       // 3. 格式化战绩消息（使用图片渲染）
-      logger.info(`[战绩订阅] 开始格式化战绩消息: ${platformID} | 类型: ${recordType}`)
+      logger.info(`[战绩订阅] 开始格式化战绩消息: ${platformID} | 模式: ${modeText} | 类型: ${recordType}`)
       let message
       try {
         message = await this.formatRecordMessage(recordType, record, frameworkToken, platformID)
-        logger.info(`[战绩订阅] 战绩消息格式化完成: ${platformID}`)
+        logger.info(`[战绩订阅] 战绩消息格式化完成: ${platformID} | 模式: ${modeText}`)
       } catch (error) {
-        logger.error(`[战绩订阅] 格式化战绩消息失败: ${platformID}`, error)
+        logger.error(`[战绩订阅] 格式化战绩消息失败: ${platformID} | 模式: ${modeText}`, error)
         // 使用文本消息作为降级
-        const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
         const mapId = record.MapID || record.MapId
         let mapName = DataManager.getMapName(mapId)
         const operatorName = DataManager.getOperatorName(record.ArmedForceId)
@@ -614,15 +614,15 @@ export class RecordSubscription extends plugin {
         // 应用私信筛选条件
         if (pushConfig.filters && pushConfig.filters.length > 0) {
           if (!this.checkFilters(recordType, record, pushConfig.filters)) {
-            logger.debug(`[战绩订阅] 战绩不符合私信筛选条件: ${platformID}`)
+            logger.debug(`[战绩订阅] 战绩不符合私信筛选条件: ${platformID} | 模式: ${modeText}`)
           } else {
             try {
               const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
               await Bot.pickUser(platformID).sendMsg(message)
-              logger.info(`[战绩订阅] 私信推送成功: ${platformID} | 账号: ${maskedToken}`)
+              logger.info(`[战绩订阅] 私信推送成功: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`)
             } catch (error) {
               const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
-              logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 账号: ${maskedToken}`, error)
+              logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`, error)
             }
           }
         } else {
@@ -630,10 +630,10 @@ export class RecordSubscription extends plugin {
           try {
             const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
             await Bot.pickUser(platformID).sendMsg(message)
-            logger.info(`[战绩订阅] 私信推送成功: ${platformID} | 账号: ${maskedToken}`)
+            logger.info(`[战绩订阅] 私信推送成功: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`)
           } catch (error) {
             const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
-            logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 账号: ${maskedToken}`, error)
+            logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`, error)
           }
         }
       }
@@ -645,22 +645,22 @@ export class RecordSubscription extends plugin {
             // 应用群筛选条件
             if (groupConfig.filters && groupConfig.filters.length > 0) {
               if (!this.checkFilters(recordType, record, groupConfig.filters)) {
-                logger.debug(`[战绩订阅] 战绩不符合筛选条件，跳过推送到群${groupConfig.groupId}`)
+                logger.debug(`[战绩订阅] 战绩不符合筛选条件，跳过推送到群${groupConfig.groupId} | 模式: ${modeText}`)
                 continue
               }
             }
 
             const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
             await Bot.pickGroup(groupConfig.groupId).sendMsg(message)
-            logger.info(`[战绩订阅] 推送成功: ${platformID} | 账号: ${maskedToken} -> 群${groupConfig.groupId}`)
+            logger.info(`[战绩订阅] 推送成功: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} -> 群${groupConfig.groupId}`)
           } catch (error) {
-            logger.error(`[战绩订阅] 推送失败到群${groupConfig.groupId}:`, error)
+            logger.error(`[战绩订阅] 推送失败到群${groupConfig.groupId} | 模式: ${modeText}:`, error)
           }
         }
       }
 
     } catch (error) {
-      logger.error('[战绩订阅] 处理推送失败:', error)
+      logger.error(`[战绩订阅] 处理推送失败: ${platformID} | 模式: ${modeText}`, error)
     }
   }
 
@@ -998,23 +998,23 @@ export class RecordSubscription extends plugin {
 
     // 渲染模板（使用 base64 模式获取图片数据，而不是自动发送）
     try {
-      logger.info(`[战绩订阅] 开始渲染图片: ${platformID}`)
+      logger.info(`[战绩订阅] 开始渲染图片: ${platformID} | 模式: ${modeText}`)
       const base64Data = await Render.render('Template/recordPush/recordPush', templateData, {
         e: fakeE,
         scale: 1.2,
         retType: 'base64'
       })
-      logger.info(`[战绩订阅] 图片渲染完成: ${platformID}，结果: ${base64Data ? '成功' : '空值'}`)
+      logger.info(`[战绩订阅] 图片渲染完成: ${platformID} | 模式: ${modeText}，结果: ${base64Data ? '成功' : '空值'}`)
       
       if (base64Data) {
         return base64Data
       } else {
         // 如果渲染失败，返回文本消息作为降级
-        logger.warn(`[战绩订阅] 图片渲染返回空值，使用文本消息降级: ${platformID}`)
+        logger.warn(`[战绩订阅] 图片渲染返回空值，使用文本消息降级: ${platformID} | 模式: ${modeText}`)
         return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
       }
     } catch (error) {
-      logger.error(`[战绩订阅] 图片渲染异常: ${platformID}`, error)
+      logger.error(`[战绩订阅] 图片渲染异常: ${platformID} | 模式: ${modeText}`, error)
       // 如果渲染异常，返回文本消息作为降级
       return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
     }
@@ -1067,7 +1067,7 @@ export class RecordSubscription extends plugin {
       const killCount = record.KillCount ?? '未知'
       const killAI = record.KillAICount ?? '未知'
       const killPlayerAI = record.KillPlayerAICount ?? '未知'
-      msg += `击杀：${killCount}玩家/${killAI}AI/${killPlayerAI}AI玩家`
+      msg += `击杀：玩家(${killCount}) / AI(${killAI}) / AI玩家(${killPlayerAI})`
       
       if (record.Rescue != null && record.Rescue > 0) {
         msg += `\n救援：${record.Rescue}次`

@@ -89,16 +89,16 @@ body {
     position: absolute;
     top: 0;
     left: auto;
-    right: -5%;
+    right: -18%;
     bottom: 0;
-    width: 52%;
+    width: 59%;
     background-image: var(--operator-img-url, none);
-    background-size: cover;
+    background-size: contain;
     background-position: right center;
     background-repeat: no-repeat;
-    opacity: 0.9;
-    mask-image: linear-gradient(to right, transparent 0%, black 15%, black 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 15%, black 100%);
+    opacity: 0.85;
+    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 100%);
     z-index: 1;
     pointer-events: none;
 }
