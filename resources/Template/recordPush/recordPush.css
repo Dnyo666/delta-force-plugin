@@ -1,10 +1,19 @@
 body {
-    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
-    color: #F2F2F2;
-    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
-    margin: 0;
-    padding: 20px;
-    width: 600px;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%) !important;
+    color: #F2F2F2 !important;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    width: 600px !important;
+    transform: none !important;
+    transform-origin: unset !important;
+}
+
+/* 覆盖 defaultLayout 中的 container 样式 */
+#container.container {
+    width: 100% !important;
+    padding: 0 !important;
+    background-size: initial !important;
 }
 
 .container {
@@ -196,13 +205,26 @@ body {
     font-weight: 700 !important;
 }
 
-.footer {
+/* 隐藏 defaultLayout 中的外部页脚 */
+.container > .copyright {
+    display: none;
+}
+
+/* ========== 页脚 ========== */
+.template-footer {
+    position: relative;
+    z-index: 2;
+    padding: 20px 28px 24px;
+    background: rgba(15, 247, 150, 0.02);
+    border-top: 1px solid rgba(15, 247, 150, 0.1);
+}
+
+.copyright-text {
     text-align: center;
-    margin-top: 35px;
-    color: #666;
-    font-size: 13px;
-    padding: 0 20px;
+    color: #FFFFFF;
+    font-size: 12px;
     font-weight: 300;
     letter-spacing: 1px;
+    opacity: 0.6;
 }
 

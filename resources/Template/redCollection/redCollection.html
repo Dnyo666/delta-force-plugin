@@ -7,109 +7,233 @@
 {{block 'main'}}
 <div class="container">
     <!-- 整体背景图片 -->
-    <img style="width: 1125px; height: 2436px; left: 0px; top: 0px; position: absolute" 
+    <img style="width: 1125px; height: 2320px; left: 0px; top: 0px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/bg.webp" />
     
-    <!-- 插件水印 -->
-    <div class="plugin-text" style="width: 350px; height: 24px; left: 386px; top: 2387px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">Delta-Force-Plugin</div>
+    <!-- 页脚 -->
+    <div class="template-footer">
+        <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
+    </div>
     
-    <!-- 统计卡片背景 -->
-    <img style="width: 340px; height: 200px; left: 38px; top: 763px; position: absolute" 
-         src="{{_res_path}}imgs/template/redCollection/dw_bg.png" />
-    <img style="width: 340px; height: 200px; left: 396px; top: 763px; position: absolute" 
-         src="{{_res_path}}imgs/template/redCollection/dw_bg.png" />
-    <img style="width: 340px; height: 200px; left: 754px; top: 763px; position: absolute" 
-         src="{{_res_path}}imgs/template/redCollection/dw_bg.png" />
+    <!-- 用户信息 -->
+    <div class="user-profile-container" style="left: 38px; top: 153px; position: absolute;">
+        <div class="profile-sidebar"></div>
+        <div class="avatar-wrapper">
+            {{if userAvatar}}
+            <img class="user-avatar" src="{{userAvatar}}" onerror="this.style.display='none'" />
+            {{else}}
+            <div class="user-avatar-placeholder"></div>
+            {{/if}}
+        </div>
+        <div class="user-meta">
+            <div class="user-name">{{userName}}</div>
+            <div class="user-rank">
+                <span class="rank-text">{{userRank}}</span>
+                {{if userRankImage}}
+                <img class="rank-icon" src="{{_res_path}}{{userRankImage}}" alt="{{userRank}}" />
+                {{/if}}
+            </div>
+        </div>
+    </div>
     
-    <!-- 统计数据 -->
-    <!-- 第一个卡片：left=38px, width=340px, center=38+170=208px -->
-    <div class="stat-value" style="width: 340px; left: 38px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">{{statistics.redGodCount}}</div>
-    <div class="stat-label" style="width: 340px; height: 44px; left: 38px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">收藏大红种数</div>
-    
-    <!-- 第二个卡片：left=396px, width=340px, center=396+170=566px -->
-    <div class="stat-value" style="width: 340px; left: 396px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">{{statistics.redTotalCount}}</div>
-    <div class="stat-label" style="width: 340px; height: 44px; left: 396px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">收藏大红个数</div>
-    
-    <!-- 第三个卡片：left=754px, width=340px, center=754+170=924px -->
-    <div class="large-value" style="width: 340px; left: 754px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">{{statistics.redTotalValue}}</div>
-    <div class="stat-label" style="width: 340px; height: 44px; left: 754px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">收藏大红价值</div>
+    <!-- 赛季标题 -->
+    <div class="season-title" 
+         style="width: 232px; height: 63px; left: 852px; top: 43px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{seasonDisplay}}
+    </div>
     
     <!-- 主标题和描述 -->
     <div class="title-primary" style="width: 600px; left: 52px; top: 521px; position: absolute">{{title}}</div>
     <div class="subtitle" style="width: 700px; height: 27px; left: 40px; top: 637px; position: absolute">"{{subtitle}}"</div>
     <div class="decor-line" style="width: 2px; height: 52px; left: 46px; top: 692px"></div>
-    <div class="description" style="width: 686px; height: 52px; left: 56px; top: 692px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{unlockDesc}}</div>
+    <div class="description" 
+         style="width: 686px; height: 52px; left: 56px; top: 692px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{unlockDesc}}
+    </div>
     
-    <!-- 用户信息 -->
-    {{if userAvatar}}
-    <img style="width: 86px; height: 86px; left: 40px; top: 153px; position: absolute; border-radius: 8px;" src="{{userAvatar}}" />
-    {{else}}
-    <div style="width: 86px; height: 86px; left: 40px; top: 153px; position: absolute; background: #ccc; border-radius: 8px;"></div>
-    {{/if}}
-    <div class="decor-line" style="width: 3px; height: 86px; left: 38px; top: 153px"></div>
-    <div class="user-info" style="width: 175px; height: 43px; left: 135px; top: 158px; position: absolute">{{userName}}</div>
-    <div class="user-info" style="width: 175px; height: 43px; left: 135px; top: 199px; position: absolute">{{userRank}}</div>
-    <div class="season-title" style="width: 232px; height: 63px; left: 852px; top: 43px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{seasonDisplay}}</div>
+    <!-- 统计卡片背景 -->
+    <img style="width: 340px; height: 200px; left: 38px; top: 763px; position: absolute" 
+         src="{{_res_path}}imgs/template/redCollection/dw_bg.png" />
+    <img style="width: 340px; height: 200px; left: 408px; top: 763px; position: absolute" 
+         src="{{_res_path}}imgs/template/redCollection/dw_bg.png" />
+    <img style="width: 340px; height: 200px; left: 778px; top: 763px; position: absolute" 
+         src="{{_res_path}}imgs/template/redCollection/dw_bg.png" />
     
-    <!-- "大红收藏馆"以下的背景图 -->
+    <!-- 统计数据 -->
+    <!-- 第一个卡片 -->
+    <div class="stat-value" 
+         style="width: 340px; left: 38px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">
+        {{statistics.redGodCount}}
+    </div>
+    <div class="stat-label" 
+         style="width: 340px; height: 44px; left: 38px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">
+        收藏大红种数
+    </div>
+    
+    <!-- 第二个卡片 -->
+    <div class="stat-value" 
+         style="width: 340px; left: 408px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">
+        {{statistics.redTotalCount}}
+    </div>
+    <div class="stat-label" 
+         style="width: 340px; height: 44px; left: 408px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">
+        收藏大红个数
+    </div>
+    
+    <!-- 第三个卡片 -->
+    <div class="large-value" 
+         style="width: 340px; left: 778px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">
+        {{statistics.redTotalValue}}
+    </div>
+    <div class="stat-label" 
+         style="width: 340px; height: 44px; left: 778px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">
+        收藏大红价值
+    </div>
+    
+    <!-- "大红收藏馆"标题背景 -->
     <img style="width: 1055px; height: 125px; left: 39px; top: 990px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_tit.webp" />
     
-    <!-- 收藏品展示区 -->
     <!-- 收藏品背景卡片 (9个位置) -->
     <img style="width: 340px; height: 297px; left: 31px; top: 1200px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
-    <img style="width: 340px; height: 297px; left: 391px; top: 1200px; position: absolute" 
+    <img style="width: 340px; height: 297px; left: 401px; top: 1200px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
-    <img style="width: 340px; height: 297px; left: 751px; top: 1200px; position: absolute" 
+    <img style="width: 340px; height: 297px; left: 771px; top: 1200px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
     <img style="width: 340px; height: 297px; left: 31px; top: 1537px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
-    <img style="width: 340px; height: 297px; left: 391px; top: 1537px; position: absolute" 
+    <img style="width: 340px; height: 297px; left: 401px; top: 1537px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
-    <img style="width: 340px; height: 297px; left: 751px; top: 1537px; position: absolute" 
+    <img style="width: 340px; height: 297px; left: 771px; top: 1537px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
     <img style="width: 340px; height: 297px; left: 31px; top: 1978px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
-    <img style="width: 340px; height: 297px; left: 391px; top: 1978px; position: absolute" 
+    <img style="width: 340px; height: 297px; left: 401px; top: 1978px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
-    <img style="width: 340px; height: 297px; left: 751px; top: 1978px; position: absolute" 
+    <img style="width: 340px; height: 297px; left: 771px; top: 1978px; position: absolute" 
          src="{{_res_path}}imgs/template/redCollection/red_bg2.png" />
     
-    <!-- TOP 1 -->
+    <!-- 收藏品展示 - TOP 1 -->
     {{if topCollections[0]}}
     <div style="width: 160px; height: 160px; left: 116px; top: 1240px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[0].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 76px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{topCollections[0].name}}</div>
-    <div class="data-text" style="width: 65px; height: 24px; left: 296px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">{{topCollections[0].count}}个</div>
-    <div class="data-text" style="width: 200px; height: 24px; left: 91px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{topCollections[0].value}}</div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 76px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[0].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 65px; height: 24px; left: 296px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[0].count}}个
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 91px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[0].value}}
+    </div>
     {{/if}}
     
-    <!-- TOP 2 -->
+    <!-- 收藏品展示 - TOP 2 -->
     {{if topCollections[1]}}
-    <div style="width: 160px; height: 160px; left: 481px; top: 1240px; position: absolute;">
+    <div style="width: 160px; height: 160px; left: 491px; top: 1240px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[1].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 436px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{topCollections[1].name}}</div>
-    <div class="data-text" style="width: 65px; height: 24px; left: 656px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">{{topCollections[1].count}}个</div>
-    <div class="data-text" style="width: 200px; height: 24px; left: 461px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{topCollections[1].value}}</div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 446px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[1].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 65px; height: 24px; left: 666px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[1].count}}个
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 471px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[1].value}}
+    </div>
     {{/if}}
     
-    <!-- TOP 3 -->
+    <!-- 收藏品展示 - TOP 3 -->
     {{if topCollections[2]}}
-    <div style="width: 160px; height: 160px; left: 841px; top: 1240px; position: absolute;">
+    <div style="width: 160px; height: 160px; left: 861px; top: 1240px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[2].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 796px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{topCollections[2].name}}</div>
-    <div class="data-text" style="width: 65px; height: 24px; left: 1016px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">{{topCollections[2].count}}个</div>
-    <div class="data-text" style="width: 200px; height: 24px; left: 821px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{topCollections[2].value}}</div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 816px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[2].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 65px; height: 24px; left: 1036px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[2].count}}个
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 841px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[2].value}}
+    </div>
+    {{/if}}
+    
+    <!-- 收藏品展示 - 第4个 -->
+    {{if topCollections[3]}}
+    <div style="width: 160px; height: 160px; left: 116px; top: 1577px; position: absolute;">
+        <img class="collection-item-image" src="{{topCollections[3].imageUrl}}" onerror="this.style.display='none'" />
+    </div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 76px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[3].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 65px; height: 24px; left: 296px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[3].count}}个
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 91px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[3].value}}
+    </div>
+    {{/if}}
+    
+    <!-- 收藏品展示 - 第5个 -->
+    {{if topCollections[4]}}
+    <div style="width: 160px; height: 160px; left: 491px; top: 1577px; position: absolute;">
+        <img class="collection-item-image" src="{{topCollections[4].imageUrl}}" onerror="this.style.display='none'" />
+    </div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 446px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[4].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 65px; height: 24px; left: 666px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[4].count}}个
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 471px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[4].value}}
+    </div>
+    {{/if}}
+    
+    <!-- 收藏品展示 - 第6个 -->
+    {{if topCollections[5]}}
+    <div style="width: 160px; height: 160px; left: 861px; top: 1577px; position: absolute;">
+        <img class="collection-item-image" src="{{topCollections[5].imageUrl}}" onerror="this.style.display='none'" />
+    </div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 816px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[5].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 65px; height: 24px; left: 1036px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[5].count}}个
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 841px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{topCollections[5].value}}
+    </div>
     {{/if}}
     
     <!-- 未解锁提示区域 -->
     {{if statistics.unlockedCount}}
     <div style="width: 900px; height: 55px; left: 52px; top: 1856px; position: absolute; justify-content: flex-start; display: flex; flex-direction: row; align-items: center; white-space: nowrap;">
-        <span class="normal-text">你还有</span><span class="highlight-text">{{statistics.unlockedCount}}个</span><span class="normal-text">未解锁的大红藏品</span>
+        <span class="normal-text">你还有</span>
+        <span class="highlight-text">{{statistics.unlockedCount}}个</span>
+        <span class="normal-text">未解锁的大红藏品</span>
     </div>
     <div class="decor-line" style="width: 2px; height: 52px; left: 42px; top: 1859px;"></div>
     {{/if}}
@@ -119,55 +243,42 @@
     <div style="width: 160px; height: 160px; left: 116px; top: 2018px; position: absolute;">
         <img class="collection-item-image" src="{{unlockedCollections[0].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 76px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{unlockedCollections[0].name}}</div>
-    <!-- <div class="data-text" style="width: 50px; height: 24px; left: 280px; top: 1988px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column; white-space: nowrap;">未获得</div> -->
-    <div class="data-text" style="width: 200px; height: 24px; left: 91px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{unlockedCollections[0].price}}</div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 76px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{unlockedCollections[0].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 91px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{unlockedCollections[0].price}}
+    </div>
     {{/if}}
     
     {{if unlockedCollections[1]}}
-    <div style="width: 160px; height: 160px; left: 481px; top: 2018px; position: absolute;">
+    <div style="width: 160px; height: 160px; left: 491px; top: 2018px; position: absolute;">
         <img class="collection-item-image" src="{{unlockedCollections[1].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 436px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{unlockedCollections[1].name}}</div>
-    <!-- <div class="data-text" style="width: 50px; height: 24px; left: 640px; top: 1988px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column; white-space: nowrap;">未获得</div> -->
-    <div class="data-text" style="width: 200px; height: 24px; left: 451px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{unlockedCollections[1].price}}</div>
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 446px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{unlockedCollections[1].name}}
+    </div>
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 461px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{unlockedCollections[1].price}}
+    </div>
     {{/if}}
     
     {{if unlockedCollections[2]}}
-    <div style="width: 160px; height: 160px; left: 841px; top: 2018px; position: absolute;">
+    <div style="width: 160px; height: 160px; left: 861px; top: 2018px; position: absolute;">
         <img class="collection-item-image" src="{{unlockedCollections[2].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 796px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{unlockedCollections[2].name}}</div>
-    <!-- <div class="data-text" style="width: 50px; height: 24px; left: 1000px; top: 1988px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column; white-space: nowrap;">未获得</div> -->
-    <div class="data-text" style="width: 200px; height: 24px; left: 811px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{unlockedCollections[2].price}}</div>
-    {{/if}}
-    
-    <!-- 更多收藏品展示 -->
-    {{if topCollections[3]}}
-    <div style="width: 160px; height: 160px; left: 116px; top: 1577px; position: absolute;">
-        <img class="collection-item-image" src="{{topCollections[3].imageUrl}}" onerror="this.style.display='none'" />
+    <div class="data-text" 
+         style="width: 220px; height: 24px; left: 816px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+        {{unlockedCollections[2].name}}
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 76px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{topCollections[3].name}}</div>
-    <div class="data-text" style="width: 65px; height: 24px; left: 296px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">{{topCollections[3].count}}个</div>
-    <div class="data-text" style="width: 200px; height: 24px; left: 91px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{topCollections[3].value}}</div>
-    {{/if}}
-    
-    {{if topCollections[4]}}
-    <div style="width: 160px; height: 160px; left: 481px; top: 1577px; position: absolute;">
-        <img class="collection-item-image" src="{{topCollections[4].imageUrl}}" onerror="this.style.display='none'" />
+    <div class="data-text" 
+         style="width: 200px; height: 24px; left: 831px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+        {{unlockedCollections[2].price}}
     </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 436px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{topCollections[4].name}}</div>
-    <div class="data-text" style="width: 65px; height: 24px; left: 656px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">{{topCollections[4].count}}个</div>
-    <div class="data-text" style="width: 200px; height: 24px; left: 461px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{topCollections[4].value}}</div>
-    {{/if}}
-    
-    {{if topCollections[5]}}
-    <div style="width: 160px; height: 160px; left: 841px; top: 1577px; position: absolute;">
-        <img class="collection-item-image" src="{{topCollections[5].imageUrl}}" onerror="this.style.display='none'" />
-    </div>
-    <div class="data-text" style="width: 220px; height: 24px; left: 796px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">{{topCollections[5].name}}</div>
-    <div class="data-text" style="width: 65px; height: 24px; left: 1016px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">{{topCollections[5].count}}个</div>
-    <div class="data-text" style="width: 200px; height: 24px; left: 821px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">{{topCollections[5].value}}</div>
     {{/if}}
 </div>
-{{/block}} 
+{{/block}}

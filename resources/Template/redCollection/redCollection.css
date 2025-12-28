@@ -4,7 +4,7 @@ body {
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     background: white;
     width: 1125px !important;
-    height: 2436px !important;
+    height: 2320px !important;
     overflow: hidden;
     transform: scale(1) !important;
     transform-origin: 0 0 !important;
@@ -12,20 +12,35 @@ body {
 
 .container { 
     width: 1125px !important; 
-    height: 2436px !important; 
+    height: 2320px !important; 
     position: relative; 
     background: white;
     padding: 0 !important;
     margin: 0 !important;
 }
 
-/* 插件水印 */
-.plugin-text {
-    color: #858788;
-    font-size: 30px;
-    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
-    font-weight: 700;
-    word-wrap: break-word;
+/* 隐藏 defaultLayout 中的外部页脚 */
+.container > .copyright {
+    display: none;
+}
+
+/* ========== 页脚 ========== */
+.template-footer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 2250px;
+    z-index: 10;
+    padding: 20px;
+    text-align: center;
+}
+
+.copyright-text {
+    color: #FFFFFF;
+    font-size: 40px;
+    font-weight: 300;
+    letter-spacing: 0.5px;
+    opacity: 0.5;
 }
 
 /* 主标题样式 - 血色会计 */
@@ -57,7 +72,92 @@ body {
     word-wrap: break-word; 
 }
 
-/* 用户信息文本 - 浅巷墨黎6、铂金II */
+/* 用户信息容器 */
+.user-profile-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    z-index: 1;
+}
+
+/* 用户信息侧边线 */
+.profile-sidebar {
+    width: 3px;
+    height: 86px;
+    background: linear-gradient(180deg, #0FF796 0%, #00D9FF 100%);
+    border-radius: 2px;
+    flex-shrink: 0;
+    box-shadow: 0 0 8px rgba(15, 247, 150, 0.4);
+}
+
+/* 头像容器 */
+.avatar-wrapper {
+    position: relative;
+    flex-shrink: 0;
+}
+
+/* 用户头像 */
+.user-avatar {
+    width: 86px;
+    height: 86px;
+    border-radius: 8px;
+    border: 2px solid #0FF796;
+    box-shadow: 0 0 8px rgba(15, 247, 150, 0.25);
+    object-fit: cover;
+    display: block;
+}
+
+.user-avatar-placeholder {
+    width: 86px;
+    height: 86px;
+    border-radius: 8px;
+    border: 2px solid #0FF796;
+    background: rgba(15, 247, 150, 0.1);
+    box-shadow: 0 0 8px rgba(15, 247, 150, 0.25);
+}
+
+/* 用户信息区域 */
+.user-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    color: white;
+    font-size: 32px;
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
+    font-weight: 500;
+    line-height: 1.2;
+    word-wrap: break-word;
+}
+
+.user-rank {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: white;
+    font-size: 32px;
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
+    font-weight: 500;
+    line-height: 1;
+}
+
+.rank-text {
+    flex-shrink: 0;
+}
+
+.rank-icon {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+    display: block;
+}
+
+/* 用户信息文本 - 保留兼容性 */
 .user-info { 
     color: white; 
     font-size: 32px; 

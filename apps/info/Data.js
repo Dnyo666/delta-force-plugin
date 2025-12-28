@@ -28,13 +28,11 @@ export class Data extends plugin {
       return true
     }
 
+    // 解析参数
     const argString = this.e.msg.replace(/^(#三角洲|\^)(数据|data)\s*/, '').trim()
     const args = argString.split(' ').filter(Boolean)
-
     let mode = ''
-    let season = 7 // 默认赛季7
-
-    // 健壮的参数解析，不再依赖顺序
+    let season = 7
     for (const arg of args) {
       if (['烽火', '烽火地带', 'sol', '摸金'].includes(arg)) {
         mode = 'sol'
@@ -59,83 +57,101 @@ export class Data extends plugin {
       return true
     }
     
-    let solDetail = null;
-    let mpDetail = null;
-
-    if (mode) { // 查询单模式
-      const singleModeData = res.data?.data?.data;
-      if (singleModeData?.solDetail) solDetail = singleModeData.solDetail;
-      if (singleModeData?.mpDetail) mpDetail = singleModeData.mpDetail;
-    } else { // 查询全部模式
-      const allModesData = res.data;
+    // 提取详情数据
+    let solDetail = null
+    let mpDetail = null
+    if (mode) {
+      const singleModeData = res.data?.data?.data
+      if (singleModeData?.solDetail) solDetail = singleModeData.solDetail
+      if (singleModeData?.mpDetail) mpDetail = singleModeData.mpDetail
+    } else {
+      const allModesData = res.data
       if (allModesData?.sol?.data?.data?.solDetail) {
-        solDetail = allModesData.sol.data.data.solDetail;
+        solDetail = allModesData.sol.data.data.solDetail
       }
       if (allModesData?.mp?.data?.data?.mpDetail) {
-        mpDetail = allModesData.mp.data.data.mpDetail;
+        mpDetail = allModesData.mp.data.data.mpDetail
       }
     }
 
     if (!solDetail && !mpDetail) {
-      await this.e.reply('暂未查询到该账号的游戏数据。');
+      await this.e.reply('暂未查询到该账号的游戏数据。')
       return true
     }
 
-    // --- 数据格式化 ---
-    const formatDuration = (seconds) => {
-        if (!seconds || isNaN(seconds)) return '0分钟';
-        const hours = Math.floor(seconds / 3600);
-        const minutes = Math.floor((seconds % 3600) / 60);
-        return `${hours}小时${minutes}分钟`;
-    }
-
-    const formatGainedPrice = (price) => {
-      if (!price || isNaN(price)) return '-';
-      return `${(parseFloat(price) / 1000000).toFixed(2)}M`;
-    };
-
-    const formatKd = (kd) => {
-      if (kd === null || kd === undefined || isNaN(kd)) return '-';
-      return (parseFloat(kd) / 100).toFixed(2);
-    }
-    
-    // --- 准备模板数据 ---
+    // 构建模板数据
     const templateData = {
       nickname: this.e.sender.nickname,
       season: season === 'all' ? '全部' : season
-    };
+    }
     
     if ((!mode || mode === 'sol') && solDetail) {
-        const solRank = solDetail.levelScore ? DataManager.getRankByScore(solDetail.levelScore, 'sol') : '-';
-        
-        templateData.solDetail = {
-          ...solDetail,
-          totalGameTime: formatDuration(solDetail.totalGameTime),
-          totalGainedPriceFormatted: formatGainedPrice(solDetail.totalGainedPrice),
-          profitLossRatioFormatted: solDetail.profitLossRatio ? (parseFloat(solDetail.profitLossRatio) / 100000).toFixed(1) + 'K' : '-',
-          lowKD: formatKd(solDetail.lowKillDeathRatio),
-          medKD: formatKd(solDetail.medKillDeathRatio),
-          highKD: formatKd(solDetail.highKillDeathRatio)
-        };
-        templateData.solRank = solRank;
+      const solRank = solDetail.levelScore ? DataManager.getRankByScore(solDetail.levelScore, 'sol') : '-'
+      const solRankImage = solRank !== '-' ? DataManager.getRankImagePath(solRank, 'sol') : null
+      
+      // 格式化 sol 数据
+      const totalGameTime = (seconds) => {
+        if (!seconds || isNaN(seconds)) return '0分钟'
+        const hours = Math.floor(seconds / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+        return `${hours}小时${minutes}分钟`
+      }
+      
+      const formatGainedPrice = (price) => {
+        if (!price || isNaN(price)) return '-'
+        return `${(parseFloat(price) / 1000000).toFixed(2)}M`
+      }
+      
+      const formatKd = (kd) => {
+        if (kd === null || kd === undefined || isNaN(kd)) return '-'
+        return (parseFloat(kd) / 100).toFixed(2)
+      }
+      
+      templateData.solDetail = {
+        ...solDetail,
+        totalGameTime: totalGameTime(solDetail.totalGameTime),
+        totalGainedPriceFormatted: formatGainedPrice(solDetail.totalGainedPrice),
+        profitLossRatioFormatted: solDetail.profitLossRatio ? (parseFloat(solDetail.profitLossRatio) / 100000).toFixed(1) + 'K' : '-',
+        lowKD: formatKd(solDetail.lowKillDeathRatio),
+        medKD: formatKd(solDetail.medKillDeathRatio),
+        highKD: formatKd(solDetail.highKillDeathRatio)
+      }
+      templateData.solRank = solRank
+      templateData.solRankImage = solRankImage
     }
 
     if ((!mode || mode === 'mp') && mpDetail) {
-        const mpRank = mpDetail.levelScore ? DataManager.getRankByScore(mpDetail.levelScore, 'tdm') : '-';
-        
-        templateData.mpDetail = {
-          ...mpDetail,
-          totalGameTime: formatDuration(mpDetail.totalGameTime * 60),
-          avgKillPerMinuteFormatted: mpDetail.avgKillPerMinute ? (parseFloat(mpDetail.avgKillPerMinute) / 100).toFixed(2) : '-',
-          avgScorePerMinuteFormatted: mpDetail.avgScorePerMinute ? (parseFloat(mpDetail.avgScorePerMinute) / 100).toFixed(2) : '-'
-        };
-        templateData.mpRank = mpRank;
+      const mpRank = mpDetail.levelScore ? DataManager.getRankByScore(mpDetail.levelScore, 'tdm') : '-'
+      const mpRankImage = mpRank !== '-' ? DataManager.getRankImagePath(mpRank, 'tdm') : null
+      
+      // 格式化 mp 数据
+      const totalGameTime = (seconds) => {
+        if (!seconds || isNaN(seconds)) return '0分钟'
+        const hours = Math.floor(seconds / 3600)
+        const minutes = Math.floor((seconds % 3600) / 60)
+        return `${hours}小时${minutes}分钟`
+      }
+      
+      templateData.mpDetail = {
+        ...mpDetail,
+        totalGameTime: totalGameTime(mpDetail.totalGameTime * 60),
+        avgKillPerMinuteFormatted: mpDetail.avgKillPerMinute ? (parseFloat(mpDetail.avgKillPerMinute) / 100).toFixed(2) : '-',
+        avgScorePerMinuteFormatted: mpDetail.avgScorePerMinute ? (parseFloat(mpDetail.avgScorePerMinute) / 100).toFixed(2) : '-'
+      }
+      templateData.mpRank = mpRank
+      templateData.mpRankImage = mpRankImage
     }
 
     // 渲染模板
     return await Render.render('Template/personalData/personalData', templateData, {
       e: this.e,
-      scale: 1.2
-    });
+      scale: 1.0,
+      renderCfg: {
+        viewPort: {
+          width: 1300,
+          height: 5000
+        }
+      }
+    })
   }
 }

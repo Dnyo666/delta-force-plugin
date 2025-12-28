@@ -37,12 +37,13 @@ export class Red extends plugin {
   /**
    * 解析用户信息（公共方法）
    * @param {Object} personalInfoRes - 个人信息API响应
-   * @returns {Object} { userName, userAvatar, userRank }
+   * @returns {Object} { userName, userAvatar, userRank, userRankImage }
    */
   parseUserInfo(personalInfoRes) {
     let userName = '未知'
     let userAvatar = ''
     let userRank = '未知段位'
+    let userRankImage = null
 
     if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
       const { userData, careerData } = personalInfoRes.data
@@ -58,10 +59,12 @@ export class Red extends plugin {
       if (careerData?.rankpoint) {
         const fullRank = DataManager.getRankByScore(careerData.rankpoint, 'sol')
         userRank = fullRank.replace(/\s*\(\d+\)/, '')
+        // 获取段位图标路径（只使用 sol 模式，因为烽火是 sol）
+        userRankImage = DataManager.getRankImagePath(userRank, 'sol')
       }
     }
 
-    return { userName, userAvatar, userRank }
+    return { userName, userAvatar, userRank, userRankImage }
   }
 
 
@@ -136,7 +139,7 @@ export class Red extends plugin {
       }
 
       // 解析用户信息
-      const { userName, userAvatar, userRank } = this.parseUserInfo(personalInfoRes)
+      const { userName, userAvatar, userRank, userRankImage } = this.parseUserInfo(personalInfoRes)
 
       // 构建地图背景图路径的辅助函数（藏品只在烽火地带，使用新的统一路径，支持降级匹配）
       const getMapBgPath = (mapName) => {
@@ -212,6 +215,7 @@ export class Red extends plugin {
       const renderData = {
         userName: userName,
         userRank: userRank,
+        userRankImage: userRankImage,
         userAvatar: userAvatar,
         itemName: targetItem.objectName,
         itemType: targetItem.objectType || (targetItem.grade ? `GRADE ${targetItem.grade}` : ''),
@@ -224,11 +228,7 @@ export class Red extends plugin {
       }
 
       try {
-        // 参考 ImageGenerator.js：设置足够大的 viewport 确保完整截取
-        // 视口宽度：容器650px + padding 60px + 大量安全边距 = 2000px（足够大）
-        const viewWidth = 2000
-        // 视口高度：设置一个非常大的固定值（5000px），让系统通过 boundingBox 自动截取实际内容
-        // 参考 ImageGenerator 的做法，使用足够大的值，系统会自动根据 boundingBox 截取
+        const viewWidth = 650
         const viewHeight = 5000
 
         return await Render.render('Template/redRecord/redRecord.html', renderData, {
@@ -344,7 +344,7 @@ export class Red extends plugin {
         return true
       }
 
-      const { userName, userAvatar, userRank } = this.parseUserInfo(personalInfoRes)
+      const { userName, userAvatar, userRank, userRankImage } = this.parseUserInfo(personalInfoRes)
 
       let renderData = {}
 
@@ -434,6 +434,7 @@ export class Red extends plugin {
         renderData = {
           userName,
           userRank,
+          userRankImage,
           userAvatar,
           statistics: {
             redGodCount: redGodCount.toString(),
@@ -557,6 +558,7 @@ export class Red extends plugin {
         renderData = {
           userName,
           userRank,
+          userRankImage,
           userAvatar,
           title,
           subtitle,
@@ -587,14 +589,14 @@ export class Red extends plugin {
           const recordItemHeight = 82 // 每条记录高度
           const footerHeight = 80 // 页脚
           viewPort = {
-            width: 2000,  // 足够大的宽度
+            width: 650,
             height: Math.max(500, baseHeight + listLen * recordItemHeight + footerHeight + 200) // 动态高度 + 安全边距
           }
         } else {
           // 大红收藏海报：固定尺寸
           viewPort = {
             width: 1145,  // 略大于容器宽度，避免边框被裁切
-            height: 2456  // 略大于容器高度，避免底部被裁切
+            height: 2340  // 略大于容器高度，避免底部被裁切
           }
         }
         
