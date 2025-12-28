@@ -152,10 +152,13 @@ export class Update extends plugin {
       return true
     }
 
+    // 只显示当前版本和上一个版本（最多2个版本）
+    const displayLogs = changelogs.slice(0, 2)
+
     // 使用 version-info 模板渲染
     return await Render.render('help/version-info.html', {
       name: pluginName,
-      changelogs: changelogs
+      changelogs: displayLogs
     }, {
       e: e,
       scale: 1.0

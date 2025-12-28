@@ -12,18 +12,25 @@
     <!-- ========== 顶部：用户信息区域 ========== -->
     <div class="user-header">
         <div class="game-meta">
-            <div class="game-logo"></div>
-            <span class="game-name">三角洲行动</span>
+            <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
         </div>
         <div class="user-profile">
-            {{if userAvatar}}
-            <img class="avatar" src="{{userAvatar}}" onerror="this.style.display='none'" />
-            {{else}}
-            <div class="avatar-placeholder"></div>
-    {{/if}}
+            <div class="profile-sidebar"></div>
+            <div class="avatar-wrapper">
+                {{if userAvatar}}
+                <img class="avatar" src="{{userAvatar}}" onerror="this.style.display='none'" />
+                {{else}}
+                <div class="avatar-placeholder"></div>
+                {{/if}}
+            </div>
             <div class="user-meta">
                 <div class="nickname">{{userName}}</div>
-                <div class="rank-tag">{{userRank}}</div>
+                <div class="rank-tag">
+                    <span class="rank-text">{{userRank}}</span>
+                    {{if userRankImage}}
+                    <img class="rank-icon" src="{{_res_path}}{{userRankImage}}" alt="{{userRank}}" />
+                    {{/if}}
+                </div>
             </div>
         </div>
     </div>
@@ -106,10 +113,9 @@
         {{/if}}
     </div>
     
-    <!-- ========== 页脚 ========== -->
+    <!-- 页脚 -->
     <div class="template-footer">
-        <div class="footer-divider"></div>
-        <div class="copyright-text">{{@copyright || sys?.copyright || 'Created By Yunzai-Bot & Delta-Force-Plugin'}}</div>
+        <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
     </div>
 </div>
 {{/block}}
