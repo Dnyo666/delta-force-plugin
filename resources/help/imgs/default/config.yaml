@@ -12,8 +12,8 @@ fontShadow: 'none'
 descColor: '#eee'
 
 # 字体设置
-# 字体族，例如: 'Microsoft YaHei', 'SimHei', 'Arial', sans-serif
-fontFamily: 'Microsoft YaHei, SimHei, Arial, sans-serif'
+# 字体族，例如: 'ProjectD', 'Microsoft YaHei', sans-serif
+fontFamily: "'ProjectD', 'Microsoft YaHei', sans-serif"
 
 # 主标题字体大小（页面顶部大标题）
 titleFontSize: '50px'

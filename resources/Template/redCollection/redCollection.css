@@ -1,7 +1,7 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Inter', 'Microsoft YaHei', Arial, sans-serif;
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     background: white;
     width: 1125px !important;
     height: 2436px !important;
@@ -23,7 +23,7 @@ body {
 .plugin-text {
     color: #858788;
     font-size: 30px;
-    font-family: Inter;
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     word-wrap: break-word;
 }
@@ -32,7 +32,7 @@ body {
 .title-primary { 
     color: #0FF796; 
     font-size: 96px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     white-space: nowrap; 
@@ -42,7 +42,7 @@ body {
 .subtitle { 
     color: white; 
     font-size: 32px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     white-space: nowrap; 
@@ -52,7 +52,7 @@ body {
 .description { 
     color: #EAEBEB; 
     font-size: 32px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word; 
 }
@@ -61,7 +61,7 @@ body {
 .user-info { 
     color: white; 
     font-size: 32px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 500; 
     word-wrap: break-word; 
 }
@@ -70,7 +70,7 @@ body {
 .season-title { 
     color: white; 
     font-size: 48px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word; 
 }
@@ -79,27 +79,38 @@ body {
 .stat-value { 
     color: #0FF796; 
     font-size: 96px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
     text-align: center;
+    white-space: nowrap;
+    overflow: visible;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 /* 大数值 - 21,554,811 */
 .large-value { 
     color: #0FF796; 
     font-size: 64px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
     text-align: center;
+    white-space: nowrap;
+    overflow: visible;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    letter-spacing: -1px;
 }
 
 /* 统计标签 - 收藏大红种数、收藏大红个数 */
 .stat-label { 
     color: #CFD0D0; 
     font-size: 36px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word; 
     text-align: center;
@@ -109,16 +120,18 @@ body {
 .data-text { 
     color: #858788; 
     font-size: 30px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 /* 高亮文本 - 39个 */
 .highlight-text { 
     color: #0FF796; 
     font-size: 45px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 500; 
     word-wrap: break-word; 
 }
@@ -127,7 +140,7 @@ body {
 .normal-text { 
     color: white; 
     font-size: 45px; 
-    font-family: Inter; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 500; 
     word-wrap: break-word; 
 }

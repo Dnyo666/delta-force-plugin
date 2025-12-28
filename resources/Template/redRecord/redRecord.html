@@ -1,0 +1,115 @@
+{{extend defaultLayout}}
+
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}Template/redRecord/redRecord.css"/>
+{{/block}}
+
+{{block 'main'}}
+<div class="red-record-container">
+    <!-- 整体背景图片 -->
+    <img class="bg-overlay" src="{{_res_path}}imgs/template/redCollection/bg.webp" />
+    
+    <!-- ========== 顶部：用户信息区域 ========== -->
+    <div class="user-header">
+        <div class="game-meta">
+            <div class="game-logo"></div>
+            <span class="game-name">三角洲行动</span>
+        </div>
+        <div class="user-profile">
+            {{if userAvatar}}
+            <img class="avatar" src="{{userAvatar}}" onerror="this.style.display='none'" />
+            {{else}}
+            <div class="avatar-placeholder"></div>
+    {{/if}}
+            <div class="user-meta">
+                <div class="nickname">{{userName}}</div>
+                <div class="rank-tag">{{userRank}}</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== 物品详细展示区域 ========== -->
+    <div class="item-display-card">
+        <div class="item-title-box">
+            <h1 class="item-name-text">{{itemName}}</h1>
+            {{if itemType}}
+            <span class="item-type-tag">{{itemType}}</span>
+            {{/if}}
+        </div>
+
+        <div class="item-details-flex">
+            <!-- 左侧：物品图片 -->
+            <div class="item-img-container">
+                <img class="item-main-img" src="{{itemImageUrl}}" onerror="this.style.display='none'" />
+            </div>
+            
+            <!-- 右侧：解锁数据 -->
+            <div class="unlock-data-panel">
+                <div class="data-row highlight">
+                    <span class="label">首次解锁</span>
+                    <span class="value">{{firstUnlockTime}}</span>
+                </div>
+        
+        {{if firstUnlockMapBg}}
+                <div class="map-box">
+                    <img class="map-thumbnail" src="{{_res_path}}{{firstUnlockMapBg}}" onerror="this.style.display='none'" />
+        </div>
+        {{/if}}
+        
+                <div class="data-row">
+                    <span class="label">解锁地点</span>
+                    <span class="value">{{firstUnlockMap}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ========== 历史记录区域 ========== -->
+    <div class="records-container">
+        <div class="records-header">
+            <div class="records-title">出红记录</div>
+            {{if recordCount > 0}}
+            <div class="records-badge">?</div>
+            {{/if}}
+        </div>
+        
+        <div class="records-content">
+            {{if records && records.length > 0}}
+                {{each records record index}}
+                <div class="record-entry">
+                    <div class="entry-index">{{index + 1}}</div>
+                    <div class="entry-data">
+                        <div class="entry-row">
+                            <span class="entry-label">出红时间</span>
+                            <span class="entry-value">{{record.time}}</span>
+                        </div>
+                        <div class="entry-row">
+                            <span class="entry-label">出红地点</span>
+                            <span class="entry-value">{{record.map}}</span>
+                        </div>
+                        {{if record.count}}
+                        <div class="entry-row">
+                            <span class="entry-label">数量</span>
+                            <span class="entry-value">{{record.count}}</span>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
+                {{/each}}
+            {{else}}
+                <div class="empty-state">暂无相关解锁记录</div>
+            {{/if}}
+        </div>
+        
+        {{if recordCount > 20}}
+        <p class="records-footer-note">（仅展示最新的 20 条记录）</p>
+        {{/if}}
+    </div>
+    
+    <!-- ========== 页脚 ========== -->
+    <div class="template-footer">
+        <div class="footer-divider"></div>
+        <div class="copyright-text">{{@copyright || sys?.copyright || 'Created By Yunzai-Bot & Delta-Force-Plugin'}}</div>
+    </div>
+</div>
+{{/block}}

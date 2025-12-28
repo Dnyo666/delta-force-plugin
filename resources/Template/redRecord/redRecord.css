@@ -1,0 +1,318 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
+    background: #0b0f13;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 30px;
+    padding-left: 30px;
+    padding-right: 30px;
+    box-sizing: border-box;
+}
+
+/* 隐藏 defaultLayout 中的外部页脚 */
+.container > .copyright {
+    display: none;
+}
+
+.red-record-container {
+    width: 560px;
+    margin: 0 auto;
+    background: #0d1217;
+    border: 2px solid #0FF796;
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(15, 247, 150, 0.1);
+    display: flex;
+    flex-direction: column;
+}
+
+.bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 15%;
+    opacity: 0.15;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.red-record-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 320px;
+    height: 180px;
+    background: 
+        radial-gradient(ellipse 350px 220px at top left, rgba(13, 18, 23, 1) 0%, rgba(13, 18, 23, 0.95) 30%, rgba(13, 18, 23, 0.8) 50%, rgba(13, 18, 23, 0.4) 70%, transparent 85%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ========== 用户头部 ========== */
+.user-header {
+    position: relative; 
+    z-index: 1;
+    padding: 24px;
+    background: rgba(15, 247, 150, 0.03);
+    border-bottom: 1px solid rgba(15, 247, 150, 0.2);
+}
+
+.game-meta {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.game-logo {
+    width: 18px;
+    height: 18px;
+    background: #0FF796;
+    clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+    margin-right: 8px;
+}
+
+.game-name {
+    color: #0FF796; 
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+}
+
+.avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    border: 2px solid #0FF796;
+    margin-right: 12px;
+    box-shadow: 0 0 8px rgba(15, 247, 150, 0.25);
+}
+
+.nickname {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.rank-tag {
+    color: #0FF796;
+    font-size: 13px;
+    background: rgba(15, 247, 150, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+/* ========== 物品展示 ========== */
+.item-display-card {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+}
+
+.item-title-box {
+    margin-bottom: 16px;
+    border-left: 4px solid #0FF796;
+    padding-left: 12px;
+}
+
+.item-name-text {
+    color: #0FF796;
+    font-size: 36px;
+    font-weight: 900;
+    text-shadow: 0 0 10px rgba(15, 247, 150, 0.35);
+}
+
+.item-type-tag {
+    color: #888;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.item-details-flex {
+    display: flex;
+    gap: 18px;
+}
+
+.item-img-container {
+    width: 240px;
+    height: 240px;
+    min-width: 240px;
+    min-height: 240px;
+    aspect-ratio: 1 / 1;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(15, 247, 150, 0.2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.item-main-img {
+    width: 85%;
+    height: 85%;
+    max-width: 85%;
+    max-height: 85%;
+    object-fit: contain;
+}
+
+.unlock-data-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.data-row {
+    background: rgba(255,255,255,0.03);
+    padding: 10px 12px;
+    border-radius: 6px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+}
+
+.data-row.highlight {
+    background: rgba(15, 247, 150, 0.05);
+}
+
+.data-row .label { 
+    color: #aaa; 
+    font-size: 13px; 
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.data-row .value { 
+    color: #0FF796; 
+    font-size: 15px; 
+    font-weight: 700; 
+    white-space: nowrap;
+    text-align: right;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    flex: 1;
+}
+
+.map-box {
+    width: 100%;
+    height: 110px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(15, 247, 150, 0.2);
+}
+
+.map-thumbnail { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+
+/* ========== 记录列表 ========== */
+.records-container {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+}
+
+.records-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.records-title { color: #0FF796; font-size: 22px; font-weight: 800; }
+
+.records-badge {
+    margin-left: 8px;
+    width: 18px;
+    height: 18px;
+    border: 1px solid #555;
+    border-radius: 50%;
+    color: #555;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.records-content {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(15, 247, 150, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+}
+
+.record-entry {
+    display: flex;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 6px;
+    margin-bottom: 8px;
+}
+
+.entry-index {
+    color: #0FF796;
+    font-size: 16px;
+    font-weight: 900;
+    width: 28px;
+}
+
+.entry-data { flex: 1; display: flex; flex-direction: column; gap: 4px; }
+.entry-row { display: flex; justify-content: space-between; }
+.entry-label { color: #777; font-size: 13px; }
+.entry-value { color: #ddd; font-size: 13px; font-weight: 600; }
+
+.records-footer-note {
+    text-align: center;
+    color: #0FF796;
+    font-size: 11px;
+    margin-top: 12px;
+    opacity: 0.8;
+}
+
+/* ========== 页脚 ========== */
+.template-footer {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+    padding-top: 20px;
+    padding-bottom: 24px;
+    border-top: 1px solid rgba(15, 247, 150, 0.1);
+    margin-bottom: 0;
+}
+
+.footer-divider {
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(15, 247, 150, 0.2), transparent);
+    margin-bottom: 12px;
+}
+
+.copyright-text {
+    text-align: center;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.7;
+    }

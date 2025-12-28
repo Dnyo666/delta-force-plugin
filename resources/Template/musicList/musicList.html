@@ -32,9 +32,9 @@
             <!-- 封面图片 -->
             <div class="music-cover-container">
                 {{if item.cover}}
-                <img class="music-cover" src="{{item.cover}}" onerror="this.src='{{_res_path}}Template/musicList/images/default-cover.png'" />
+                <img class="music-cover" src="{{item.cover}}" onerror="this.src='{{_res_path}}imgs/template/musicList/default-cover.png'" />
                 {{else}}
-                <img class="music-cover" src="{{_res_path}}Template/musicList/images/default-cover.png" />
+                <img class="music-cover" src="{{_res_path}}imgs/template/musicList/default-cover.png" />
                 {{/if}}
                 {{if index < 3}}
                 <div class="top-badge">TOP{{index + 1}}</div>

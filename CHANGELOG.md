@@ -5,7 +5,58 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [1.2.2] - 当前版本
+## [1.2.4] - 当前版本
+
+### style（样式/格式优化）
+- 统一项目字体系统，所有模板和帮助页面使用项目自带字体（`p-med.ttf` 和 `p-bold.ttf`）
+- 在 `common/common.css` 中定义统一的 `@font-face` 字体声明
+- 更新所有模板 CSS 文件，统一使用 `ProjectD` 字体族
+- 更新帮助页面配置文件（`config.yaml`），使用项目默认字体
+- 更新 `StyleConfig.js` 默认字体配置
+- 优化大红收藏记录模板（`redRecord.html`）样式
+- 优化出红记录列表模板（`redRecordList.html`）样式
+- 优化大红收藏海报模板（`redCollection.html`）样式
+
+### refactor（重构）
+- 重构字体引用系统，移除对不存在字体文件的引用
+- 统一字体命名规范，使用 `ProjectD` 作为主字体族名
+- 合并 `red.js` 和 `RedCollection.js` 为统一文件，消除重复代码
+    - 将 `getRedCollection()` 方法合并到 `red.js`，支持两种数据源
+    - 提取公共方法 `parseUserInfo()`，统一用户信息解析逻辑
+    - 根据命令参数自动选择数据源（出红记录 vs 收藏品详情）
+    - 删除 `RedCollection.js` 文件，减少维护成本
+- 重构出红记录功能，创建专用列表模板
+    - 出红记录使用新的 `redRecordList.html` 模板，以列表形式展示
+    - 大红收藏使用 `redCollection.html` 模板，保持原有海报样式
+    - 根据数据源类型自动选择对应模板进行渲染
+
+### fix（问题修复）
+- 修复出红记录列表显示条数，默认显示前 6 条记录（按价值排序）
+- 修复模板容器宽度问题，确保左右空隙对称
+- 修复数字显示超出和对齐问题，确保在统计卡片上正确居中显示
+
+## [1.2.3] - 历史版本
+
+### feat（新功能）
+- 订阅战绩功能支持返回图片展示
+- 更新 Guoba Web 配置
+- 更新战绩背景显示地图
+- 增加大红藏品图片渲染、大红查询图片渲染
+
+### refactor（重构）
+- 优化 resources 文件夹内的图片文件存储结构，全部移动至 imgs 文件夹内
+- 优化配置文件存放逻辑，区分默认配置与用户配置
+    - 外层 `config/` 存放默认配置（提交到 Git）
+    - 内层 `config/config/` 存放用户配置和运行时生成的数据（不提交）
+    - 订阅配置自动迁移到新目录
+
+### style（样式/格式优化）
+- 优化大红藏品查询模板样式
+
+### chore（其他）
+- 更新 `.gitignore` 规则，完善忽略配置
+
+## [1.2.2] - 历史版本
 
 ### feat（新功能）
 - 帮助菜单支持动态配置文件（`help.yaml`）

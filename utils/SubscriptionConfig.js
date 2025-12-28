@@ -9,10 +9,45 @@ import { pluginRoot } from '../model/path.js'
  */
 class SubscriptionConfigManager {
   constructor() {
-    this.configDir = path.join(pluginRoot, 'config')
+    // 用户数据存放在 config/config/ 目录（运行时生成）
+    this.configDir = path.join(pluginRoot, 'config', 'config')
     this.configFile = path.join(this.configDir, 'subscription_push.yaml')
     this.config = null
+    
+    // 确保目录存在
+    if (!fs.existsSync(this.configDir)) {
+      fs.mkdirSync(this.configDir, { recursive: true })
+    }
+    
+    // 迁移旧配置文件（从 config/ 到 config/config/）
+    this.migrateOldConfig()
+    
     this.loadConfig()
+  }
+  
+  /**
+   * 迁移旧配置文件到新位置
+   */
+  migrateOldConfig() {
+    const oldConfigFile = path.join(pluginRoot, 'config', 'subscription_push.yaml')
+    
+    // 如果旧文件存在且新文件不存在，执行迁移
+    if (fs.existsSync(oldConfigFile) && !fs.existsSync(this.configFile)) {
+      try {
+        fs.renameSync(oldConfigFile, this.configFile)
+        logger.info('[订阅配置] 已将订阅配置迁移到 config/config/ 目录')
+      } catch (error) {
+        logger.error('[订阅配置] 迁移配置文件失败:', error)
+        // 迁移失败时尝试复制
+        try {
+          fs.copyFileSync(oldConfigFile, this.configFile)
+          fs.unlinkSync(oldConfigFile)
+          logger.info('[订阅配置] 已将订阅配置复制到 config/config/ 目录')
+        } catch (copyError) {
+          logger.error('[订阅配置] 复制配置文件也失败:', copyError)
+        }
+      }
+    }
   }
 
   /**

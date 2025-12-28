@@ -10,7 +10,7 @@ body {
   transform: scale(1.3);
   transform-origin: 0 0;
   width: 600px;
-  font-family: 'Microsoft YaHei', 'PingFang SC', Arial, sans-serif;
+  font-family: 'ProjectD', 'Microsoft YaHei', 'PingFang SC', sans-serif;
   background-image: url("version-bg.jpg");
   background-repeat: no-repeat;
   background-size: cover;
