@@ -5,7 +5,7 @@
 }
 
 body {
-    font-family: 'Inter', 'Microsoft YaHei', sans-serif;
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     background: #0b0f13;
     width: 100%;
     min-height: 100vh;
@@ -37,7 +37,7 @@ body {
 
 /* ========== 用户头部 ========== */
 .user-header {
-    position: relative;
+    position: relative; 
     z-index: 1;
     padding: 18px 20px;
     background: rgba(15, 247, 150, 0.03);
@@ -59,7 +59,7 @@ body {
 }
 
 .game-name {
-    color: #0FF796;
+    color: #0FF796; 
     font-size: 16px;
     font-weight: 800;
     letter-spacing: 0.5px;
@@ -261,4 +261,4 @@ body {
     color: #555;
     font-size: 12px;
     font-weight: 600;
-}
+    }

@@ -2,16 +2,16 @@
 
 /* 字体导入 */
 @font-face {
-  font-family: 'ProjectD Type Curve';
-  src: url("../../../fonts/p-bold.ttf") format('truetype');
-  font-weight: 700;
+  font-family: 'ProjectD';
+  src: url("../../../fonts/p-med.ttf") format('truetype');
+  font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'ProjectD';
-  src: url("../../../fonts/p-med.ttf") format('truetype');
-  font-weight: 500;
+  src: url("../../../fonts/p-bold.ttf") format('truetype');
+  font-weight: 700;
   font-display: swap;
 }
 
@@ -68,7 +68,8 @@ body {
 .header-title {
     color: white;
     font-size: 48px;
-    font-family: 'ProjectD Type Curve', 'Inter';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
+    font-weight: 700;
     font-weight: 700;
     margin-left: 20px;
     margin-bottom: 10px;
@@ -87,7 +88,7 @@ body {
 .header-count {
     color: #23F79E;
     font-size: 20px;
-    font-family: 'ProjectD Type Curve';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     margin-left: 20px;
 }
@@ -119,7 +120,7 @@ body {
 
 .command {
     color: #23F79E;
-    font-family: 'ProjectD Type Curve';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     background: rgba(35, 247, 158, 0.15);
     padding: 3px 10px;
@@ -196,7 +197,7 @@ body {
     justify-content: center;
     color: rgba(255, 255, 255, 0.7);
     font-size: 28px;
-    font-family: 'ProjectD Type Curve';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
 }
 
@@ -233,7 +234,7 @@ body {
     background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
     color: #0a0a0a;
     font-size: 14px;
-    font-family: 'ProjectD Type Curve';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     padding: 4px 10px;
     border-radius: 20px;
@@ -249,7 +250,7 @@ body {
 .music-name {
     color: white;
     font-size: 22px;
-    font-family: 'ProjectD Type Curve';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     margin-bottom: 8px;
     overflow: hidden;
@@ -299,7 +300,7 @@ body {
     background: rgba(35, 247, 158, 0.15);
     color: #23F79E;
     font-size: 18px;
-    font-family: 'ProjectD Type Curve';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     padding: 10px 20px;
     border-radius: 25px;
@@ -334,7 +335,7 @@ body {
 .plugin-watermark {
     color: rgba(255, 255, 255, 0.3);
     font-size: 18px;
-    font-family: 'ProjectD Type Curve';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     letter-spacing: 2px;
 }

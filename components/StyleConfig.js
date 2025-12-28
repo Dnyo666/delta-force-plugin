@@ -12,7 +12,7 @@ class StyleConfig {
       fontColor: '#ceb78b',
       fontShadow: 'none',
       descColor: '#eee',
-      fontFamily: 'Microsoft YaHei, SimHei, Arial, sans-serif',
+      fontFamily: "'ProjectD', 'Microsoft YaHei', sans-serif",
       titleFontSize: '50px',
       groupFontSize: '18px',
       commandFontSize: '16px',

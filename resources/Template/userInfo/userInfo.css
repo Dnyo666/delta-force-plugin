@@ -2,23 +2,23 @@
 
 /* 使用fonts目录中的字体 */
 @font-face {
-  font-family: 'ProjectD Type Curve';
-  src: url("../../../fonts/p-bold.ttf") format('truetype');
-  font-weight: 700;
+  font-family: 'ProjectD';
+  src: url("../../../fonts/p-med.ttf") format('truetype');
+  font-weight: 400;
   font-display: swap;
 }
 
 @font-face {
   font-family: 'ProjectD';
-  src: url("../../../fonts/p-med.ttf") format('truetype');
-  font-weight: 500;
+  src: url("../../../fonts/p-bold.ttf") format('truetype');
+  font-weight: 700;
   font-display: swap;
 }
 
 body {
     margin: 0;
     padding: 0;
-    font-family: 'ProjectD Type Curve', 'ProjectD', 'Inter', 'Microsoft YaHei', Arial, sans-serif;
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     background: white;
     width: 1365px !important;
     height: 640px !important;
@@ -76,7 +76,7 @@ img {
 .user-name { 
     color: white; 
     font-size: 36px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     justify-content: center;
@@ -87,7 +87,7 @@ img {
 .user-register-time, .user-last-login { 
     color: white; 
     font-size: 18px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     white-space: nowrap;
     overflow: hidden;
@@ -101,7 +101,7 @@ img {
 .account-status { 
     color: white; 
     font-size: 15px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     letter-spacing: 3px; 
     word-wrap: break-word;
@@ -134,7 +134,7 @@ img {
 .mode-title { 
     color: white; 
     font-size: 36px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     justify-content: center;
@@ -149,7 +149,7 @@ img {
 .level-info { 
     color: white; 
     font-size: 24px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     justify-content: center;
@@ -160,7 +160,7 @@ img {
 .rank-info { 
     color: white; 
     font-size: 24px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     justify-content: center;
@@ -182,7 +182,7 @@ img {
 .stat-item { 
     color: white; 
     font-size: 24px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     justify-content: center;
@@ -193,7 +193,7 @@ img {
 .stat-divider { 
     color: white; 
     font-size: 24px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     justify-content: center;
@@ -205,7 +205,7 @@ img {
 .asset-info { 
     color: white; 
     font-size: 24px; 
-    font-family: 'ProjectD Type Curve', 'Inter'; 
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
     justify-content: center;
@@ -217,7 +217,7 @@ img {
 .plugin-watermark {
     color: #858788;
     font-size: 24px;
-    font-family: 'Inter';
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 700;
     word-wrap: break-word;
     text-align: center;

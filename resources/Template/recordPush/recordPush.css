@@ -1,7 +1,7 @@
 body {
     background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
     color: #F2F2F2;
-    font-family: "Microsoft YaHei", "PingFang SC", Arial, sans-serif;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
     margin: 0;
     padding: 20px;
     width: 600px;

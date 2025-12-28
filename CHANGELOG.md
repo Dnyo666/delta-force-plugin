@@ -5,7 +5,20 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [1.2.3] - 当前版本
+## [1.2.4] - 当前版本
+
+### style（样式/格式优化）
+- 统一项目字体系统，所有模板和帮助页面使用项目自带字体（`p-med.ttf` 和 `p-bold.ttf`）
+- 在 `common/common.css` 中定义统一的 `@font-face` 字体声明
+- 更新所有模板 CSS 文件，统一使用 `ProjectD` 字体族
+- 更新帮助页面配置文件（`config.yaml`），使用项目默认字体
+- 更新 `StyleConfig.js` 默认字体配置
+
+### refactor（重构）
+- 重构字体引用系统，移除对不存在字体文件的引用
+- 统一字体命名规范，使用 `ProjectD` 作为主字体族名
+
+## [1.2.3] - 历史版本
 
 ### feat（新功能）
 - 订阅战绩功能支持返回图片展示
