@@ -11,7 +11,13 @@ body {
     min-height: 100vh;
     display: flex;
     justify-content: center;
-    padding: 24px;
+    align-items: center;
+    padding: 30px;
+}
+
+/* 隐藏 defaultLayout 中的外部页脚 */
+.container > .copyright {
+    display: none;
 }
 
 .red-record-container {
@@ -30,8 +36,22 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
+    object-position: center 15%;
     opacity: 0.15;
     z-index: 0;
+    pointer-events: none;
+}
+
+.red-record-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 280px;
+    height: 160px;
+    background: 
+        radial-gradient(ellipse 300px 200px at top left, rgba(13, 18, 23, 1) 0%, rgba(13, 18, 23, 0.95) 30%, rgba(13, 18, 23, 0.8) 50%, rgba(13, 18, 23, 0.4) 70%, transparent 85%);
+    z-index: 1;
     pointer-events: none;
 }
 
@@ -39,7 +59,7 @@ body {
 .user-header {
     position: relative; 
     z-index: 1;
-    padding: 18px 20px;
+    padding: 24px;
     background: rgba(15, 247, 150, 0.03);
     border-bottom: 1px solid rgba(15, 247, 150, 0.2);
 }
@@ -95,14 +115,11 @@ body {
     display: inline-block;
 }
 
-/* ========== 分隔线 ========== */
-/* 已移除分隔线素材 p3_lineTi.png */
-
 /* ========== 物品展示 ========== */
 .item-display-card {
     position: relative;
     z-index: 1;
-    padding: 0 24px 22px;
+    padding: 24px;
 }
 
 .item-title-box {
@@ -131,8 +148,8 @@ body {
 }
 
 .item-img-container {
-    width: 240px;
-    height: 240px;
+    width: 260px;
+    height: 260px;
     background: rgba(0,0,0,0.4);
     border: 1px solid rgba(15, 247, 150, 0.2);
     border-radius: 10px;
@@ -184,7 +201,7 @@ body {
 .records-container {
     position: relative;
     z-index: 1;
-    padding: 0 24px 26px;
+    padding: 24px;
 }
 
 .records-header {
@@ -247,7 +264,9 @@ body {
 .template-footer {
     position: relative;
     z-index: 1;
-    padding: 0 20px 16px;
+    padding: 24px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(15, 247, 150, 0.1);
 }
 
 .footer-divider {
@@ -258,7 +277,8 @@ body {
 
 .copyright-text {
     text-align: center;
-    color: #555;
-    font-size: 12px;
-    font-weight: 600;
-    }
+    color: #fff;
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.7;
+}

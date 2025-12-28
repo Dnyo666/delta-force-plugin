@@ -13,6 +13,7 @@
 - 更新所有模板 CSS 文件，统一使用 `ProjectD` 字体族
 - 更新帮助页面配置文件（`config.yaml`），使用项目默认字体
 - 更新 `StyleConfig.js` 默认字体配置
+- 优化大红收藏记录模板（`redRecord.html`）样式
 
 ### refactor（重构）
 - 重构字体引用系统，移除对不存在字体文件的引用
