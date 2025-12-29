@@ -5,7 +5,21 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [1.2.4] - 当前版本
+## [1.2.5] - 当前版本
+
+### fix（问题修复）
+- 修复 Config.js 中自动创建 config.yaml 时的错误处理
+  - 添加 config_default.yaml 存在性检查，避免文件不存在时导致插件加载失败
+  - 添加完整的错误处理机制，确保异常情况下插件仍能正常加载
+- 更新 .gitignore，排除自动从 API 生成的数据文件
+  - 添加 maps.yaml、operators.yaml、rankscore.yaml、audio_data.yaml 到忽略列表
+  - 这些文件会自动从 API 下载，无需提交到版本控制
+- 优化日志提示，确保 API Key 未配置的提示只显示一次
+  - 在 Data.js 中添加统一的 showApiKeyWarning() 函数，避免重复提示
+  - 在 Code.js 中添加统一的 showApiKeyWarning() 函数，避免重复提示
+  - 使用标志变量确保每种数据类型只提示一次，提升日志可读性
+
+## [1.2.4] - 历史版本
 
 ### style（样式/格式优化）
 - 统一项目字体系统，所有模板和帮助页面使用项目自带字体（`p-med.ttf` 和 `p-bold.ttf`）

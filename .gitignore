@@ -7,6 +7,12 @@ node_modules/
 config/config/*
 !config/config/.keep
 
+# 自动从API生成的数据文件（会自动下载，无需提交）
+config/maps.yaml
+config/operators.yaml
+config/rankscore.yaml
+config/audio_data.yaml
+
 # 自定义别名
 resources/Alias/custom/*.yaml
 

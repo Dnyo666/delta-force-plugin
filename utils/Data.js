@@ -1,4 +1,5 @@
 import Code from '../components/Code.js'
+import Config from '../components/Config.js'
 import fs from 'fs'
 import path from 'path'
 import YAML from 'yaml'
@@ -20,6 +21,20 @@ let bulletsData = null;
 let equipmentData = null;
 let battlefieldWeaponsData = null;
 let meleeWeaponsData = null;
+
+// API Key 提示标志（确保只提示一次）
+let apiKeyWarningShown = false;
+
+/**
+ * 显示 API Key 未配置的提示（只提示一次）
+ */
+function showApiKeyWarning() {
+    if (!apiKeyWarningShown) {
+        apiKeyWarningShown = true;
+        logger.warn('[Delta-Force 数据管理器] 检测到 API Key 未配置，数据文件将无法自动生成');
+        logger.warn('[Delta-Force 数据管理器] 请在 config/config.yaml 中填写 api_key 以获取数据');
+    }
+}
 
 // 本地数据文件路径
 const localMapsFile = path.join(pluginRoot, 'config', 'maps.yaml');
@@ -193,6 +208,14 @@ async function fetchAndCache(dataType) {
                     if (localData && localData.size > 0) {
                         mapData = localData;
                         logger.debug('[Delta-Force 数据管理器] 已从本地加载地图数据（降级）');
+                    } else {
+                        // 检查 API Key 是否配置
+                        const apiKey = Config.get('delta_force', 'api_key');
+                        if (!apiKey || apiKey === 'sk-xxxxxxx') {
+                            showApiKeyWarning();
+                        } else {
+                            logger.warn('[Delta-Force 数据管理器] 本地数据文件不存在，将在 API 成功时自动生成');
+                        }
                     }
                 }
             }
@@ -215,6 +238,14 @@ async function fetchAndCache(dataType) {
                     if (localData && localData.size > 0) {
                         operatorData = localData;
                         logger.debug('[Delta-Force 数据管理器] 已从本地加载干员数据（降级）');
+                    } else {
+                        // 检查 API Key 是否配置
+                        const apiKey = Config.get('delta_force', 'api_key');
+                        if (!apiKey || apiKey === 'sk-xxxxxxx') {
+                            showApiKeyWarning();
+                        } else {
+                            logger.warn('[Delta-Force 数据管理器] 本地数据文件不存在，将在 API 成功时自动生成');
+                        }
                     }
                 }
             }
@@ -247,6 +278,14 @@ async function fetchAndCache(dataType) {
                     if (localData && Object.keys(localData).length > 0) {
                         rankScoreData = localData;
                         logger.debug('[Delta-Force 数据管理器] 已从本地加载排位分数数据（降级）');
+                    } else {
+                        // 检查 API Key 是否配置
+                        const apiKey = Config.get('delta_force', 'api_key');
+                        if (!apiKey || apiKey === 'sk-xxxxxxx') {
+                            showApiKeyWarning();
+                        } else {
+                            logger.warn('[Delta-Force 数据管理器] 本地数据文件不存在，将在 API 成功时自动生成');
+                        }
                     }
                 }
             }
@@ -404,30 +443,45 @@ async function fetchAndCache(dataType) {
                     }
                     logger.debug('[Delta-Force 数据管理器] 已从本地加载音频数据（API异常降级）');
                 } else {
-                    logger.warn('[Delta-Force 数据管理器] 音频数据API异常且无本地缓存，将使用空数据');
+                    // 检查 API Key 是否配置
+                    const apiKey = Config.get('delta_force', 'api_key');
+                    if (!apiKey || apiKey === 'sk-xxxxxxx') {
+                        showApiKeyWarning();
+                    } else {
+                        logger.warn('[Delta-Force 数据管理器] 音频数据API异常且无本地缓存，将在 API 成功时自动生成');
+                    }
                 }
             }
         }
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 缓存 ${dataType} 数据失败:`, error);
         // 发生错误时尝试从本地加载
+        const apiKey = Config.get('delta_force', 'api_key');
+        const isApiKeyConfigured = apiKey && apiKey !== 'sk-xxxxxxx';
+        
         if (dataType === 'maps') {
             const localData = loadLocalData(localMapsFile);
             if (localData && localData.size > 0) {
                 mapData = localData;
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载地图数据');
+            } else if (!isApiKeyConfigured) {
+                showApiKeyWarning();
             }
         } else if (dataType === 'operators') {
             const localData = loadLocalData(localOperatorsFile);
             if (localData && localData.size > 0) {
                 operatorData = localData;
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载干员数据');
+            } else if (!isApiKeyConfigured) {
+                showApiKeyWarning();
             }
         } else if (dataType === 'rankscore') {
             const localData = loadRankScoreData(localRankScoreFile);
             if (localData && Object.keys(localData).length > 0) {
                 rankScoreData = localData;
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载排位分数数据');
+            } else if (!isApiKeyConfigured) {
+                showApiKeyWarning();
             }
         } else if (dataType === 'audiodata') {
             const localData = loadRankScoreData(localAudioDataFile);
@@ -443,6 +497,8 @@ async function fetchAndCache(dataType) {
                     audioCategoriesData = localData.categories;
                 }
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载音频数据');
+            } else if (!isApiKeyConfigured) {
+                showApiKeyWarning();
             }
         }
     }

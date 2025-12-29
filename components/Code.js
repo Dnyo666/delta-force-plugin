@@ -8,6 +8,19 @@ const httpsAgent = new https.Agent({
   rejectUnauthorized: false
 })
 
+// API Key 提示标志（确保只提示一次）
+let apiKeyWarningShown = false
+
+/**
+ * 显示 API Key 未配置的提示（只提示一次）
+ */
+function showApiKeyWarning() {
+  if (!apiKeyWarningShown) {
+    apiKeyWarningShown = true
+    logger.error('[DELTA FORCE PLUGIN] APIKey 未配置，请在 config/config.yaml 中填写')
+  }
+}
+
 // 获取 WebSocket 连接地址
 export function getWebSocketURL() {
   const apiUrlManager = getApiUrlManager()
@@ -37,7 +50,7 @@ export default class Code {
 
     if (!apiKey || apiKey === 'sk-xxxxxxx') {
       const errorMsg = 'APIKey 未配置，请联系机器人管理员。'
-      logger.error('[DELTA FORCE PLUGIN] APIKey 未配置，请在 config/config.yaml 中填写')
+      showApiKeyWarning()
       if (this.e) {
         await this.e.reply(errorMsg)
       }
@@ -190,7 +203,7 @@ export default class Code {
 
     if (!apiKey || apiKey === 'sk-xxxxxxx') {
       const errorMsg = 'APIKey 未配置，请联系机器人管理员。'
-      logger.error('[DELTA FORCE PLUGIN] APIKey 未配置，请在 config/config.yaml 中填写')
+      showApiKeyWarning()
       if (this.e) {
         await this.e.reply(errorMsg)
       }
