@@ -13,8 +13,18 @@ const userConfigPath = path.join(configDir, 'config.yaml');
 const defaultConfigPath = path.join(pluginRoot, 'config', 'config_default.yaml');
 
 if (!fs.existsSync(userConfigPath)) {
-  fs.copyFileSync(defaultConfigPath, userConfigPath);
-  logger.info('[DELTA FORCE PLUGIN] 自动创建 config.yaml 成功');
+  if (fs.existsSync(defaultConfigPath)) {
+    try {
+      fs.copyFileSync(defaultConfigPath, userConfigPath);
+      logger.info('[DELTA FORCE PLUGIN] 自动创建 config.yaml 成功');
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 自动创建 config.yaml 失败:', error);
+      // 即使复制失败，也继续加载，后续会使用默认配置
+    }
+  } else {
+    logger.warn('[DELTA FORCE PLUGIN] config_default.yaml 不存在，无法自动创建 config.yaml');
+    logger.warn('[DELTA FORCE PLUGIN] 请手动创建配置文件或确保 config_default.yaml 存在');
+  }
 }
 
 class Config {
