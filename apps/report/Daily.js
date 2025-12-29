@@ -3,6 +3,7 @@ import Code from '../../components/Code.js'
 import DataManager from '../../utils/Data.js'
 import lodash from 'lodash'
 import Config from '../../components/Config.js'
+import Render from '../../components/Render.js'
 
 export class Daily extends plugin {
   constructor(e) {
@@ -77,49 +78,91 @@ export class Daily extends plugin {
       return true
     }
 
-    let msg = '【三角洲行动日报】\n'
+    // 构建模板数据
+    const templateData = {
+      type: 'daily',
+      mode: mode,
+      userName: e.sender.card || e.sender.nickname
+    }
 
-    // --- 全面战场 ---
+    // 处理全面战场数据
     if (mpDetail) {
-      msg += '--- 全面战场 ---\n'
-      msg += `日期: ${mpDetail.recentDate}\n`
-      msg += `总对局: ${mpDetail.totalFightNum} | 胜利: ${mpDetail.totalWinNum}\n`
-      msg += `总击杀: ${mpDetail.totalKillNum}\n`
-      msg += `总得分: ${mpDetail.totalScore?.toLocaleString()}\n`
       const mostUsedOperator = DataManager.getOperatorName(mpDetail.mostUseForceType);
-      msg += `最常用干员: ${mostUsedOperator}\n`;
+      
+      // 获取干员图片路径（相对路径，模板中会自动添加 _res_path）
+      const operatorImagePath = mostUsedOperator ? utils.getOperatorImagePath(mostUsedOperator) : null;
+      
+      templateData.mpDetail = {
+        recentDate: mpDetail.recentDate || '-',
+        totalFightNum: mpDetail.totalFightNum || 0,
+        totalWinNum: mpDetail.totalWinNum || 0,
+        totalKillNum: mpDetail.totalKillNum || 0,
+        totalScore: mpDetail.totalScore?.toLocaleString() || '0',
+        mostUsedOperator: mostUsedOperator || '无',
+        operatorImage: operatorImagePath || null
+      }
 
+      // 处理最佳对局
       if (mpDetail.bestMatch) {
         const best = mpDetail.bestMatch
         const bestMatchMap = DataManager.getMapName(best.mapID);
-        msg += '--- 当日最佳 ---\n'
-        msg += `地图: ${bestMatchMap} | 时间: ${best.dtEventTime}\n`
-        msg += `结果: ${best.isWinner ? '胜利' : '失败'} | KDA: ${best.killNum}/${best.death}/${best.assist}\n`
-        msg += `得分: ${best.score?.toLocaleString()}\n`
+        
+        // 获取地图背景图路径（相对路径）
+        const getMapBgPath = (mapName, gameMode) => {
+          const modePrefix = gameMode === 'sol' ? '烽火' : '全面';
+          let normalizedMapName = mapName;
+          if (gameMode === 'mp' && normalizedMapName.includes('沟壕战')) {
+            normalizedMapName = normalizedMapName.replace(/沟壕战/g, '堑壕战');
+          }
+          const parts = normalizedMapName.split('-');
+          if (parts.length >= 2) {
+            const baseMapName = parts[0];
+            const difficulty = parts.slice(1).join('-');
+            return `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`;
+          }
+          return `imgs/map/${modePrefix}-${normalizedMapName}.jpg`;
+        };
+        
+        const mapBgPath = getMapBgPath(bestMatchMap || '未知地图', 'mp');
+        const bestOperator = DataManager.getOperatorName(best.ArmedForceId);
+        const bestOperatorImage = bestOperator ? utils.getOperatorImagePath(bestOperator) : null;
+        
+        templateData.mpDetail.bestMatch = {
+          mapID: best.mapID,
+          mapName: bestMatchMap || '未知地图',
+          mapImage: mapBgPath,
+          dtEventTime: best.dtEventTime || '-',
+          isWinner: best.isWinner || false,
+          killNum: best.killNum || 0,
+          death: best.death || 0,
+          assist: best.assist || 0,
+          score: best.score?.toLocaleString() || '0'
+        }
       }
     }
 
-    // --- 烽火地带 ---
+    // 处理烽火地带数据
     if (solDetail && solDetail.recentGainDate) {
-      if (mpDetail) msg += '\n' // 分割线
-      msg += '--- 烽火地带 ---\n'
-      msg += `日期: ${solDetail.recentGainDate}\n`
-      msg += `最近带出总价值: ${solDetail.recentGain?.toLocaleString()}\n`
-
-      const topItems = solDetail.userCollectionTop?.list
-      if (topItems && topItems.length > 0) {
-        msg += '--- 近期高价值物资 ---\n'
-        topItems.forEach(item => {
-          const price = parseFloat(item.price).toLocaleString()
-          msg += `${item.objectName}: ${price}\n`
-        })
+      const topItems = solDetail.userCollectionTop?.list || []
+      templateData.solDetail = {
+        recentGainDate: solDetail.recentGainDate || '-',
+        recentGain: solDetail.recentGain?.toLocaleString() || '0',
+        topItems: topItems.map(item => ({
+          objectName: item.objectName || '未知物品',
+          price: parseFloat(item.price || 0).toLocaleString(),
+          count: item.count || 0
+        }))
       }
     } else if (mode === 'sol' || !mode) {
-      if (mpDetail) msg += '\n';
-      msg += '--- 烽火地带 ---\n最近没有对局';
+      // 无数据但需要显示烽火地带卡片
+      templateData.solDetail = null
     }
 
-    return e.reply([segment.at(e.user_id), msg.trim()])
+    // 渲染模板
+    return await Render.render('Template/dailyReport/dailyReport', templateData, {
+      e: e,
+      retType: 'default'
+    })
   }
 
   async getYesterdayProfit(e) {
@@ -147,28 +190,29 @@ export class Daily extends plugin {
       return e.reply('暂无昨日收益数据，快去摸金吧！');
     }
 
-    const recentGain = solDetail.recentGain;
+    const recentGain = solDetail.recentGain || 0;
     const gainDate = solDetail.recentGainDate || '昨日';
-    const topItems = solDetail.userCollectionTop.list;
+    const topItems = solDetail.userCollectionTop.list || [];
 
-    let msg = `【${gainDate}收益TOP3物资】\n`;
-
-    // 处理并显示TOP物资
-    if (topItems && topItems.length > 0) {
-      topItems.forEach((item, index) => {
-        const price = parseFloat(item.price).toLocaleString();
-        msg += `${index + 1}. 【${item.objectName}*${item.count}】${price}\n`;
-      });
-
-      // 添加总收益
-      const gainPrefix = recentGain >= 0 ? '+' : '';
-      msg += `\n${gainDate}总收益: ${gainPrefix}${recentGain?.toLocaleString()}`;
-    } else {
-      msg += '昨日未带出任何高价值物资\n';
-      msg += `${gainDate}总收益: ${recentGain?.toLocaleString()}`;
+    // 构建模板数据
+    const templateData = {
+      type: 'profit',
+      profitData: {
+        gainDate: gainDate,
+        recentGain: recentGain,
+        topItems: topItems.slice(0, 3).map(item => ({
+          objectName: item.objectName || '未知物品',
+          price: parseFloat(item.price || 0).toLocaleString(),
+          count: item.count || 0
+        }))
+      }
     }
 
-    return e.reply([segment.at(e.user_id), msg.trim()]);
+    // 渲染模板
+    return await Render.render('Template/dailyReport/dailyReport', templateData, {
+      e: e,
+      retType: 'default'
+    });
   }
 
   async toggleDailyPush(e) {

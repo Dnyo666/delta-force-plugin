@@ -71,12 +71,6 @@ class HelpConfig {
     return this.cache
   }
 
-  /**
-   * 异步重新加载配置（用于文件监听）
-   */
-  async reloadConfig() {
-    return this.loadConfigSync()
-  }
 
   /**
    * 获取帮助配置（每次调用时尝试重新加载）
@@ -115,10 +109,10 @@ class HelpConfig {
    */
   watchFile() {
     if (fs.existsSync(this.helpYamlPath)) {
-      fs.watchFile(this.helpYamlPath, { interval: 1000 }, async (curr, prev) => {
+      fs.watchFile(this.helpYamlPath, { interval: 1000 }, (curr, prev) => {
         if (curr.mtimeMs !== prev.mtimeMs) {
           logger.debug(`[DELTA FORCE PLUGIN] help.yaml 文件变动，重新加载`)
-          await this.reloadConfig()
+          this.loadConfigSync()
         }
       })
       logger.info('[DELTA FORCE PLUGIN] 已启用 help.yaml 文件监听，修改文件后会自动重新加载')

@@ -7,6 +7,9 @@
 
 ## [1.2.5] - 当前版本
 
+### style（样式/格式优化）
+- 增加周报模板（`weeklyReport.html` 和 `weeklyReport.css`）
+
 ### fix（问题修复）
 - 修复 Config.js 中自动创建 config.yaml 时的错误处理
   - 添加 config_default.yaml 存在性检查，避免文件不存在时导致插件加载失败
