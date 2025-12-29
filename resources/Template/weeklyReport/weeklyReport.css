@@ -1,0 +1,472 @@
+body {
+    background: #0b0f13 !important;
+    color: #F2F2F2 !important;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 680px !important;
+    height: auto !important;
+    min-height: 400px !important;
+    transform: none !important;
+    transform-origin: unset !important;
+    overflow: visible !important;
+}
+
+/* 覆盖 defaultLayout 中的 container 样式 */
+#container.container {
+    width: 100% !important;
+    padding: 0 !important;
+    background-size: initial !important;
+    height: auto !important;
+}
+
+.container {
+    position: relative;
+    width: 680px;
+    min-height: 400px;
+    margin: 0 auto;
+    background: transparent;
+    overflow: visible;
+}
+
+/* 背景图片 - 确保在最底层，不会覆盖内容 */
+.bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.25;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 0;
+}
+
+.bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(11, 15, 19, 0.96) 0%, rgba(13, 18, 23, 0.96) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* 确保所有内容在背景之上 */
+.header {
+    position: relative;
+    z-index: 2;
+}
+
+.content {
+    position: relative;
+    z-index: 2;
+}
+
+.template-footer {
+    position: relative;
+    z-index: 2;
+}
+
+.header {
+    margin-bottom: 20px;
+    padding: 15px 30px;
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #0FF796, transparent) 1;
+    position: relative;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    position: relative;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.game-logo {
+    height: 45px;
+    width: auto;
+    opacity: 0.95;
+    filter: drop-shadow(0 0 8px rgba(15, 247, 150, 0.3));
+    flex-shrink: 0;
+}
+
+.title {
+    position: absolute;
+    left: 65%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #0FF796, #00d4aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.header-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.user-name {
+    color: #aaa;
+    font-weight: 300;
+}
+
+.report-date {
+    color: rgba(15, 247, 150, 0.8);
+    font-weight: 500;
+    letter-spacing: 1px;
+}
+
+.header-meta .user-name::after {
+    content: '·';
+    margin-left: 12px;
+    color: rgba(15, 247, 150, 0.4);
+}
+
+.content {
+    margin-bottom: 15px;
+    padding: 0 30px;
+}
+
+/* 报告网格布局 - 上下排列 */
+.report-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+}
+
+/* 模式卡片 - 完全移除高度限制，允许内容完整显示 */
+.mode-card {
+    background: linear-gradient(135deg, rgba(44, 44, 50, 0.98), rgba(35, 35, 40, 0.98));
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    overflow: visible;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    height: fit-content;
+    min-height: auto;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 12px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-bottom: 2px solid rgba(15, 247, 150, 0.3);
+    position: relative;
+    overflow: hidden;
+    min-height: 36px;
+    border-radius: 12px 12px 0 0;
+}
+
+.card-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(15, 247, 150, 0.2), rgba(15, 247, 150, 0.05));
+    z-index: 0;
+    border-radius: 12px 12px 0 0;
+}
+
+.card-header > * {
+    position: relative;
+    z-index: 1;
+}
+
+.mode-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    letter-spacing: 1px;
+}
+
+.card-body {
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.stats-overview.stats-three-col {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+}
+
+.stat-item.full-width {
+    grid-column: 1 / -1;
+}
+
+.stat-item.highlight-large {
+    background: linear-gradient(90deg, rgba(15, 247, 150, 0.15), rgba(15, 247, 150, 0.05));
+}
+
+.stat-label {
+    color: #999;
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+}
+
+.stat-value {
+    color: #F2F2F2;
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.stat-value.highlight {
+    color: #0FF796;
+    font-size: 16px;
+}
+
+.stat-detail {
+    font-size: 10px;
+    color: #aaa;
+    margin-top: 2px;
+    line-height: 1.3;
+}
+
+/* 物资列表 - 移除高度限制 */
+.items-section {
+    margin-top: 2px;
+}
+
+.items-title {
+    font-size: 11px;
+    color: #0FF796;
+    font-weight: 600;
+    margin-bottom: 5px;
+    letter-spacing: 1px;
+    text-align: center;
+}
+
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: visible;
+}
+
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 6px;
+    overflow: visible;
+}
+
+.item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    font-size: 11px;
+    gap: 10px;
+}
+
+.item-tag {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 4px;
+    text-align: center;
+}
+
+.item-tag .item-name {
+    color: #F2F2F2;
+    font-weight: 500;
+    font-size: 11px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.item-tag .item-count {
+    color: #0FF796;
+    font-weight: 700;
+    font-size: 12px;
+}
+
+.item-name {
+    color: #F2F2F2;
+    flex: 1;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.item-price {
+    color: #0FF796;
+    font-weight: 700;
+    font-size: 12px;
+    flex-shrink: 0;
+}
+
+/* 干员统计网格 */
+.operator-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+}
+
+.operator-stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 8px 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    text-align: center;
+}
+
+.operator-stat-item .stat-label {
+    color: #999;
+    font-weight: 500;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.operator-stat-item .stat-value {
+    color: #0FF796;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* 队友卡片 - 网格布局 */
+.teammates-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    overflow: visible;
+}
+
+.teammate-card {
+    display: flex;
+    gap: 10px;
+    padding: 10px;
+    background: linear-gradient(135deg, rgba(44, 44, 50, 0.6), rgba(35, 35, 40, 0.6));
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.teammate-avatar {
+    flex-shrink: 0;
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid rgba(15, 247, 150, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.teammate-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.teammate-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.teammate-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #0FF796;
+    margin-bottom: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.teammate-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.teammate-stat {
+    font-size: 10px;
+    color: #F2F2F2;
+    line-height: 1.4;
+}
+
+/* 隐藏 defaultLayout 中的外部页脚 */
+.container > .copyright {
+    display: none;
+}
+
+/* 页脚 */
+.template-footer {
+    position: relative;
+    z-index: 2;
+    padding: 12px 30px;
+    background: rgba(15, 247, 150, 0.02);
+    border-top: 1px solid rgba(15, 247, 150, 0.1);
+    margin-top: 12px;
+}
+
+.copyright-text {
+    text-align: center;
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 300;
+    letter-spacing: 1px;
+    opacity: 0.6;
+}

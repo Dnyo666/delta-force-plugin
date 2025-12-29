@@ -46,17 +46,16 @@ class StyleConfig {
       if (!fs.existsSync(themeDir)) {
         if (theme !== 'default') {
           logger.warn(`[DELTA FORCE PLUGIN] 主题目录不存在: ${theme}，使用 default 主题`)
-          theme = 'default'
-          const defaultThemeDir = path.join(this.imgsDir, 'default')
-          const defaultStyleYamlPath = path.join(defaultThemeDir, 'config.yaml')
-          if (!fs.existsSync(defaultThemeDir)) {
-            logger.warn(`[DELTA FORCE PLUGIN] default 主题目录也不存在`)
-            return { style: { ...this.defaultStyle }, lastModified: null }
-          }
           return this.loadConfigSync('default')
         }
         logger.warn(`[DELTA FORCE PLUGIN] default 主题目录不存在`)
-        return { style: { ...this.defaultStyle }, lastModified: null }
+        const defaultConfig = {
+          style: { ...this.defaultStyle },
+          lastModified: null,
+          themeDir: theme
+        }
+        this.cache.set(theme, defaultConfig)
+        return defaultConfig
       }
       
       // 检查文件是否真的改变了
@@ -119,13 +118,6 @@ class StyleConfig {
     return defaultConfig
   }
 
-  /**
-   * 异步重新加载配置（用于文件监听）
-   * @param {string} theme - 主题名称
-   */
-  async reloadConfig(theme = 'default') {
-    return this.loadConfigSync(theme)
-  }
 
   /**
    * 获取样式配置（每次调用时尝试重新加载）
