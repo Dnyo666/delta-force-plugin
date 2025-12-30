@@ -6,6 +6,14 @@ import Config from '../../components/Config.js'
 import Render from '../../components/Render.js'
 
 export class Weekly extends plugin {
+    // URL解码函数
+    decodeUserInfo(str) {
+        try {
+            return decodeURIComponent(str || '')
+        } catch (e) {
+            return str || ''
+        }
+    }
     constructor(e) {
         super({
             name: '三角洲周报',
@@ -80,6 +88,32 @@ export class Weekly extends plugin {
             return e.reply('暂无周报数据，不打两把吗？')
         }
 
+        // --- 获取用户信息（包括头像） ---
+        let userName = e.sender.card || e.sender.nickname
+        let userAvatar = ''
+        try {
+            const personalInfoRes = await this.api.getPersonalInfo(token)
+            if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
+                const { userData, careerData } = personalInfoRes.data
+                const { roleInfo } = personalInfoRes
+
+                // 获取用户名（优先使用游戏内名称）
+                const gameUserName = this.decodeUserInfo(userData?.charac_name || roleInfo?.charac_name)
+                if (gameUserName) {
+                    userName = gameUserName
+                }
+
+                // 获取用户头像
+                userAvatar = this.decodeUserInfo(userData?.picurl || roleInfo?.picurl)
+                if (userAvatar && /^[0-9]+$/.test(userAvatar)) {
+                    userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${userAvatar}.webp`
+                }
+            }
+        } catch (error) {
+            // 获取个人信息失败，使用默认值
+            logger.debug(`[Weekly] 获取用户信息失败:`, error)
+        }
+
         // --- 提取所有队友的OpenID并获取昵称 ---
         const allTeammateOpenIDs = new Set();
         if (solData?.teammates) {
@@ -149,10 +183,21 @@ export class Weekly extends plugin {
             mpData.mostUsedOperator = DataManager.getOperatorName(mpData.max_inum_DeployArmedForceType);
         }
 
+        // 如果没有提供日期，使用当前日期（格式：YYYYMMDD）
+        let displayDate = date
+        if (!displayDate) {
+            const now = new Date()
+            const year = now.getFullYear()
+            const month = String(now.getMonth() + 1).padStart(2, '0')
+            const day = String(now.getDate()).padStart(2, '0')
+            displayDate = `${year}${month}${day}`
+        }
+
         // --- 构建模板数据 ---
         const templateData = {
-            userName: e.sender.card || e.sender.nickname,
-            date: date || ''
+            userName: userName,
+            userAvatar: userAvatar,
+            date: displayDate
         };
 
         if (solData) {

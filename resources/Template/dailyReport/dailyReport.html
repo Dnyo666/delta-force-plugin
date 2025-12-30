@@ -17,18 +17,29 @@
                 <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
             </div>
             <div class="title">{{if type === 'profit'}}{{profitData.gainDate || '昨日'}}收益TOP3物资{{else}}日报{{/if}}</div>
-            {{if type === 'daily'}}
-            <div class="header-meta">
-                {{if userName}}
-                <span class="user-name">{{userName}}</span>
+            <div class="header-right">
+                {{if userAvatar}}
+                <div class="user-avatar-wrapper">
+                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" onerror="this.style.display='none'; this.parentElement.style.display='none';" />
+                </div>
                 {{/if}}
-                {{if mpDetail && mpDetail.recentDate}}
-                <span class="report-date">{{mpDetail.recentDate}}</span>
-                {{else if solDetail && solDetail.recentGainDate}}
-                <span class="report-date">{{solDetail.recentGainDate}}</span>
-                {{/if}}
+                <div class="header-meta">
+                    {{if userName}}
+                    <span class="user-name">{{userName}}</span>
+                    {{/if}}
+                    {{if type === 'daily'}}
+                        {{if mpDetail && mpDetail.recentDate}}
+                        <span class="report-date">{{mpDetail.recentDate}}</span>
+                        {{else if solDetail && solDetail.recentGainDate}}
+                        <span class="report-date">{{solDetail.recentGainDate}}</span>
+                        {{/if}}
+                    {{else if type === 'profit'}}
+                        {{if profitData && profitData.gainDate}}
+                        <span class="report-date">{{profitData.gainDate}}</span>
+                        {{/if}}
+                    {{/if}}
+                </div>
             </div>
-            {{/if}}
         </div>
     </div>
 
@@ -161,8 +172,15 @@
                         <div class="items-list">
                             {{each solDetail.topItems item}}
                             <div class="item-row">
-                                <span class="item-name">{{item.objectName}}</span>
-                                <span class="item-price">{{item.price}}</span>
+                                {{if item.imageUrl}}
+                                <div class="item-image-wrapper">
+                                    <img class="item-image" src="{{item.imageUrl}}" alt="{{item.objectName}}" onerror="this.style.display='none'" />
+                                </div>
+                                {{/if}}
+                                <div class="item-info">
+                                    <span class="item-name">{{item.objectName}}</span>
+                                    <span class="item-price">{{item.price}}</span>
+                                </div>
                             </div>
                             {{/each}}
                         </div>

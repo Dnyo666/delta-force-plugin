@@ -1,5 +1,9 @@
 import Calculate from '../../utils/Calculate.js'
 import DataManager from '../../utils/Data.js'
+import HelpConfig from '../../components/HelpConfig.js'
+import StyleConfig from '../../components/StyleConfig.js'
+import Render from '../../components/Render.js'
+import _ from 'lodash'
 
 // 会话状态管理
 const userSessions = new Map()
@@ -79,7 +83,7 @@ export class InteractiveCalculator extends plugin {
           fnc: 'quickDamageCalculation'
         },
         {
-          reg: '^(#三角洲|\\^)(计算帮助|help)$',
+          reg: '^(#三角洲|\\^)(计算帮助)$',
           fnc: 'showHelp'
         },
         {
@@ -209,55 +213,251 @@ export class InteractiveCalculator extends plugin {
       }
 
   /**
-   * 显示帮助信息
+   * 处理帮助组图标和权限（公共方法）
+   * @param {Object} group - 帮助组对象
+   * @param {boolean} checkPermission - 是否检查权限（默认true）
+   * @returns {Object|null} - 处理后的组对象，如果无权限则返回null
    */
-  async showHelp() {
-    const helpMsg = [
-      '【三角洲计算器使用帮助】',
-      '',
-      '伤害计算: ^伤害计算',
-      '战备计算: ^战备计算',
-      '维修计算: ^维修计算',
-      '计算映射表: ^计算映射表',
-      '取消计算: ^取消计算',
-      '',
-      '快捷指令:',
-      '修甲 装备名 剩余/当前 局内/局外',
-      '示例: 修甲 fs 0/100 局内',
-      '',
-      '伤害 模式 武器 子弹 护甲 距离 次数 部位',
-      '示例: 伤害 烽火 腾龙 dvc12 dich-1:泰坦 50 6 头:2,胸:4',
-      '',
-      '模式支持: sol/烽火/摸金, mp/战场/全面',
-      '支持模糊搜索: 武器、子弹、护甲名称',
-      '基于繁星攻略组算法，确保计算精确。'
-    ].join('\n')
-
-    await this.e.reply(helpMsg)
-        return true
-      }
+  processHelpGroup(group, checkPermission = true) {
+    // 权限检查：如果是masterOnly组且用户不是master，则返回null
+    if (checkPermission && group.masterOnly && !this.e.isMaster) {
+      return null
+    }
+    
+    // 处理组内的图标
+    if (group.list && Array.isArray(group.list)) {
+      _.forEach(group.list, (help) => {
+        let icon = help.icon * 1
+        if (!icon) {
+          help.css = 'display:none'
+        } else {
+          let x = (icon - 1) % 10
+          let y = (icon - x - 1) / 10
+          help.css = `background-position:-${x * 50}px -${y * 50}px`
+        }
+      })
+    }
+    
+    return group
+  }
 
   /**
-   * 显示计算映射表
+   * 处理两列布局分配（公共方法）
+   * @param {Array} sortedGroups - 已排序的组数组
+   * @param {boolean} twoColumnLayout - 是否启用两列布局
+   * @returns {Object} - 包含 leftGroups, rightGroups, topFullWidthGroups, bottomFullWidthGroups, helpGroup
+   */
+  distributeGroupsToColumns(sortedGroups, twoColumnLayout) {
+    let leftGroups = []
+    let rightGroups = []
+    let topFullWidthGroups = []
+    let bottomFullWidthGroups = []
+    let helpGroup = []
+    
+    if (twoColumnLayout) {
+      // 分离出需要跨列显示的组
+      const normalGroups = []
+      sortedGroups.forEach((group) => {
+        if (group.fullWidth) {
+          // 根据 order 分配到顶部或底部
+          if ((group.order || 999) < 50) {
+            topFullWidthGroups.push(group)
+          } else {
+            bottomFullWidthGroups.push(group)
+          }
+        } else if (group.column === 'left') {
+          leftGroups.push(group)
+        } else if (group.column === 'right') {
+          rightGroups.push(group)
+        } else {
+          normalGroups.push(group)
+        }
+      })
+      
+      // 对于未指定列位置的组，智能平衡分配到左右两列
+      if (normalGroups.length > 0) {
+        // 计算总组数和目标分配
+        const totalGroups = leftGroups.length + rightGroups.length + normalGroups.length
+        const targetLeftCount = Math.ceil(totalGroups / 2)
+        const targetRightCount = Math.floor(totalGroups / 2)
+        
+        // 计算每列还需要多少个组
+        let leftNeeded = Math.max(0, targetLeftCount - leftGroups.length)
+        let rightNeeded = Math.max(0, targetRightCount - rightGroups.length)
+        
+        // 如果某个列已经超过目标，则全部给另一个列
+        if (leftGroups.length >= targetLeftCount) {
+          rightGroups.push(...normalGroups)
+        } else if (rightGroups.length >= targetRightCount) {
+          leftGroups.push(...normalGroups)
+        } else {
+          // 按需分配，优先分配给需要更多的列
+          normalGroups.forEach((group) => {
+            if (leftNeeded > rightNeeded) {
+              leftGroups.push(group)
+              leftNeeded--
+            } else {
+              rightGroups.push(group)
+              rightNeeded--
+            }
+          })
+        }
+      }
+    } else {
+      // 单列布局：所有组放在 helpGroup 中
+      helpGroup = sortedGroups
+    }
+    
+    return {
+      leftGroups,
+      rightGroups,
+      topFullWidthGroups,
+      bottomFullWidthGroups,
+      helpGroup
+    }
+  }
+
+  /**
+   * 显示帮助信息 - 使用模板渲染
+   */
+  async showHelp() {
+    const calculatorHelpList = HelpConfig.getCalculatorHelpList()
+    const calculatorHelpCfg = HelpConfig.getCalculatorHelpCfg()
+    const helpCfg = HelpConfig.getHelpCfg()
+
+    let leftGroups = []
+    let rightGroups = []
+    let topFullWidthGroups = []
+    let bottomFullWidthGroups = []
+    let helpGroup = []
+
+    // 检查是新格式（对象）还是旧格式（数组）
+    if (calculatorHelpList && typeof calculatorHelpList === 'object' && !Array.isArray(calculatorHelpList)) {
+      // 新格式：从 left/right/fullWidth 中获取组
+      // 处理 fullWidth 组，分为顶部和底部两部分
+      if (calculatorHelpList.fullWidth && Array.isArray(calculatorHelpList.fullWidth)) {
+        const sorted = calculatorHelpList.fullWidth
+          .map(g => this.processHelpGroup(g))
+          .filter(g => g !== null)
+          .sort((a, b) => (a.order || 999) - (b.order || 999))
+        // order < 50 的显示在顶部，order >= 50 的显示在底部
+        sorted.forEach(group => {
+          if ((group.order || 999) < 50) {
+            topFullWidthGroups.push(group)
+          } else {
+            bottomFullWidthGroups.push(group)
+          }
+        })
+      }
+
+      // 处理 left 组
+      if (calculatorHelpList.left && Array.isArray(calculatorHelpList.left)) {
+        const sorted = calculatorHelpList.left
+          .map(g => this.processHelpGroup(g))
+          .filter(g => g !== null)
+          .sort((a, b) => (a.order || 999) - (b.order || 999))
+        leftGroups.push(...sorted)
+      }
+
+      // 处理 right 组
+      if (calculatorHelpList.right && Array.isArray(calculatorHelpList.right)) {
+        const sorted = calculatorHelpList.right
+          .map(g => this.processHelpGroup(g))
+          .filter(g => g !== null)
+          .sort((a, b) => (a.order || 999) - (b.order || 999))
+        rightGroups.push(...sorted)
+      }
+
+      // 合并所有组用于单列布局
+      helpGroup = [...topFullWidthGroups, ...bottomFullWidthGroups, ...leftGroups, ...rightGroups]
+    } else {
+      // 旧格式：兼容原有数组格式
+      _.forEach(calculatorHelpList, (group) => {
+        const processed = this.processHelpGroup(group)
+        if (processed) {
+          helpGroup.push(processed)
+        }
+      })
+
+      // 如果启用两列布局，使用公共方法分配
+      if (calculatorHelpCfg.twoColumnLayout) {
+        const distribution = this.distributeGroupsToColumns(helpGroup, true)
+        leftGroups = distribution.leftGroups
+        rightGroups = distribution.rightGroups
+        topFullWidthGroups = distribution.topFullWidthGroups
+        bottomFullWidthGroups = distribution.bottomFullWidthGroups
+        helpGroup = [] // 两列布局时 helpGroup 为空
+      }
+    }
+
+    // 合并配置，calculatorHelpCfg 优先级更高
+    const finalCfg = { ...helpCfg, ...calculatorHelpCfg }
+
+    let themeData = await this.getThemeData(finalCfg, helpCfg) || {}
+    return await Render.render('help/index.html', {
+      helpCfg: finalCfg,
+      helpGroup,
+      leftGroups,
+      rightGroups,
+      topFullWidthGroups,
+      bottomFullWidthGroups,
+      ...themeData,
+      themePath: themeData.themePath || 'default',
+      element: 'default'
+    }, { e: this.e, scale: 1.6 })
+  }
+
+  /**
+   * 显示计算映射表 - 使用合并消息转发
    */
   async showMappingTable() {
     const armors = this.getArmorList()
     const hitParts = ['头部', '胸部', '腹部', '大臂', '小臂', '大腿', '小腿']
     
-    // 构建转发消息数组
+    // 构建转发消息
     const forwardMsg = []
     
     // 游戏模式映射
-    let modeMsg = '━━━ 游戏模式 ━━━\n'
-    modeMsg += '烽火地带: sol, 烽火, 摸金, 烽火地带\n'
-    modeMsg += '全面战场: mp, 战场, 全面, 大战场, 全面战场'
+    let gameModeMsg = '【游戏模式映射】\n'
+    gameModeMsg += '烽火地带 - sol / 烽火 / 烽火地带 / 摸金\n'
+    gameModeMsg += '全面战场 - mp / 战场 / 全面 / 大战场 / 全面战场'
     forwardMsg.push({
-      message: modeMsg,
+      message: gameModeMsg,
       nickname: Bot.nickname,
       user_id: Bot.uin
     })
     
-    // 护甲头盔列表 - 分组显示
+    // 命中部位映射
+    const partDescMap = {
+      '头部': '简写: 头',
+      '胸部': '简写: 胸',
+      '腹部': '简写: 腹'
+    }
+    let partMsg = '【命中部位映射】\n'
+    hitParts.forEach((part, index) => {
+      const desc = partDescMap[part] || '不支持简写，请使用序号'
+      partMsg += `${index + 1}. ${part} - ${desc}\n`
+    })
+    forwardMsg.push({
+      message: partMsg.trim(),
+      nickname: Bot.nickname,
+      user_id: Bot.uin
+    })
+    
+    // 使用示例
+    let exampleMsg = '【使用示例】\n'
+    exampleMsg += '护甲组合 - 序号: 2:5 (头盔2+护甲5)\n'
+    exampleMsg += '护甲组合 - 简写: dich-1:fs 或 gn:泰坦\n'
+    exampleMsg += '部位分配 - 序号: 1:2,2:4 (头部2发+胸部4发)\n'
+    exampleMsg += '部位分配 - 简写: 头:2,胸:4\n'
+    exampleMsg += '注意事项: 四肢部位不支持简写，请使用序号'
+    forwardMsg.push({
+      message: exampleMsg,
+      nickname: Bot.nickname,
+      user_id: Bot.uin
+    })
+    
+    // 护甲头盔列表 - 按等级分组并显示
     const armorGroups = {}
     armors.forEach((armor, index) => {
       const level = armor.protectionLevel
@@ -266,60 +466,30 @@ export class InteractiveCalculator extends plugin {
       }
       const isHelmet = this.isHelmet(armor)
       const type = isHelmet ? '头盔' : '护甲'
-      armorGroups[level].push(`${index + 2}. ${armor.name} (${type})`)
+      armorGroups[level].push({
+        index: index + 2,
+        name: armor.name,
+        type: type
+      })
     })
     
+    // 按1-6级顺序显示装备
     for (let level = 1; level <= 6; level++) {
       if (armorGroups[level] && armorGroups[level].length > 0) {
-        let levelMsg = `━━━ ${level}级装备 ━━━\n`
-        levelMsg += armorGroups[level].join('\n')
+        let armorMsg = `━━━ ${level}级装备 ━━━\n`
+        armorGroups[level].forEach(item => {
+          armorMsg += `${item.index}. ${item.name} - ${item.type} (防护等级 ${level})\n`
+        })
         forwardMsg.push({
-          message: levelMsg,
+          message: armorMsg.trim(),
           nickname: Bot.nickname,
           user_id: Bot.uin
         })
       }
     }
     
-    // 部位映射
-    let partMsg = '━━━ 命中部位 ━━━\n'
-    hitParts.forEach((part, index) => {
-      // 四肢不支持简写，避免冲突
-      if (part === '头部') {
-        partMsg += `${index + 1}. ${part} (简写: 头)\n`
-      } else if (part === '胸部') {
-        partMsg += `${index + 1}. ${part} (简写: 胸)\n`
-      } else if (part === '腹部') {
-        partMsg += `${index + 1}. ${part} (简写: 腹)\n`
-      } else {
-        partMsg += `${index + 1}. ${part}\n`
-      }
-    })
-    forwardMsg.push({
-      message: partMsg,
-      nickname: Bot.nickname,
-      user_id: Bot.uin
-    })
-    
-    // 使用示例
-    let exampleMsg = '━━━ 使用示例 ━━━\n'
-    exampleMsg += '护甲组合:\n'
-    exampleMsg += '• 序号: 2:5 (头盔2+护甲5)\n'
-    exampleMsg += '• 简写: dich-1:fs\n'
-    exampleMsg += '• 简写: gn:泰坦\n\n'
-    exampleMsg += '部位分配:\n'
-    exampleMsg += '• 序号: 1:2,2:4 (头部2发+胸部4发)\n'
-    exampleMsg += '• 简写: 头:2,胸:4\n\n'
-    exampleMsg += '注意: 四肢部位不支持简写，请使用序号'
-    forwardMsg.push({
-      message: exampleMsg,
-      nickname: Bot.nickname,
-      user_id: Bot.uin
-    })
-
     // 发送转发消息
     await this.e.reply(await Bot.makeForwardMsg(forwardMsg))
-    return true
   }
 
   /**
@@ -2381,5 +2551,108 @@ export class InteractiveCalculator extends plugin {
     }
 
     await this.e.reply([segment.at(this.e.user_id), '\n', msg])
+  }
+
+  /**
+   * 获取主题数据 - 用于模板渲染
+   */
+  async getThemeData(diyStyle, sysStyle) {
+    const helpConfig = { ...sysStyle, ...diyStyle }
+    const colCount = Math.min(5, Math.max(parseInt(helpConfig?.colCount) || 3, 2))
+    const colWidth = Math.min(600, Math.max(200, parseInt(helpConfig?.colWidth) || 350))
+    const twoColumnLayout = helpConfig?.twoColumnLayout === true
+    
+    // 获取主题名称，默认为 'default'
+    const themeName = helpConfig?.themeName || 'default'
+    
+    // 两侧空白区域（每侧15px，总共30px）
+    const sidePadding = 30
+    // 两列布局的间距
+    const columnGap = 20
+    
+    let width
+    if (twoColumnLayout) {
+      // 两列布局：每个表格宽度 = 列数 * 列宽，总宽度 = 两个表格宽度 + 中间间距 + 两侧空白
+      const tableWidth = colCount * colWidth
+      width = tableWidth * 2 + columnGap + sidePadding
+    } else {
+      // 单列布局：总宽度 = 两侧空白区域 + (列数 * 列宽)
+      width = colCount * colWidth + sidePadding
+    }
+    
+    // 从 StyleConfig 获取指定主题的样式配置（支持热重载）
+    const style = StyleConfig.getStyle(themeName)
+    const themePath = StyleConfig.getThemePath(themeName)
+    
+    // 构建绝对路径（Puppeteer 渲染时相对路径的 base URL 不可靠）
+    const path = await import('node:path')
+    const { pluginRoot } = await import('../../model/path.js')
+    
+    const bgPath = path.join(pluginRoot, 'resources', 'help', 'imgs', themePath, 'bg.jpg')
+    const iconPath = path.join(pluginRoot, 'resources', 'help', 'imgs', themePath, 'icon.png')
+    
+    const theme = {
+      main: bgPath,
+      bg: bgPath,
+      icon: iconPath,
+      style: style,
+      themePath: themePath
+    }
+    const themeStyle = theme.style || {}
+    const ret = []
+    
+    // body 样式设置（宽度、字体、背景图）
+    const bodyFontFamily = themeStyle.fontFamily ?? diyStyle.fontFamily ?? sysStyle.fontFamily ?? 'Microsoft YaHei, SimHei, Arial, sans-serif'
+    ret.push(`body{width:${width}px;font-family:${bodyFontFamily};background-image:url("${theme.bg}");background-repeat:no-repeat;background-size:cover;}`)
+    
+    // container 样式设置（宽度、背景图）
+    ret.push(`.container{width:${width}px;background-image:url("${theme.main}");background-position:top left;background-repeat:no-repeat;background-size:100% auto;}`)
+    
+    // help-icon 样式设置（背景图）
+    ret.push(`.help-icon{background-image:url("${theme.icon}");background-size:500px auto;}`)
+    
+    // 表格宽度
+    ret.push(`.help-table .td,.help-table .th{width:${100 / colCount}%}`)
+    
+    // 如果启用两列布局，添加相应的CSS
+    if (twoColumnLayout) {
+      ret.push(`
+        .help-content-wrapper{display:flex;gap:${columnGap}px;width:100%;}
+        .help-column{flex:1;min-width:0;}
+        .help-column .cont-box{width:100%;}
+      `)
+    }
+    
+    const css = function (sel, cssProp, key, def, fn) {
+      let val = themeStyle[key] ?? diyStyle[key] ?? sysStyle[key] ?? def
+      if (fn) {
+        val = fn(val)
+      }
+      ret.push(`${sel}{${cssProp}:${val}}`)
+    }
+    
+    // 其他样式设置
+    css('.head-box .title', 'font-size', 'titleFontSize', '50px')
+    css('.help-group', 'font-size', 'groupFontSize', '18px')
+    css('.help-title', 'font-size', 'commandFontSize', '16px')
+    css('.help-desc', 'font-size', 'descFontSize', '13px')
+    css('.help-table .td,.help-table .th', 'font-size', 'tableFontSize', '14px')
+    
+    // 颜色和样式设置
+    css('.help-title,.help-group', 'color', 'fontColor', '#ceb78b')
+    css('.help-title,.help-group', 'text-shadow', 'fontShadow', 'none')
+    css('.help-desc', 'color', 'descColor', '#eee')
+    css('.cont-box', 'background', 'contBgColor', 'rgba(43, 52, 61, 0.8)')
+    css('.cont-box', 'backdrop-filter', 'contBgBlur', 3, (n) => diyStyle.bgBlur === false ? 'none' : `blur(${n}px)`)
+    css('.help-group', 'background', 'headerBgColor', 'rgba(34, 41, 51, .4)')
+    css('.help-table .tr:nth-child(odd)', 'background', 'rowBgColor1', 'rgba(34, 41, 51, .2)')
+    css('.help-table .tr:nth-child(even)', 'background', 'rowBgColor2', 'rgba(34, 41, 51, .4)')
+    
+    const finalStyle = ret.join('\n')
+    return {
+      style: `<style>${finalStyle}</style>`,
+      colCount,
+      themePath
+    }
   }
 }

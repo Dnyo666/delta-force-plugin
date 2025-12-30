@@ -1,0 +1,70 @@
+# 计算器帮助配置
+calculatorHelpCfg:
+  # 基本配置
+  title: "三角洲计算器 帮助"
+  subTitle: "DeltaForce-Plugin Calculator"
+  
+  # 样式主题配置
+  themeName: "default" # 主题名称，对应 resources/help/imgs/ 下的文件夹名称（如 default、dark、light 等）
+  
+  # 布局配置
+  colWidth: 420        # 列宽度（像素）
+  colCount: 2          # 列数
+  twoColumnLayout: false # 是否使用两列大表格布局（单列布局）
+  bgBlur: true         # 是否启用背景模糊效果
+
+# 计算器帮助列表
+calculatorHelpList:
+  fullWidth:
+    - order: 1
+      group: "三角洲计算器使用帮助"
+    - order: 2
+      group: "所有命令统一使用 ^ 前缀，例如 ^计算帮助"
+  
+  left:
+    - order: 1
+      group: "基础功能"
+      list:
+        - icon: 61
+          title: "^伤害计算"
+          desc: "启动伤害计算对话模式"
+        - icon: 33
+          title: "^战备计算"
+          desc: "启动战备计算对话模式"
+        - icon: 51
+          title: "^维修计算"
+          desc: "启动维修计算对话模式"
+        - icon: 48
+          title: "^取消计算"
+          desc: "取消当前计算会话"
+    - order: 2
+      group: "快捷指令"
+      list:
+        - icon: 51
+          title: "^修甲 装备名 剩余/当前 局内/局外"
+          desc: "快捷维修计算，示例：修甲 fs 0/100 局内"
+        - icon: 61
+          title: "^伤害 模式 武器 子弹 护甲 距离 次数 部位"
+          desc: "快捷伤害计算，示例：伤害 烽火 腾龙 dvc12 dich-1:泰坦 50 6 头:2,胸:4"
+    - order: 3
+      group: "模式支持"
+      list:
+        - icon: 78
+          title: "烽火地带"
+          desc: "sol / 烽火 / 烽火地带 / 摸金"
+        - icon: 78
+          title: "全面战场"
+          desc: "mp / 战场 / 全面 / 大战场 / 全面战场"
+    - order: 4
+      group: "功能特性"
+      list:
+        - icon: 54
+          title: "模糊搜索"
+          desc: "支持武器、子弹、护甲名称模糊搜索"
+        - icon: 54
+          title: "算法精确"
+          desc: "基于繁星攻略组算法，确保计算精确"
+        - icon: 54
+          title: "映射表"
+          desc: "使用 ^计算映射表 查看详细映射关系"
+
