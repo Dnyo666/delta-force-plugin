@@ -17,16 +17,21 @@
                 <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
             </div>
             <div class="title">周报</div>
-            {{if userName || date}}
-            <div class="header-meta">
-                {{if userName}}
-                <span class="user-name">{{userName}}</span>
+            <div class="header-right">
+                {{if userAvatar}}
+                <div class="user-avatar-wrapper">
+                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" onerror="this.style.display='none'; this.parentElement.style.display='none';" />
+                </div>
                 {{/if}}
-                {{if date}}
-                <span class="report-date">{{date.slice(0, 4)}}-{{date.slice(4, 6)}}-{{date.slice(6, 8)}}</span>
-                {{/if}}
+                <div class="header-meta">
+                    {{if userName}}
+                    <span class="user-name">{{userName}}</span>
+                    {{/if}}
+                    {{if date}}
+                    <span class="report-date">{{date.slice(0, 4)}}-{{date.slice(4, 6)}}-{{date.slice(6, 8)}}</span>
+                    {{/if}}
+                </div>
             </div>
-            {{/if}}
         </div>
     </div>
 

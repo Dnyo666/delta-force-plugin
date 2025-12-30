@@ -1,0 +1,65 @@
+# 娱乐帮助配置
+entertainmentHelpCfg:
+  # 基本配置
+  title: "三角洲娱乐 帮助"
+  subTitle: "DeltaForce-Plugin ENTERTAINMENT"
+  
+  # 样式主题配置
+  themeName: "default" # 主题名称，对应 resources/help/imgs/ 下的文件夹名称（如 default、dark、light 等）
+  
+  # 布局配置
+  colWidth: 280        # 列宽度（像素）
+  colCount: 3          # 列数
+  twoColumnLayout: false # 是否使用两列大表格布局（左右各一个表格）
+  bgBlur: true         # 是否启用背景模糊效果
+
+# 娱乐帮助列表
+entertainmentHelpList:
+  - group: "所有命令统一使用 ^ 前缀，例如 ^娱乐帮助"
+  - group: "语音播放"
+    list:
+      - icon: 87
+        title: "^语音"
+        desc: "随机播放语音"
+      - icon: 87
+        title: "^语音 [角色名/标签]"
+        desc: "播放指定角色/标签语音"
+      - icon: 87
+        title: "^语音 [角色] [场景]"
+        desc: "播放指定场景语音"
+      - icon: 87
+        title: "^语音 [角色] [场景] [动作]"
+        desc: "播放指定动作语音"
+      - icon: 78
+        title: "^语音列表 | ^语音分类"
+        desc: "查看可用角色/分类信息"
+      - icon: 79
+        title: "^标签列表 | ^语音统计"
+        desc: "查看特殊标签/音频统计"
+  - group: "鼠鼠音乐"
+    list:
+      - icon: 87
+        title: "^鼠鼠音乐 [关键词]"
+        desc: "随机播放/搜索播放音乐"
+      - icon: 88
+        title: "^鼠鼠音乐列表 [页码]"
+        desc: "查看热度排行榜"
+      - icon: 98
+        title: "^鼠鼠语音"
+        desc: "播放鼠鼠语音"
+      - icon: 89
+        title: "^鼠鼠歌单 [名称]"
+        desc: "查看指定歌单"
+      - icon: 90
+        title: "^点歌 [序号]"
+        desc: "播放列表中的歌曲"
+      - icon: 45
+        title: "^歌词"
+        desc: "查看鼠鼠音乐歌词"
+      - icon: 78
+        title: "^音乐缓存统计"
+        desc: "查看音乐缓存统计"
+      - icon: 78
+        title: "^清理音乐缓存"
+        desc: "清空所有音乐缓存（仅主人）"
+

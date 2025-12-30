@@ -6,6 +6,14 @@ import Config from '../../components/Config.js'
 import Render from '../../components/Render.js'
 
 export class Daily extends plugin {
+  // URL解码函数
+  decodeUserInfo(str) {
+    try {
+      return decodeURIComponent(str || '')
+    } catch (e) {
+      return str || ''
+    }
+  }
   constructor(e) {
     super({
       name: '三角洲日报',
@@ -78,11 +86,38 @@ export class Daily extends plugin {
       return true
     }
 
+    // 获取用户信息（包括头像）
+    let userName = e.sender.card || e.sender.nickname
+    let userAvatar = ''
+    try {
+      const personalInfoRes = await this.api.getPersonalInfo(token)
+      if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
+        const { userData, careerData } = personalInfoRes.data
+        const { roleInfo } = personalInfoRes
+
+        // 获取用户名（优先使用游戏内名称）
+        const gameUserName = this.decodeUserInfo(userData?.charac_name || roleInfo?.charac_name)
+        if (gameUserName) {
+          userName = gameUserName
+        }
+
+        // 获取用户头像
+        userAvatar = this.decodeUserInfo(userData?.picurl || roleInfo?.picurl)
+        if (userAvatar && /^[0-9]+$/.test(userAvatar)) {
+          userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${userAvatar}.webp`
+        }
+      }
+    } catch (error) {
+      // 获取个人信息失败，使用默认值
+      logger.debug(`[Daily] 获取用户信息失败:`, error)
+    }
+
     // 构建模板数据
     const templateData = {
       type: 'daily',
       mode: mode,
-      userName: e.sender.card || e.sender.nickname
+      userName: userName,
+      userAvatar: userAvatar
     }
 
     // 处理全面战场数据
@@ -144,14 +179,57 @@ export class Daily extends plugin {
     // 处理烽火地带数据
     if (solDetail && solDetail.recentGainDate) {
       const topItems = solDetail.userCollectionTop?.list || []
+      
+      // 为物品添加图片URL
+      const itemsWithImages = await Promise.all(
+        topItems.map(async (item) => {
+          const objectName = item.objectName || '未知物品'
+          let imageUrl = null
+          let objectID = null
+          
+          // 优先使用数据中已有的 objectID 或 itemId
+          if (item.objectID) {
+            objectID = String(item.objectID)
+          } else if (item.itemId) {
+            objectID = String(item.itemId)
+          } else if (item.objectId) {
+            objectID = String(item.objectId)
+          }
+          
+          // 如果没有 objectID，尝试通过物品名称搜索获取
+          if (!objectID) {
+            try {
+              const searchRes = await this.api.searchObject(objectName, '')
+              if (searchRes?.success && searchRes.data?.keywords && searchRes.data.keywords.length > 0) {
+                const firstMatch = searchRes.data.keywords[0]
+                if (firstMatch.objectID) {
+                  objectID = String(firstMatch.objectID)
+                }
+              }
+            } catch (error) {
+              // 搜索失败，不显示图片
+              logger.debug(`[Daily] 搜索物品 ${objectName} 失败:`, error)
+            }
+          }
+          
+          // 如果有 objectID，生成图片URL
+          if (objectID) {
+            imageUrl = `https://playerhub.df.qq.com/playerhub/60004/object/${objectID}.png`
+          }
+          
+          return {
+            objectName: objectName,
+            price: parseFloat(item.price || 0).toLocaleString(),
+            count: item.count || 0,
+            imageUrl: imageUrl
+          }
+        })
+      )
+      
       templateData.solDetail = {
         recentGainDate: solDetail.recentGainDate || '-',
         recentGain: solDetail.recentGain?.toLocaleString() || '0',
-        topItems: topItems.map(item => ({
-          objectName: item.objectName || '未知物品',
-          price: parseFloat(item.price || 0).toLocaleString(),
-          count: item.count || 0
-        }))
+        topItems: itemsWithImages
       }
     } else if (mode === 'sol' || !mode) {
       // 无数据但需要显示烽火地带卡片
@@ -194,9 +272,37 @@ export class Daily extends plugin {
     const gainDate = solDetail.recentGainDate || '昨日';
     const topItems = solDetail.userCollectionTop.list || [];
 
+    // 获取用户信息（包括头像）
+    let userName = e.sender.card || e.sender.nickname
+    let userAvatar = ''
+    try {
+      const personalInfoRes = await this.api.getPersonalInfo(token)
+      if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
+        const { userData, careerData } = personalInfoRes.data
+        const { roleInfo } = personalInfoRes
+
+        // 获取用户名（优先使用游戏内名称）
+        const gameUserName = this.decodeUserInfo(userData?.charac_name || roleInfo?.charac_name)
+        if (gameUserName) {
+          userName = gameUserName
+        }
+
+        // 获取用户头像
+        userAvatar = this.decodeUserInfo(userData?.picurl || roleInfo?.picurl)
+        if (userAvatar && /^[0-9]+$/.test(userAvatar)) {
+          userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${userAvatar}.webp`
+        }
+      }
+    } catch (error) {
+      // 获取个人信息失败，使用默认值
+      logger.debug(`[Daily] 获取用户信息失败:`, error)
+    }
+
     // 构建模板数据
     const templateData = {
       type: 'profit',
+      userName: userName,
+      userAvatar: userAvatar,
       profitData: {
         gainDate: gainDate,
         recentGain: recentGain,
