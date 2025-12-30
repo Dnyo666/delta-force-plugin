@@ -7,6 +7,13 @@
 
 ## [1.2.5] - 当前版本
 
+### feat（新功能）
+- 周报和日报推送功能改为使用模板渲染，以图片形式发送
+  - 周报推送（`WeeklyPush.js`）使用 `weeklyReport` 模板渲染
+  - 日报推送（`DailyPush.js`）使用 `dailyReport` 模板渲染
+  - 推送消息从纯文本/转发消息改为图片展示，视觉效果更佳
+  - 推送内容与手动查询展示方式保持一致
+
 ### style（样式/格式优化）
 - 增加周报模板（`weeklyReport.html` 和 `weeklyReport.css`）
 
