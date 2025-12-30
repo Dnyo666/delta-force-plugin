@@ -3,32 +3,29 @@ import Code from '../../components/Code.js';
 import utils from '../../utils/utils.js';
 import DataManager from '../../utils/Data.js';
 import { normalizeCronExpression } from '../../utils/cron.js';
+import Render from '../../components/Render.js';
 
 export class DailyPush extends plugin {
   constructor() {
     super({
       name: '三角洲日报推送',
       dsc: '每日定时推送日报',
-      event: 'none', // 这是一个后台任务，不响应任何消息
+      event: 'none',
     });
 
-    // 在启动时从用户配置读取cron
     const dailyConfig = Config.getConfig()?.delta_force?.push_daily_report || {};
     
     this.task = {
       name: '三角洲日报推送任务',
-      // 使用通用的规范化函数
       cron: normalizeCronExpression(dailyConfig.cron || '0 0 10 * * ?'), 
       fnc: () => this.pushDailyReports()
     };
   }
 
   async pushDailyReports() {
-    // 1. 在执行时，获取最新的配置
     const config = Config.getConfig();
     const dailyReportConfig = config?.delta_force?.push_daily_report || {};
 
-    // 2. 检查功能是否启用
     if (!dailyReportConfig.enabled) {
       return;
     }
@@ -36,7 +33,6 @@ export class DailyPush extends plugin {
     logger.info('[DELTA FORCE] 开始执行日报推送任务...');
     const api = new Code();
 
-    // 3. 筛选出所有开启了此项推送的用户ID
     const userEntries = Object.entries(dailyReportConfig).filter(([key, value]) => 
         /^\d+$/.test(key) && value?.enabled && value?.push_to?.group?.length > 0
     );
@@ -63,55 +59,119 @@ export class DailyPush extends plugin {
         continue;
       }
 
-      let msg = '【三角洲行动日报】\n';
+      // 构建模板数据
+      const templateData = {
+        type: 'daily',
+        mode: '',
+        userName: userConfig.nickname || userId
+      }
 
-      // --- 全面战场 ---
+      // 处理全面战场数据
       if (mpDetail) {
-        msg += '--- 全面战场 ---\n';
-        msg += `日期: ${mpDetail.recentDate}\n`;
-        msg += `总对局: ${mpDetail.totalFightNum} | 胜利: ${mpDetail.totalWinNum}\n`;
-        msg += `总击杀: ${mpDetail.totalKillNum}\n`;
-        msg += `总得分: ${mpDetail.totalScore?.toLocaleString()}\n`;
         const mostUsedOperator = DataManager.getOperatorName(mpDetail.mostUseForceType);
-        msg += `最常用干员: ${mostUsedOperator}\n`;
+        
+        // 获取干员图片路径（相对路径，模板中会自动添加 _res_path）
+        const operatorImagePath = mostUsedOperator ? utils.getOperatorImagePath(mostUsedOperator) : null;
+        
+        templateData.mpDetail = {
+          recentDate: mpDetail.recentDate || '-',
+          totalFightNum: mpDetail.totalFightNum || 0,
+          totalWinNum: mpDetail.totalWinNum || 0,
+          totalKillNum: mpDetail.totalKillNum || 0,
+          totalScore: mpDetail.totalScore?.toLocaleString() || '0',
+          mostUsedOperator: mostUsedOperator || '无',
+          operatorImage: operatorImagePath || null
+        }
 
+        // 处理最佳对局
         if (mpDetail.bestMatch) {
-            const best = mpDetail.bestMatch;
-            const bestMatchMap = DataManager.getMapName(best.mapID);
-            msg += '--- 当日最佳 ---\n';
-            msg += `地图: ${bestMatchMap} | 时间: ${best.dtEventTime}\n`;
-            msg += `结果: ${best.isWinner ? '胜利' : '失败'} | KDA: ${best.killNum}/${best.death}/${best.assist}\n`;
-            msg += `得分: ${best.score?.toLocaleString()}\n`;
+          const best = mpDetail.bestMatch
+          const bestMatchMap = DataManager.getMapName(best.mapID);
+          
+          // 获取地图背景图路径（相对路径）
+          const getMapBgPath = (mapName, gameMode) => {
+            const modePrefix = gameMode === 'sol' ? '烽火' : '全面';
+            let normalizedMapName = mapName;
+            if (gameMode === 'mp' && normalizedMapName.includes('沟壕战')) {
+              normalizedMapName = normalizedMapName.replace(/沟壕战/g, '堑壕战');
+            }
+            const parts = normalizedMapName.split('-');
+            if (parts.length >= 2) {
+              const baseMapName = parts[0];
+              const difficulty = parts.slice(1).join('-');
+              return `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`;
+            }
+            return `imgs/map/${modePrefix}-${normalizedMapName}.jpg`;
+          };
+          
+          const mapBgPath = getMapBgPath(bestMatchMap || '未知地图', 'mp');
+          const bestOperator = DataManager.getOperatorName(best.ArmedForceId);
+          const bestOperatorImage = bestOperator ? utils.getOperatorImagePath(bestOperator) : null;
+          
+          templateData.mpDetail.bestMatch = {
+            mapID: best.mapID,
+            mapName: bestMatchMap || '未知地图',
+            mapImage: mapBgPath,
+            dtEventTime: best.dtEventTime || '-',
+            isWinner: best.isWinner || false,
+            killNum: best.killNum || 0,
+            death: best.death || 0,
+            assist: best.assist || 0,
+            score: best.score?.toLocaleString() || '0'
+          }
         }
       }
 
-      // --- 烽火地带 ---
+      // 处理烽火地带数据
       if (solDetail && solDetail.recentGainDate) {
-        if (mpDetail) msg += '\n'; // 分割线
-        msg += '--- 烽火地带 ---\n';
-        msg += `日期: ${solDetail.recentGainDate}\n`;
-        msg += `最近带出总价值: ${solDetail.recentGain?.toLocaleString()}\n`;
-
-        const topItems = solDetail.userCollectionTop?.list;
-        if (topItems && topItems.length > 0) {
-            msg += '--- 近期高价值物资 ---\n';
-            topItems.forEach(item => {
-                const price = parseFloat(item.price).toLocaleString();
-                msg += `${item.objectName}: ${price}\n`;
-            });
+        const topItems = solDetail.userCollectionTop?.list || []
+        templateData.solDetail = {
+          recentGainDate: solDetail.recentGainDate || '-',
+          recentGain: solDetail.recentGain?.toLocaleString() || '0',
+          topItems: topItems.map(item => ({
+            objectName: item.objectName || '未知物品',
+            price: parseFloat(item.price || 0).toLocaleString(),
+            count: item.count || 0
+          }))
         }
       } else if (!mpDetail) {
-          if (mpDetail) msg += '\n';
-          msg += '--- 烽火地带 ---\n最近没有对局';
+        templateData.solDetail = null
       }
       
       const pushToGroups = userConfig.push_to.group || [];
       for (const groupId of pushToGroups) {
         try {
           const group = await Bot.pickGroup(Number(groupId));
-          await group.sendMsg([segment.at(Number(userId)), `\n${msg.trim()}`]);
-          logger.debug(`[日报推送] 已成功向群 ${groupId} 推送用户 ${userId} 的日报`);
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // 创建模拟的 e 对象用于渲染
+          const Runtime = (await import('../../../../lib/plugins/runtime.js')).default;
+          const mockE = {
+            user_id: Number(userId),
+            group_id: Number(groupId),
+            isGroup: true,
+            sender: {
+              card: userConfig.nickname || userId,
+              nickname: userConfig.nickname || userId
+            }
+          };
+          const runtime = new Runtime(mockE);
+          mockE.runtime = runtime;
+
+          // 渲染模板，获取 base64 图片
+          const base64Image = await Render.render('Template/dailyReport/dailyReport', templateData, {
+            e: mockE,
+            retType: 'base64'
+          });
+
+          if (base64Image) {
+            await group.sendMsg([segment.at(Number(userId)), `\n您的日报来啦！`]);
+            await new Promise(resolve => setTimeout(resolve, 500));
+            await group.sendMsg(segment.image(base64Image));
+            logger.debug(`[日报推送] 已成功向群 ${groupId} 推送用户 ${userId} 的日报`);
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          } else {
+            logger.error(`[日报推送] 用户 ${userId} 日报渲染失败`);
+          }
         } catch (e) {
           logger.error(`[日报推送] 向群 ${groupId} 推送用户 ${userId} 日报时失败: ${e.message}`);
         }
@@ -119,4 +179,4 @@ export class DailyPush extends plugin {
     }
     logger.info('[DELTA FORCE] 日报推送任务执行完毕。');
   }
-} 
+}
