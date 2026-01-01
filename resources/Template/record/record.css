@@ -100,7 +100,7 @@ body {
     left: auto;
     right: -18%;
     bottom: 0;
-    width: 59%;
+    width: 55%;
     background-image: var(--operator-img-url, none);
     background-size: contain;
     background-position: right center;
