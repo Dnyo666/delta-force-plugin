@@ -1188,6 +1188,64 @@ export default {
      */
     isValidAudioCharacter(keyword) {
         return this.getAudioCharacter(keyword) !== null;
+    },
+
+    /**
+     * 根据干员名称获取干员图片路径
+     * @param {string} operatorName - 干员名称
+     * @returns {string|null} - 干员图片路径，如果不存在返回null
+     */
+    getOperatorImagePath(operatorName) {
+        if (!operatorName || operatorName.includes('未知') || operatorName.includes('无')) {
+            return null;
+        }
+        // 清理干员名称，移除可能的括号内容
+        const cleanName = operatorName.replace(/\s*\([^)]*\)/, '').trim();
+        // 优先使用PNG格式，如果不存在则使用JPG
+        return `imgs/operator/${cleanName}.png`;
+    },
+
+    /**
+     * 根据地图名称获取地图图片路径
+     * @param {string} mapName - 地图名称
+     * @param {string} mode - 模式 ('sol' 烽火地带 或 'mp' 全面战场)
+     * @returns {string|null} - 地图图片路径，如果不存在返回null
+     */
+    getMapImagePath(mapName, mode = 'sol') {
+        if (!mapName || mapName.includes('未知') || mapName.includes('无')) {
+            return null;
+        }
+        // 清理地图名称，移除可能的括号内容
+        let cleanName = mapName.trim().replace(/\s*\([^)]*\)/, '');
+        
+        // 根据模式构建路径
+        const prefix = mode === 'sol' ? '烽火-' : '全面-';
+        
+        // 全面战场模式：从地图名称中提取"-"前面的部分
+        // 例如："烬区-攻防" -> "烬区"，匹配"全面-烬区.jpg"
+        if (mode === 'mp') {
+            if (cleanName.includes('-')) {
+                cleanName = cleanName.split('-')[0].trim();
+            }
+        }
+        
+        // 烽火地带的地图名称可能需要特殊处理（包含难度等级）
+        if (mode === 'sol') {
+            // 尝试匹配常见的地图名称格式
+            // 例如：零号大坝-常规、长弓溪谷-机密等
+            // 如果cleanName不包含"-"，可能需要添加默认难度
+            if (!cleanName.includes('-')) {
+                // 对于烽火地带，如果没有指定难度，尝试使用"常规"作为默认
+                // 但首先尝试直接匹配
+                const directPath = `imgs/map/${prefix}${cleanName}.png`;
+                // 这里不检查文件是否存在，让HTML的onerror处理
+                return directPath;
+            }
+        }
+        
+        // 根据模式选择扩展名
+        const extension = mode === 'sol' ? '.png' : '.jpg';
+        return `imgs/map/${prefix}${cleanName}${extension}`;
     }
     
 }; 
