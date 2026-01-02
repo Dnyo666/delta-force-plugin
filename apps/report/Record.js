@@ -93,14 +93,8 @@ export class Record extends plugin {
       const modePrefix = gameMode === 'sol' ? '烽火' : '全面';
       const baseDir = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map`.replace(/\\/g, '/');
       
-      // 地图名称映射：沟壕战 -> 堑壕战（仅用于全面战场战绩，匹配图片文件名）
-      let normalizedMapName = mapName;
-      if (gameMode === 'mp' && normalizedMapName.includes('沟壕战')) {
-        normalizedMapName = normalizedMapName.replace(/沟壕战/g, '堑壕战');
-      }
-      
       // 处理地图名称：尝试精确匹配和降级匹配
-      const parts = normalizedMapName.split('-');
+      const parts = mapName.split('-');
       let finalPath = null;
       
       if (parts.length >= 2) {

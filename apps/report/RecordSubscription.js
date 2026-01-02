@@ -16,7 +16,6 @@ import fs from 'fs'
 export class RecordSubscription extends plugin {
   static _listenerRegistered = false
   static _nicknameCache = new Map() // 缓存 frameworkToken -> 昵称的映射
-  static _pushedRecords = new Map() // 缓存已推送的战绩ID，防止短时间内重复推送
 
   constructor(e) {
     super({
@@ -89,7 +88,6 @@ export class RecordSubscription extends plugin {
     // 检查 WebSocket 是否已连接，如果已连接则立即执行订阅
     const wsStatus = this.wsManager.getStatus()
     if (wsStatus.isConnected) {
-      logger.info('[战绩订阅] WebSocket 已连接，立即执行自动订阅')
       // 延迟执行，确保所有初始化完成
       setTimeout(async () => {
         await this.autoResubscribeOnConnect()
@@ -102,13 +100,10 @@ export class RecordSubscription extends plugin {
    */
   async autoResubscribeOnConnect() {
     try {
-      logger.info('[战绩订阅] WebSocket 已连接，检查本地订阅状态...')
-      
       // 获取所有推送配置
       const allConfigs = this.subConfig.getAllPushConfigs()
       
       if (!allConfigs || Object.keys(allConfigs).length === 0) {
-        logger.info('[战绩订阅] 没有本地订阅记录')
         return
       }
 
@@ -125,13 +120,10 @@ export class RecordSubscription extends plugin {
 
         const subData = JSON.parse(subDataStr)
         if (!subData.enabled) {
-          logger.info(`[战绩订阅] 用户 ${platformID} 订阅已禁用，跳过`)
           continue
         }
 
         const recordType = subData.subscriptionType || 'both'
-        
-        logger.info(`[战绩订阅] 自动重新订阅: platformID=${platformID}, recordType=${recordType}`)
         
         // 发送 WebSocket 订阅消息
         const sendSuccess = this.wsManager.send({
@@ -140,9 +132,7 @@ export class RecordSubscription extends plugin {
           recordType: recordType
         })
 
-        if (sendSuccess) {
-          logger.info(`[战绩订阅] 用户 ${platformID} 自动订阅成功`)
-        } else {
+        if (!sendSuccess) {
           logger.error(`[战绩订阅] 用户 ${platformID} 自动订阅失败`)
         }
       }
@@ -197,10 +187,8 @@ export class RecordSubscription extends plugin {
 
       // 2. 确保 WebSocket 已连接
       const wsStatus = this.wsManager.getStatus()
-      logger.info(`[战绩订阅] WebSocket 状态: ${wsStatus.isConnected ? '已连接' : '未连接'}`)
       
       if (!wsStatus.isConnected) {
-        logger.info('[战绩订阅] 正在建立 WebSocket 连接...')
         // 尝试连接
         const connectSuccess = await this.wsManager.connect({
           clientID: clientID,
@@ -215,14 +203,12 @@ export class RecordSubscription extends plugin {
         }
 
         // 等待连接就绪
-        logger.info('[战绩订阅] 等待 WebSocket 就绪...')
         await new Promise((resolve) => {
           const timeout = setTimeout(() => {
             logger.warn('[战绩订阅] WebSocket 就绪超时')
             resolve()
           }, 5000)
           this.wsManager.once('connected', () => {
-            logger.info('[战绩订阅] WebSocket 已连接')
             clearTimeout(timeout)
             resolve()
           })
@@ -230,7 +216,6 @@ export class RecordSubscription extends plugin {
       }
 
       // 3. 通过 WebSocket 订阅频道
-      logger.info(`[战绩订阅] 发送 WebSocket 订阅请求: platformID=${platformID}, recordType=${subscriptionType}`)
       const sendSuccess = this.wsManager.send({
         type: 'record_subscribe',
         platformID: platformID,
@@ -242,8 +227,6 @@ export class RecordSubscription extends plugin {
         await this.e.reply('WebSocket 订阅失败，请检查连接状态')
         return true
       }
-
-      logger.info('[战绩订阅] WebSocket 订阅消息已发送')
 
       // 4. 保存订阅信息到 Redis
       await redis.set(
@@ -548,27 +531,52 @@ export class RecordSubscription extends plugin {
     const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
     const modeText = recordType === 'sol' ? '烽火地带' : recordType === 'mp' ? '全面战场' : `未知(${recordType})`
 
+    // 兼容处理：如果 isNew 不存在，使用 isRecent 来判断
+    // isRecent=true 表示是最近/新的战绩，应该处理
+    const shouldProcess = isNew !== undefined ? isNew : (isRecent === true)
+    
+    // 检查字段情况
+    if (isNew === undefined && isRecent === undefined) {
+      logger.warn(`[战绩订阅] 警告: isNew和isRecent字段都为undefined，无法判断是否为新战绩`)
+      return
+    }
+
     // 只处理新战绩，不处理缓存战绩
-    if (!isNew) {
-      logger.debug(`[战绩订阅] 跳过缓存战绩: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} | 类型: ${recordType}`)
+    if (!shouldProcess) {
+      logger.debug(`[战绩订阅] 跳过缓存战绩: platformID=${platformID} | 模式: ${modeText}`)
       return
     }
-
+    
     // 生成战绩唯一标识，防止重复推送
-    const recordId = `${platformID}:${frameworkToken}:${recordType}:${record.dtEventTime || Date.now()}`
-    if (RecordSubscription._pushedRecords.has(recordId)) {
-      logger.debug(`[战绩订阅] 检测到重复推送，已跳过: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} | 类型: ${recordType} | ID: ${recordId.substring(0, 50)}...`)
+    // 使用关键字段生成唯一ID，确保同一场对局不会重复推送
+    const mapId = record.MapID || record.MapId
+    const armedForceId = record.ArmedForceId
+    const dtEventTime = record.dtEventTime || ''
+    
+    // 对于烽火地带，添加 FinalPrice 作为额外标识
+    // 对于全面战场，添加 TotalScore 作为额外标识
+    let extraId = ''
+    if (recordType === 'sol') {
+      extraId = record.FinalPrice || '0'
+    } else {
+      extraId = record.TotalScore || '0'
+    }
+    
+    const recordId = `${platformID}:${frameworkToken}:${recordType}:${mapId}:${armedForceId}:${dtEventTime}:${extraId}`
+    const recordKey = `delta-force:record-pushed:${recordId}`
+    
+    // 检查 Redis 中是否已推送过
+    const pushed = await redis.get(recordKey)
+    if (pushed) {
+      const pushedTime = new Date(parseInt(pushed)).toLocaleString()
+      logger.debug(`[战绩订阅] 检测到重复推送，已跳过: ${platformID} | 模式: ${modeText} | 已推送时间: ${pushedTime}`)
       return
     }
 
-    // 标记为已推送，5分钟后过期
-    RecordSubscription._pushedRecords.set(recordId, Date.now())
-    setTimeout(() => {
-      RecordSubscription._pushedRecords.delete(recordId)
-    }, 300000) // 5分钟
-
-    // 记录需要处理的事件（在去重检查之后）
-    logger.info(`[战绩订阅] 收到推送事件: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} | 类型: ${recordType} | isRecent: ${isRecent}`)
+    // 标记为已推送，保存到 Redis，24小时后过期（防止重启后重复推送）
+    await redis.set(recordKey, Date.now().toString(), { EX: 24 * 60 * 60 })
+    
+    logger.info(`[战绩订阅] 处理新战绩: platformID=${platformID} | 模式: ${modeText}`)
 
     try {
       // 1. 检查用户是否启用了战绩订阅
@@ -586,7 +594,6 @@ export class RecordSubscription extends plugin {
 
       // 2. 获取推送配置
       const pushConfig = this.subConfig.getUserPushConfig(platformID)
-      logger.info(`[战绩订阅] 推送配置: 模式=${modeText} | 私信=${pushConfig.private} | 群数=${pushConfig.groups?.length || 0}`)
 
       if (!pushConfig.private && (!pushConfig.groups || pushConfig.groups.length === 0)) {
         logger.warn(`[战绩订阅] 没有推送目标: ${platformID} | 模式: ${modeText}`)
@@ -594,17 +601,18 @@ export class RecordSubscription extends plugin {
       }
 
       // 3. 格式化战绩消息（使用图片渲染）
-      logger.info(`[战绩订阅] 开始格式化战绩消息: ${platformID} | 模式: ${modeText} | 类型: ${recordType}`)
       let message
       try {
+        logger.debug(`[战绩订阅] 开始格式化战绩消息: ${platformID} | 模式: ${modeText}`)
         message = await this.formatRecordMessage(recordType, record, frameworkToken, platformID)
-        logger.info(`[战绩订阅] 战绩消息格式化完成: ${platformID} | 模式: ${modeText}`)
+        logger.debug(`[战绩订阅] 战绩消息格式化完成: ${platformID} | 模式: ${modeText}`)
       } catch (error) {
         logger.error(`[战绩订阅] 格式化战绩消息失败: ${platformID} | 模式: ${modeText}`, error)
         // 使用文本消息作为降级
         const mapId = record.MapID || record.MapId
+        const armedForceId = record.ArmedForceId
         let mapName = DataManager.getMapName(mapId)
-        const operatorName = DataManager.getOperatorName(record.ArmedForceId)
+        const operatorName = DataManager.getOperatorName(armedForceId)
         const displayName = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家'
         message = this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
       }
@@ -617,23 +625,17 @@ export class RecordSubscription extends plugin {
             logger.debug(`[战绩订阅] 战绩不符合私信筛选条件: ${platformID} | 模式: ${modeText}`)
           } else {
             try {
-              const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
               await Bot.pickUser(platformID).sendMsg(message)
-              logger.info(`[战绩订阅] 私信推送成功: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`)
             } catch (error) {
-              const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
-              logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`, error)
+              logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 模式: ${modeText}`, error)
             }
           }
         } else {
           // 无筛选条件，推送所有
           try {
-            const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
             await Bot.pickUser(platformID).sendMsg(message)
-            logger.info(`[战绩订阅] 私信推送成功: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`)
           } catch (error) {
-            const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
-            logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText}`, error)
+            logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 模式: ${modeText}`, error)
           }
         }
       }
@@ -650,9 +652,8 @@ export class RecordSubscription extends plugin {
               }
             }
 
-            const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
+            logger.debug(`[战绩订阅] 开始群推送: ${platformID} | 模式: ${modeText} -> 群${groupConfig.groupId}`)
             await Bot.pickGroup(groupConfig.groupId).sendMsg(message)
-            logger.info(`[战绩订阅] 推送成功: ${platformID} | 账号: ${maskedToken} | 模式: ${modeText} -> 群${groupConfig.groupId}`)
           } catch (error) {
             logger.error(`[战绩订阅] 推送失败到群${groupConfig.groupId} | 模式: ${modeText}:`, error)
           }
@@ -798,12 +799,17 @@ export class RecordSubscription extends plugin {
     const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
     // 全面战场使用 MapID，烽火地带使用 MapId
     const mapId = record.MapID || record.MapId
+    const armedForceId = record.ArmedForceId
+    
     let mapName = DataManager.getMapName(mapId)
-    const operatorName = DataManager.getOperatorName(record.ArmedForceId)
-
-    // 地图名称映射：沟壕战 -> 堑壕战（仅用于全面战场战绩，匹配图片文件名）
-    if (recordType === 'mp' && mapName && mapName.includes('沟壕战')) {
-      mapName = mapName.replace(/沟壕战/g, '堑壕战')
+    const operatorName = DataManager.getOperatorName(armedForceId)
+    
+    // 如果获取失败，记录警告
+    if (!mapName || mapName === '未知地图') {
+      logger.warn(`[战绩订阅] 地图名称获取失败: mapId=${mapId}, recordType=${recordType}`)
+    }
+    if (!operatorName || operatorName === '未知干员') {
+      logger.warn(`[战绩订阅] 干员名称获取失败: armedForceId=${armedForceId}, recordType=${recordType}`)
     }
 
     // 获取昵称
@@ -898,10 +904,10 @@ export class RecordSubscription extends plugin {
       displayName,
       modeName: modeText,
       time: record.dtEventTime,
-      map: mapName,
-      operator: operatorName,
-      mapBg: getMapBgPath(mapName, recordType),
-      operatorImg: getOperatorImgPath(operatorName)
+      map: mapName || '未知地图',
+      operator: operatorName || '未知干员',
+      mapBg: getMapBgPath(mapName || '未知地图', recordType),
+      operatorImg: getOperatorImgPath(operatorName || '未知干员')
     }
 
     if (recordType === 'sol') {
@@ -925,6 +931,12 @@ export class RecordSubscription extends plugin {
         } else {
           duration = `${seconds}秒`
         }
+      } else if (durationS === 0 && record.DurationS !== undefined && record.DurationS !== null) {
+        // 如果 DurationS 明确为 0，显示 0秒
+        duration = '0秒'
+      } else {
+        // 如果 DurationS 不存在或无效，记录警告
+        logger.warn(`[战绩订阅] 存活时间无效: DurationS=${record.DurationS}, 类型=${typeof record.DurationS}`)
       }
       
       // 撤离状态
@@ -935,6 +947,9 @@ export class RecordSubscription extends plugin {
         '10': '撤离失败'
       }
       const escapeStatus = escapeReasons[String(record.EscapeFailReason)] || '撤离失败'
+      if (escapeStatus === '撤离失败') {
+        logger.warn(`[战绩订阅] 未知的撤离状态: EscapeFailReason=${record.EscapeFailReason}`)
+      }
       
       // 确定状态样式类
       let statusClass = 'fail'
@@ -971,6 +986,12 @@ export class RecordSubscription extends plugin {
         } else {
           duration = `${seconds}秒`
         }
+      } else if (gameTimeS === 0 && record.gametime !== undefined && record.gametime !== null) {
+        // 如果 gametime 明确为 0，显示 0秒
+        duration = '0秒'
+      } else {
+        // 如果 gametime 不存在或无效，记录警告
+        logger.warn(`[战绩订阅] 游戏时长无效: gametime=${record.gametime}, 类型=${typeof record.gametime}`)
       }
       
       // 对局结果
@@ -980,6 +1001,9 @@ export class RecordSubscription extends plugin {
         '3': '中途退出'
       }
       const result = mpResults[String(record.MatchResult)] || '未知结果'
+      if (result === '未知结果') {
+        logger.warn(`[战绩订阅] 未知的对局结果: MatchResult=${record.MatchResult}`)
+      }
       
       // 确定状态样式类
       let statusClass = 'fail'
@@ -998,13 +1022,11 @@ export class RecordSubscription extends plugin {
 
     // 渲染模板（使用 base64 模式获取图片数据，而不是自动发送）
     try {
-      logger.info(`[战绩订阅] 开始渲染图片: ${platformID} | 模式: ${modeText}`)
       const base64Data = await Render.render('Template/recordPush/recordPush', templateData, {
         e: fakeE,
         scale: 1.2,
         retType: 'base64'
       })
-      logger.info(`[战绩订阅] 图片渲染完成: ${platformID} | 模式: ${modeText}，结果: ${base64Data ? '成功' : '空值'}`)
       
       if (base64Data) {
         return base64Data

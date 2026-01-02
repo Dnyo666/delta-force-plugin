@@ -6,11 +6,21 @@ import { normalizeCronExpression } from '../../utils/cron.js';
 import Render from '../../components/Render.js';
 
 export class WeeklyPush extends plugin {
-  constructor() {
+  // URL解码函数
+  decodeUserInfo(str) {
+    try {
+      return decodeURIComponent(str || '')
+    } catch (e) {
+      return str || ''
+    }
+  }
+
+  constructor(e) {
     super({
       name: '三角洲周报推送',
       dsc: '每周定时推送周报',
       event: 'none',
+      priority: 100
     });
 
     const weeklyConfig = Config.getConfig()?.delta_force?.push_weekly_report || {};
@@ -126,10 +136,44 @@ export class WeeklyPush extends plugin {
         mpData.mostUsedOperator = DataManager.getOperatorName(mpData.max_inum_DeployArmedForceType);
       }
 
+      // --- 获取用户信息（包括头像） ---
+      let userName = userConfig.nickname || userId
+      let userAvatar = ''
+      try {
+        const personalInfoRes = await api.getPersonalInfo(token)
+        if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
+          const { userData, careerData } = personalInfoRes.data
+          const { roleInfo } = personalInfoRes
+
+          // 获取用户名（优先使用游戏内名称）
+          const gameUserName = this.decodeUserInfo(userData?.charac_name || roleInfo?.charac_name)
+          if (gameUserName) {
+            userName = gameUserName
+          }
+
+          // 获取用户头像
+          userAvatar = this.decodeUserInfo(userData?.picurl || roleInfo?.picurl)
+          if (userAvatar && /^[0-9]+$/.test(userAvatar)) {
+            userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${userAvatar}.webp`
+          }
+        }
+      } catch (error) {
+        // 获取个人信息失败，使用默认值
+        logger.debug(`[周报推送] 获取用户信息失败:`, error)
+      }
+
+      // 生成日期（格式：YYYYMMDD）
+      const now = new Date()
+      const year = now.getFullYear()
+      const month = String(now.getMonth() + 1).padStart(2, '0')
+      const day = String(now.getDate()).padStart(2, '0')
+      const displayDate = `${year}${month}${day}`
+
       // --- 构建模板数据 ---
       const templateData = {
-        userName: userConfig.nickname || userId,
-        date: ''
+        userName: userName,
+        userAvatar: userAvatar,
+        date: displayDate
       };
 
       if (solData) {
@@ -137,18 +181,97 @@ export class WeeklyPush extends plugin {
         const profitRatio = solData.Gained_Price && solData.consume_Price ?
           (solData.Gained_Price / solData.consume_Price).toFixed(2) : '0';
         
-        // 解析资产趋势
+        // 获取段位图片路径
+        const solRankImagePath = solRank !== '-' ? DataManager.getRankImagePath(solRank, 'sol') : null;
+        
+        // 解析资产趋势 - 处理7天数据
         let assetTrend = null;
         if (solData.Total_Price) {
           const prices = solData.Total_Price.split(',');
-          const monday = prices.find(p => p.startsWith('Monday'));
-          const sunday = prices.find(p => p.startsWith('Sunday'));
-          if (monday && sunday) {
-            const startPrice = parseInt(monday.split('-')[2]);
-            const endPrice = parseInt(sunday.split('-')[2]);
+          const dayMap = {
+            'Monday': '周一',
+            'Tuesday': '周二',
+            'Wednesday': '周三',
+            'Thursday': '周四',
+            'Friday': '周五',
+            'Saturday': '周六',
+            'Sunday': '周日'
+          };
+          
+          // 解析所有7天的数据
+          const dailyPrices = {};
+          prices.forEach(priceStr => {
+            const parts = priceStr.split('-');
+            if (parts.length >= 3) {
+              const dayName = parts[0];
+              const price = parseInt(parts[2]);
+              if (!isNaN(price)) {
+                dailyPrices[dayName] = price;
+              }
+            }
+          });
+          
+          // 获取周一和周日的数据（开始和结束）
+          const monday = dailyPrices['Monday'];
+          const sunday = dailyPrices['Sunday'];
+          
+          if (monday !== undefined && sunday !== undefined) {
+            // 计算7天的完整数据
+            const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            const allPrices = allDays.map(day => dailyPrices[day]).filter(p => p !== undefined);
+            
+            // 计算最高和最低值
+            const maxPrice = Math.max(...allPrices);
+            const minPrice = Math.min(...allPrices);
+            const priceRange = maxPrice - minPrice;
+            
+            // 计算折线图坐标点
+            const chartWidth = 600;
+            const chartHeight = 120;
+            const padding = { top: 20, right: 10, bottom: 30, left: 10 };
+            const plotWidth = chartWidth - padding.left - padding.right;
+            const plotHeight = chartHeight - padding.top - padding.bottom;
+            const htmlContainerHeight = 140; // HTML容器高度（与CSS中的height一致）
+            
+            const points = allDays.map((day, index) => {
+              const price = dailyPrices[day];
+              // X坐标：均匀分布
+              const x = padding.left + (index / (allDays.length - 1)) * plotWidth;
+              // Y坐标：从底部开始，价格越高Y越小（SVG坐标系）
+              const y = padding.top + plotHeight - ((price - minPrice) / priceRange) * plotHeight;
+              // Y坐标百分比（用于HTML定位）
+              // 将SVG的Y坐标映射到HTML容器的百分比位置
+              const yPercent = ((y / chartHeight) * 100).toFixed(2);
+              
+              return {
+                dayName: dayMap[day] || day,
+                price: price ? price.toLocaleString() : '-',
+                rawPrice: price || 0,
+                x: x.toFixed(1),
+                y: y.toFixed(1),
+                xPercent: ((x / chartWidth) * 100).toFixed(2),
+                yPercent: yPercent
+              };
+            });
+            
+            // 生成折线路径
+            let pathData = '';
+            if (points.length > 0) {
+              pathData = `M ${points[0].x},${points[0].y}`;
+              for (let i = 1; i < points.length; i++) {
+                pathData += ` L ${points[i].x},${points[i].y}`;
+              }
+            }
+            
             assetTrend = {
-              startPrice: startPrice.toLocaleString(),
-              endPrice: endPrice.toLocaleString()
+              startPrice: monday.toLocaleString(),
+              endPrice: sunday.toLocaleString(),
+              maxPrice: maxPrice.toLocaleString(),
+              minPrice: minPrice.toLocaleString(),
+              chartWidth: chartWidth,
+              chartHeight: chartHeight,
+              pathData: pathData,
+              allDays: points
             };
           }
         }
@@ -162,6 +285,7 @@ export class WeeklyPush extends plugin {
           total_Kill_AI: solData.total_Kill_AI || 0,
           total_Kill_Boss: solData.total_Kill_Boss || 0,
           rankName: solRank,
+          rankImagePath: solRankImagePath,
           rise_Price: solData.rise_Price?.toLocaleString() || '0',
           Gained_Price: solData.Gained_Price?.toLocaleString() || '0',
           consume_Price: solData.consume_Price?.toLocaleString() || '0',
@@ -176,7 +300,9 @@ export class WeeklyPush extends plugin {
           Kill_ByCrocodile_num: solData.Kill_ByCrocodile_num || 0,
           gameTime: `${Math.floor((solData.total_Online_Time || 0) / 3600)}小时${Math.floor(((solData.total_Online_Time || 0) % 3600) / 60)}分钟`,
           mostUsedMap: solData.mostUsedMap || '无',
-          mostUsedOperator: solData.mostUsedOperator || '无'
+          mostUsedMapImagePath: solData.mostUsedMap ? DataManager.getMapImagePath(solData.mostUsedMap, 'sol') : null,
+          mostUsedOperator: solData.mostUsedOperator || '无',
+          mostUsedOperatorImagePath: solData.mostUsedOperator ? DataManager.getOperatorImagePath(solData.mostUsedOperator) : null
         };
 
         // 解析所有使用的干员
@@ -188,10 +314,12 @@ export class WeeklyPush extends plugin {
               const correctedJSON = s.replace(/'/g, '"').replace(/([a-zA-Z0-9_]+):/g, '"$1":');
               try {
                 const parsed = JSON.parse(correctedJSON);
+                const operatorName = DataManager.getOperatorName(parsed.ArmedForceId);
                 return {
                   id: parsed.ArmedForceId,
                   count: parsed.inum,
-                  name: DataManager.getOperatorName(parsed.ArmedForceId)
+                  name: operatorName,
+                  imagePath: DataManager.getOperatorImagePath(operatorName)
                 };
               } catch (err) {
                 return null;
@@ -214,10 +342,12 @@ export class WeeklyPush extends plugin {
               const correctedJSON = s.replace(/'/g, '"').replace(/([a-zA-Z0-9_]+):/g, '"$1":');
               try {
                 const parsed = JSON.parse(correctedJSON);
+                const mapName = DataManager.getMapName(parsed.MapId);
                 return {
                   id: parsed.MapId,
                   count: parsed.inum,
-                  name: DataManager.getMapName(parsed.MapId)
+                  name: mapName,
+                  imagePath: DataManager.getMapImagePath(mapName, 'sol')
                 };
               } catch (err) {
                 return null;
@@ -284,11 +414,15 @@ export class WeeklyPush extends plugin {
         const mpRank = mpData.Rank_Match_Score ? DataManager.getRankByScore(mpData.Rank_Match_Score, 'tdm') : '-';
         const hitRate = mpData.Consume_Bullet_Num > 0 ? (mpData.Hit_Bullet_Num / mpData.Consume_Bullet_Num * 100).toFixed(1) + '%' : '0%';
 
+        // 获取段位图片路径
+        const mpRankImagePath = mpRank !== '-' ? DataManager.getRankImagePath(mpRank, 'tdm') : null;
+
         templateData.mpData = {
           total_num: mpData.total_num || 0,
           win_num: mpData.win_num || 0,
           winRate: winRate,
           rankName: mpRank,
+          rankImagePath: mpRankImagePath,
           Kill_Num: mpData.Kill_Num || 0,
           continuous_Kill_Num: mpData.continuous_Kill_Num || 0,
           total_score: mpData.total_score?.toLocaleString() || '0',
@@ -300,7 +434,9 @@ export class WeeklyPush extends plugin {
           Rescue_Teammate_Count: mpData.Rescue_Teammate_Count || 0,
           by_Rescue_num: mpData.by_Rescue_num || 0,
           mostUsedMap: mpData.mostUsedMap || '无',
-          mostUsedOperator: mpData.mostUsedOperator || '无'
+          mostUsedMapImagePath: mpData.mostUsedMap ? DataManager.getMapImagePath(mpData.mostUsedMap, 'mp') : null,
+          mostUsedOperator: mpData.mostUsedOperator || '无',
+          mostUsedOperatorImagePath: mpData.mostUsedOperator ? DataManager.getOperatorImagePath(mpData.mostUsedOperator) : null
         };
 
         // 解析地图使用详情
@@ -312,10 +448,12 @@ export class WeeklyPush extends plugin {
               const correctedJSON = s.replace(/'/g, '"').replace(/([a-zA-Z0-9_]+):/g, '"$1":');
               try {
                 const parsed = JSON.parse(correctedJSON);
+                const mapName = DataManager.getMapName(parsed.MapId);
                 return {
                   id: parsed.MapId,
                   count: parsed.inum,
-                  name: DataManager.getMapName(parsed.MapId)
+                  name: mapName,
+                  imagePath: DataManager.getMapImagePath(mapName, 'mp')
                 };
               } catch (err) {
                 return null;
@@ -335,6 +473,7 @@ export class WeeklyPush extends plugin {
           const operatorName = DataManager.getOperatorName(operatorId);
           templateData.mpData.operatorStats = {
             name: operatorName || '未知干员',
+            imagePath: DataManager.getOperatorImagePath(operatorName),
             games: mpData.DeployArmedForceType_inum || 0,
             kills: mpData.DeployArmedForceType_KillNum || 0,
             gameTime: `${Math.floor((mpData.DeployArmedForceType_gametime || 0) / 3600)}小时${Math.floor(((mpData.DeployArmedForceType_gametime || 0) % 3600) / 60)}分钟`
@@ -390,11 +529,8 @@ export class WeeklyPush extends plugin {
           });
 
           if (base64Image) {
-            await group.sendMsg([segment.at(Number(userId)), ' 您的周报来啦！']);
-            await new Promise(resolve => setTimeout(resolve, 500));
-            await group.sendMsg(segment.image(base64Image));
+            await group.sendMsg([segment.at(Number(userId)), '\n您的周报来啦！', base64Image]);
             logger.debug(`[周报推送] 已成功向群 ${groupId} 推送用户 ${userId} 的周报`);
-            await new Promise(resolve => setTimeout(resolve, 1000));
           } else {
             logger.error(`[周报推送] 用户 ${userId} 周报渲染失败`);
           }
