@@ -5,7 +5,7 @@
 {{/block}}
 
 {{block 'main'}}
-<div class="container">
+<div class="container {{if type === 'daily' && !((mpDetail && solDetail && solDetail.recentGainDate))}}single-mode{{/if}}">
     <!-- 背景图片 -->
     <img class="bg-image" src="{{_res_path}}imgs/others/loading13.png" alt="" />
     <div class="bg-overlay"></div>
@@ -78,7 +78,50 @@
         </div>
         {{else}}
         <!-- 日报模式 -->
-        <div class="report-grid">
+        <div class="report-grid {{if mpDetail && solDetail && solDetail.recentGainDate}}two-cards{{else}}single-card{{/if}}">
+            {{if solDetail && solDetail.recentGainDate}}
+            <!-- 烽火地带卡片 -->
+            <div class="mode-card sol-card">
+                <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/fire_limit_normal.png');">
+                    <div class="mode-title">烽火地带</div>
+                </div>
+                <div class="card-body">
+                    <div class="stat-item full-width highlight-large">
+                        <span class="stat-label-overlay">最近带出总价值</span>
+                        <span class="stat-value">{{solDetail.recentGain}}</span>
+                    </div>
+                    {{if solDetail.topItems && solDetail.topItems.length > 0}}
+                    <div class="items-section">
+                        <div class="items-title">近期高价值物资</div>
+                        <div class="items-list">
+                            {{each solDetail.topItems item}}
+                            <div class="item-row">
+                                {{if item.imageUrl}}
+                                <div class="item-image-wrapper">
+                                    <img class="item-image" src="{{item.imageUrl}}" alt="{{item.objectName}}" onerror="this.style.display='none'" />
+                                </div>
+                                {{/if}}
+                                <span class="item-name">{{item.objectName}}</span>
+                                <span class="item-price">{{item.price}}</span>
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{/if}}
+                </div>
+            </div>
+            {{else if mode === 'sol' || !mode}}
+            <!-- 烽火地带无数据 -->
+            <div class="mode-card sol-card">
+                <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/fire_limit_normal.png');">
+                    <div class="mode-title">烽火地带</div>
+                </div>
+                <div class="card-body">
+                    <div class="no-data-text">最近没有对局</div>
+                </div>
+            </div>
+            {{/if}}
+
             {{if mpDetail}}
             <!-- 全面战场卡片 -->
             <div class="mode-card mp-card">
@@ -88,45 +131,36 @@
                 <div class="card-body">
                     <div class="stats-overview">
                         <div class="stat-item">
-                            <span class="stat-label">总对局</span>
+                            <span class="stat-label-overlay">总对局</span>
                             <span class="stat-value">{{mpDetail.totalFightNum}}</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">胜利</span>
+                            <span class="stat-label-overlay">胜利</span>
                             <span class="stat-value highlight">{{mpDetail.totalWinNum}}</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">总击杀</span>
+                            <span class="stat-label-overlay">总击杀</span>
                             <span class="stat-value">{{mpDetail.totalKillNum}}</span>
                         </div>
                         <div class="stat-item">
-                            <span class="stat-label">总得分</span>
+                            <span class="stat-label-overlay">总得分</span>
                             <span class="stat-value highlight">{{mpDetail.totalScore}}</span>
                         </div>
                     </div>
-                    {{if mpDetail.operatorImage}}
-                    <div class="operator-display">
-                        <img class="operator-img" src="{{_res_path}}{{mpDetail.operatorImage}}" alt="{{mpDetail.mostUsedOperator}}" />
-                        <div class="operator-info">
-                            <div class="operator-label">最常用干员</div>
-                            <div class="operator-name">{{mpDetail.mostUsedOperator}}</div>
+                    <div class="stats-overview">
+                        <div class="stat-item stat-item-card">
+                            <div class="mp-card-item" {{if mpDetail.operatorImage}}style="background-image: url('{{_res_path}}{{mpDetail.operatorImage}}');"{{/if}}>
+                                <span class="stat-label-overlay">最常用干员</span>
+                            </div>
                         </div>
                     </div>
-                    {{else}}
-                    <div class="stat-item full-width">
-                        <span class="stat-label">最常用干员</span>
-                        <span class="stat-value">{{mpDetail.mostUsedOperator}}</span>
-                    </div>
-                    {{/if}}
                     {{if mpDetail.bestMatch}}
                     <div class="best-match">
                         <div class="best-match-header">
-                            <div class="best-match-title">--- 当日最佳 ---</div>
+                            <div class="best-match-title">当日最佳</div>
                         </div>
                         {{if mpDetail.bestMatch.mapImage}}
-                        <div class="best-match-bg" style="background-image: url('{{_res_path}}{{mpDetail.bestMatch.mapImage}}');">
-                            <div class="best-match-overlay"></div>
-                        </div>
+                        <div class="best-match-bg" style="background-image: url('{{_res_path}}{{mpDetail.bestMatch.mapImage}}');"></div>
                         {{/if}}
                         <div class="best-match-content">
                             <div class="best-match-row">
@@ -151,51 +185,6 @@
                         </div>
                     </div>
                     {{/if}}
-                </div>
-            </div>
-            {{/if}}
-
-            {{if solDetail && solDetail.recentGainDate}}
-            <!-- 烽火地带卡片 -->
-            <div class="mode-card sol-card">
-                <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/fire_limit_normal.png');">
-                    <div class="mode-title">烽火地带</div>
-                </div>
-                <div class="card-body">
-                    <div class="stat-item full-width highlight-large">
-                        <span class="stat-label">最近带出总价值</span>
-                        <span class="stat-value">{{solDetail.recentGain}}</span>
-                    </div>
-                    {{if solDetail.topItems && solDetail.topItems.length > 0}}
-                    <div class="items-section">
-                        <div class="items-title">--- 近期高价值物资 ---</div>
-                        <div class="items-list">
-                            {{each solDetail.topItems item}}
-                            <div class="item-row">
-                                {{if item.imageUrl}}
-                                <div class="item-image-wrapper">
-                                    <img class="item-image" src="{{item.imageUrl}}" alt="{{item.objectName}}" onerror="this.style.display='none'" />
-                                </div>
-                                {{/if}}
-                                <div class="item-info">
-                                    <span class="item-name">{{item.objectName}}</span>
-                                    <span class="item-price">{{item.price}}</span>
-                                </div>
-                            </div>
-                            {{/each}}
-                        </div>
-                    </div>
-                    {{/if}}
-                </div>
-            </div>
-            {{else if mode === 'sol' || !mode}}
-            <!-- 烽火地带无数据 -->
-            <div class="mode-card sol-card">
-                <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/fire_limit_normal.png');">
-                    <div class="mode-title">烽火地带</div>
-                </div>
-                <div class="card-body">
-                    <div class="no-data-text">最近没有对局</div>
                 </div>
             </div>
             {{/if}}

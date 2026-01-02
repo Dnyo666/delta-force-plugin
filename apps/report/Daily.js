@@ -142,23 +142,8 @@ export class Daily extends plugin {
         const best = mpDetail.bestMatch
         const bestMatchMap = DataManager.getMapName(best.mapID);
         
-        // 获取地图背景图路径（相对路径）
-        const getMapBgPath = (mapName, gameMode) => {
-          const modePrefix = gameMode === 'sol' ? '烽火' : '全面';
-          let normalizedMapName = mapName;
-          if (gameMode === 'mp' && normalizedMapName.includes('沟壕战')) {
-            normalizedMapName = normalizedMapName.replace(/沟壕战/g, '堑壕战');
-          }
-          const parts = normalizedMapName.split('-');
-          if (parts.length >= 2) {
-            const baseMapName = parts[0];
-            const difficulty = parts.slice(1).join('-');
-            return `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`;
-          }
-          return `imgs/map/${modePrefix}-${normalizedMapName}.jpg`;
-        };
-        
-        const mapBgPath = getMapBgPath(bestMatchMap || '未知地图', 'mp');
+        // 使用 DataManager 的方法获取地图背景图路径（相对路径）
+        const mapBgPath = bestMatchMap ? DataManager.getMapImagePath(bestMatchMap, 'mp') : null;
         const bestOperator = DataManager.getOperatorName(best.ArmedForceId);
         const bestOperatorImage = bestOperator ? utils.getOperatorImagePath(bestOperator) : null;
         
@@ -181,50 +166,29 @@ export class Daily extends plugin {
       const topItems = solDetail.userCollectionTop?.list || []
       
       // 为物品添加图片URL
-      const itemsWithImages = await Promise.all(
-        topItems.map(async (item) => {
-          const objectName = item.objectName || '未知物品'
-          let imageUrl = null
-          let objectID = null
-          
-          // 优先使用数据中已有的 objectID 或 itemId
-          if (item.objectID) {
-            objectID = String(item.objectID)
-          } else if (item.itemId) {
-            objectID = String(item.itemId)
-          } else if (item.objectId) {
-            objectID = String(item.objectId)
-          }
-          
-          // 如果没有 objectID，尝试通过物品名称搜索获取
-          if (!objectID) {
-            try {
-              const searchRes = await this.api.searchObject(objectName, '')
-              if (searchRes?.success && searchRes.data?.keywords && searchRes.data.keywords.length > 0) {
-                const firstMatch = searchRes.data.keywords[0]
-                if (firstMatch.objectID) {
-                  objectID = String(firstMatch.objectID)
-                }
-              }
-            } catch (error) {
-              // 搜索失败，不显示图片
-              logger.debug(`[Daily] 搜索物品 ${objectName} 失败:`, error)
-            }
-          }
-          
-          // 如果有 objectID，生成图片URL
+      // 优先使用接口返回的 pic 字段，如果没有则通过 objectID 构造
+      const itemsWithImages = topItems.map((item) => {
+        const objectName = item.objectName || '未知物品'
+        let imageUrl = null
+        
+        // 优先使用接口返回的 pic 字段
+        if (item.pic) {
+          imageUrl = item.pic
+        } else {
+          // 如果没有 pic，尝试通过 objectID 构造
+          const objectID = item.objectID || item.itemId || item.objectId
           if (objectID) {
-            imageUrl = `https://playerhub.df.qq.com/playerhub/60004/object/${objectID}.png`
+            imageUrl = `https://playerhub.df.qq.com/playerhub/60004/object/${String(objectID)}.png`
           }
-          
-          return {
-            objectName: objectName,
-            price: parseFloat(item.price || 0).toLocaleString(),
-            count: item.count || 0,
-            imageUrl: imageUrl
-          }
-        })
-      )
+        }
+        
+        return {
+          objectName: objectName,
+          price: parseFloat(item.price || 0).toLocaleString(),
+          count: item.count || 0,
+          imageUrl: imageUrl
+        }
+      })
       
       templateData.solDetail = {
         recentGainDate: solDetail.recentGainDate || '-',
