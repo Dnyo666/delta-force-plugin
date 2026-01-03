@@ -49,13 +49,6 @@ export class BanHistory extends plugin {
         if (!timestamp || isNaN(timestamp)) return 'N/A';
         return new Date(timestamp * 1000).toLocaleString();
     }
-    const formatDuration = (seconds) => {
-        if (!seconds || isNaN(seconds)) return 'N/A';
-        const days = Math.floor(seconds / (3600 * 24));
-        if (days > 365 * 9) return '永久';
-        const h = Math.floor((seconds % (3600 * 24)) / 3600);
-        return `${days}天${h}小时`;
-    }
 
     // 添加每条封号记录到转发消息中
     banList.forEach((ban, index) => {
@@ -65,7 +58,18 @@ export class BanHistory extends plugin {
       msg += `原因: ${ban.reason}\n`;
       msg += `分类: ${ban.strategy_desc}\n`;
       msg += `开始时间: ${formatDate(ban.start_stmp)}\n`;
-      msg += `持续时间: ${formatDuration(ban.duration)}\n`;
+      const duration = ban.duration;
+      if (duration && !isNaN(duration)) {
+          const days = Math.floor(duration / (3600 * 24));
+          if (days > 365 * 9) {
+              msg += `持续时间: 永久\n`;
+          } else {
+              const h = Math.floor((duration % (3600 * 24)) / 3600);
+              msg += `持续时间: ${days}天${h}小时\n`;
+          }
+      } else {
+          msg += `持续时间: N/A\n`;
+      }
       if (ban.cheat_date) {
         msg += `作弊时间: ${formatDate(ban.cheat_date)}`;
       }

@@ -144,7 +144,7 @@ export class Record extends plugin {
 
     // 构建干员图片路径的辅助函数（使用新的统一路径）
     const getOperatorImgPath = (operatorName) => {
-      const relativePath = utils.getOperatorImagePath(operatorName);
+      const relativePath = DataManager.getOperatorImagePath(operatorName);
       const imgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${relativePath}`.replace(/\\/g, '/');
       return `file:///${imgPath}`;
     };

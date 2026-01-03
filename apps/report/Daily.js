@@ -56,8 +56,16 @@ export class Daily extends plugin {
 
     await e.reply('正在查询您的今日战报，请稍候...');
 
-    // mode变量值作为type参数传递
-    const res = await this.api.getDailyRecord(token, mode);
+    // 获取当前日期（格式：YYYYMMDD 用于API，YYYY-MM-DD 用于显示）
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const day = String(now.getDate()).padStart(2, '0')
+    const currentDate = `${year}${month}${day}`  // API 日期格式
+    const currentDateStr = `${year}-${month}-${day}`  // 显示日期格式
+
+    // mode变量值作为type参数传递，同时传递当前日期
+    const res = await this.api.getDailyRecord(token, mode, currentDate);
 
     if (await utils.handleApiError(res, e)) return true;
 
@@ -80,8 +88,9 @@ export class Daily extends plugin {
       mpDetail = res.data?.mp?.data?.data?.mpDetail;
     }
 
-
-    if (!solDetail && !mpDetail) {
+    // 如果指定了模式但没有数据，仍然显示卡片（显示"暂无数据"）
+    // 如果查询全部且两个模式都没有数据，才提示无数据
+    if (!mode && !solDetail && !mpDetail) {
       await e.reply('暂无日报数据，不打两把吗？')
       return true
     }
@@ -117,15 +126,23 @@ export class Daily extends plugin {
       type: 'daily',
       mode: mode,
       userName: userName,
-      userAvatar: userAvatar
+      userAvatar: userAvatar,
+      currentDate: currentDateStr  // 头部显示的当前日期（YYYY-MM-DD）
     }
 
     // 处理全面战场数据
-    if (mpDetail) {
+    // 如果查询全部模式或指定mp模式，都需要显示卡片
+    if (!mode || mode === 'mp') {
+      // 判断是否有有效数据：recentDate 不为空且不为空字符串
+      const hasValidData = mpDetail && 
+        mpDetail.recentDate && 
+        mpDetail.recentDate.trim() !== ''
+      
+      if (hasValidData) {
       const mostUsedOperator = DataManager.getOperatorName(mpDetail.mostUseForceType);
       
       // 获取干员图片路径（相对路径，模板中会自动添加 _res_path）
-      const operatorImagePath = mostUsedOperator ? utils.getOperatorImagePath(mostUsedOperator) : null;
+        const operatorImagePath = mostUsedOperator ? DataManager.getOperatorImagePath(mostUsedOperator) : null;
       
       templateData.mpDetail = {
         recentDate: mpDetail.recentDate || '-',
@@ -145,7 +162,7 @@ export class Daily extends plugin {
         // 使用 DataManager 的方法获取地图背景图路径（相对路径）
         const mapBgPath = bestMatchMap ? DataManager.getMapImagePath(bestMatchMap, 'mp') : null;
         const bestOperator = DataManager.getOperatorName(best.ArmedForceId);
-        const bestOperatorImage = bestOperator ? utils.getOperatorImagePath(bestOperator) : null;
+          const bestOperatorImage = bestOperator ? DataManager.getOperatorImagePath(bestOperator) : null;
         
         templateData.mpDetail.bestMatch = {
           mapID: best.mapID,
@@ -157,12 +174,23 @@ export class Daily extends plugin {
           death: best.death || 0,
           assist: best.assist || 0,
           score: best.score?.toLocaleString() || '0'
+          }
+        }
+      } else {
+        // 没有数据，但需要显示卡片
+        templateData.mpDetail = {
+          isEmpty: true
         }
       }
     }
 
     // 处理烽火地带数据
-    if (solDetail && solDetail.recentGainDate) {
+    // 如果查询全部模式或指定sol模式，都需要显示卡片
+    if (!mode || mode === 'sol') {
+      // 判断是否有有效数据：recentGainDate 不为空
+      const hasValidData = solDetail && solDetail.recentGainDate && solDetail.recentGainDate.trim() !== ''
+      
+      if (hasValidData) {
       const topItems = solDetail.userCollectionTop?.list || []
       
       // 为物品添加图片URL
@@ -195,9 +223,12 @@ export class Daily extends plugin {
         recentGain: solDetail.recentGain?.toLocaleString() || '0',
         topItems: itemsWithImages
       }
-    } else if (mode === 'sol' || !mode) {
-      // 无数据但需要显示烽火地带卡片
-      templateData.solDetail = null
+      } else {
+        // 没有数据，但需要显示卡片
+        templateData.solDetail = {
+          isEmpty: true
+        }
+      }
     }
 
     // 渲染模板
@@ -216,8 +247,16 @@ export class Daily extends plugin {
 
     await e.reply('正在查询您的昨日收益数据，请稍候...');
 
-    // 默认不传模式参数，查询全部数据
-    const res = await this.api.getDailyRecord(token);
+    // 获取昨天日期（格式：YYYYMMDD）
+    const yesterday = new Date()
+    yesterday.setDate(yesterday.getDate() - 1)
+    const year = yesterday.getFullYear()
+    const month = String(yesterday.getMonth() + 1).padStart(2, '0')
+    const day = String(yesterday.getDate()).padStart(2, '0')
+    const yesterdayDate = `${year}${month}${day}`
+
+    // 默认不传模式参数，查询全部数据，传递昨天日期
+    const res = await this.api.getDailyRecord(token, '', yesterdayDate);
 
     if (await utils.handleApiError(res, e)) return true;
 

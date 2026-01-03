@@ -1,14 +1,5 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
-import Config from '../../components/Config.js'
-
-function getClientID() {
-  const clientID = Config.getConfig()?.delta_force?.clientID
-  if (!clientID || clientID === 'xxxxxx') {
-    return null
-  }
-  return clientID
-}
 
 export class SolutionV2 extends plugin {
   constructor(e) {
@@ -58,7 +49,7 @@ export class SolutionV2 extends plugin {
 
   async uploadSolution() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -180,7 +171,7 @@ export class SolutionV2 extends plugin {
 
   async getSolutionList() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -270,7 +261,7 @@ export class SolutionV2 extends plugin {
 
   async getSolutionDetail() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -332,7 +323,7 @@ export class SolutionV2 extends plugin {
 
   async voteSolution() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -367,7 +358,7 @@ export class SolutionV2 extends plugin {
 
   async updateSolution() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -479,7 +470,7 @@ export class SolutionV2 extends plugin {
 
   async deleteSolution() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -512,7 +503,7 @@ export class SolutionV2 extends plugin {
 
   async collectSolution() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -548,7 +539,7 @@ export class SolutionV2 extends plugin {
 
   async getCollectList() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true

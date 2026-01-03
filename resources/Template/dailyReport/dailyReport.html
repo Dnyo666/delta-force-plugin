@@ -28,10 +28,8 @@
                     <span class="user-name">{{userName}}</span>
                     {{/if}}
                     {{if type === 'daily'}}
-                        {{if mpDetail && mpDetail.recentDate}}
-                        <span class="report-date">{{mpDetail.recentDate}}</span>
-                        {{else if solDetail && solDetail.recentGainDate}}
-                        <span class="report-date">{{solDetail.recentGainDate}}</span>
+                        {{if currentDate}}
+                        <span class="report-date">{{currentDate}}</span>
                         {{/if}}
                     {{else if type === 'profit'}}
                         {{if profitData && profitData.gainDate}}
@@ -78,14 +76,20 @@
         </div>
         {{else}}
         <!-- 日报模式 -->
-        <div class="report-grid {{if mpDetail && solDetail && solDetail.recentGainDate}}two-cards{{else}}single-card{{/if}}">
-            {{if solDetail && solDetail.recentGainDate}}
+        <div class="report-grid {{if (solDetail || (!mode || mode === 'sol')) && (mpDetail || (!mode || mode === 'mp'))}}two-cards{{else}}single-card{{/if}}">
+            {{if solDetail || (!mode || mode === 'sol')}}
             <!-- 烽火地带卡片 -->
             <div class="mode-card sol-card">
                 <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/fire_limit_normal.png');">
-                    <div class="mode-title">烽火地带</div>
+                    <div class="mode-title">
+                        烽火地带
+                        {{if solDetail && solDetail.recentGainDate}}
+                        <span class="mode-date">{{solDetail.recentGainDate}}</span>
+                        {{/if}}
+                    </div>
                 </div>
                 <div class="card-body">
+                    {{if solDetail && solDetail.recentGainDate && !solDetail.isEmpty}}
                     <div class="stat-item full-width highlight-large">
                         <span class="stat-label-overlay">最近带出总价值</span>
                         <span class="stat-value">{{solDetail.recentGain}}</span>
@@ -108,27 +112,26 @@
                         </div>
                     </div>
                     {{/if}}
-                </div>
-            </div>
-            {{else if mode === 'sol' || !mode}}
-            <!-- 烽火地带无数据 -->
-            <div class="mode-card sol-card">
-                <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/fire_limit_normal.png');">
-                    <div class="mode-title">烽火地带</div>
-                </div>
-                <div class="card-body">
-                    <div class="no-data-text">最近没有对局</div>
+                    {{else}}
+                    <div class="no-data-text">暂无数据</div>
+                    {{/if}}
                 </div>
             </div>
             {{/if}}
 
-            {{if mpDetail}}
+            {{if mpDetail || (!mode || mode === 'mp')}}
             <!-- 全面战场卡片 -->
             <div class="mode-card mp-card">
                 <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/allwar_limit_normal.png');">
-                    <div class="mode-title">全面战场</div>
+                    <div class="mode-title">
+                        全面战场
+                        {{if mpDetail && mpDetail.recentDate && mpDetail.recentDate.trim() !== ''}}
+                        <span class="mode-date">{{mpDetail.recentDate}}</span>
+                        {{/if}}
+                    </div>
                 </div>
                 <div class="card-body">
+                    {{if mpDetail && mpDetail.recentDate && mpDetail.recentDate.trim() !== '' && !mpDetail.isEmpty}}
                     <div class="stats-overview">
                         <div class="stat-item">
                             <span class="stat-label-overlay">总对局</span>
@@ -184,6 +187,9 @@
                             </div>
                         </div>
                     </div>
+                    {{/if}}
+                    {{else}}
+                    <div class="no-data-text">暂无数据</div>
                     {{/if}}
                 </div>
             </div>

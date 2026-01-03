@@ -1,6 +1,5 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
-import Config from '../../components/Config.js'
 
 let mapCache = null;
 let tagCache = null;
@@ -37,14 +36,6 @@ async function getTagData(api) {
     return tagCache;
   }
   return new Map(); // 失败时返回空Map，避免阻塞
-}
-
-function getClientID() {
-  const clientID = Config.getConfig()?.delta_force?.clientID
-  if (!clientID || clientID === 'xxxxxx') {
-    return null
-  }
-  return clientID
 }
 
 export class Room extends plugin {
@@ -94,7 +85,7 @@ export class Room extends plugin {
   }
 
   async getRoomList() {
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!clientID) {
       await this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
       return true
@@ -173,7 +164,7 @@ export class Room extends plugin {
 
   async createRoom() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -246,7 +237,7 @@ export class Room extends plugin {
 
   async joinRoom() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -281,7 +272,7 @@ export class Room extends plugin {
 
   async quitRoom() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       return await this.e.reply('请先绑定账号。')
     }
@@ -310,7 +301,7 @@ export class Room extends plugin {
 
   async kickMember() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true
@@ -350,7 +341,7 @@ export class Room extends plugin {
 
   async getRoomInfo() {
     const token = await utils.getAccount(this.e.user_id)
-    const clientID = getClientID()
+    const clientID = utils.getClientID()
     if (!token) {
       await this.e.reply('请先绑定账号。')
       return true

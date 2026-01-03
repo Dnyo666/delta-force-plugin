@@ -608,10 +608,19 @@ export default class Code {
    * @param {string} frameworkToken - 用户绑定的token
    * @param {string} type - 'sol' 或 'mp'
    */
-  async getDailyRecord(frameworkToken, type = '') {
+  /**
+   * 获取日报
+   * @param {string} frameworkToken - 用户绑定的token
+   * @param {string} type - 'sol' 或 'mp'
+   * @param {string} date - 日期，格式 YYYYMMDD，不传则查询最近的数据
+   */
+  async getDailyRecord(frameworkToken, type = '', date = '') {
       const params = { frameworkToken };
       if (type) {
           params.type = type;
+      }
+      if (date) {
+          params.date = date;
       }
       return this.request('/df/person/dailyRecord', params, 'GET');
   }

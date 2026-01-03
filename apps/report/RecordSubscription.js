@@ -803,14 +803,6 @@ export class RecordSubscription extends plugin {
     
     let mapName = DataManager.getMapName(mapId)
     const operatorName = DataManager.getOperatorName(armedForceId)
-    
-    // 如果获取失败，记录警告
-    if (!mapName || mapName === '未知地图') {
-      logger.warn(`[战绩订阅] 地图名称获取失败: mapId=${mapId}, recordType=${recordType}`)
-    }
-    if (!operatorName || operatorName === '未知干员') {
-      logger.warn(`[战绩订阅] 干员名称获取失败: armedForceId=${armedForceId}, recordType=${recordType}`)
-    }
 
     // 获取昵称
     let nickname = null
@@ -881,7 +873,7 @@ export class RecordSubscription extends plugin {
 
     // 构建干员图片路径的辅助函数
     const getOperatorImgPath = (operatorName) => {
-      const relativePath = utils.getOperatorImagePath(operatorName)
+      const relativePath = DataManager.getOperatorImagePath(operatorName)
       const imgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${relativePath}`.replace(/\\/g, '/')
       return `file:///${imgPath}`
     }
@@ -934,9 +926,6 @@ export class RecordSubscription extends plugin {
       } else if (durationS === 0 && record.DurationS !== undefined && record.DurationS !== null) {
         // 如果 DurationS 明确为 0，显示 0秒
         duration = '0秒'
-      } else {
-        // 如果 DurationS 不存在或无效，记录警告
-        logger.warn(`[战绩订阅] 存活时间无效: DurationS=${record.DurationS}, 类型=${typeof record.DurationS}`)
       }
       
       // 撤离状态
@@ -947,9 +936,6 @@ export class RecordSubscription extends plugin {
         '10': '撤离失败'
       }
       const escapeStatus = escapeReasons[String(record.EscapeFailReason)] || '撤离失败'
-      if (escapeStatus === '撤离失败') {
-        logger.warn(`[战绩订阅] 未知的撤离状态: EscapeFailReason=${record.EscapeFailReason}`)
-      }
       
       // 确定状态样式类
       let statusClass = 'fail'
@@ -989,9 +975,6 @@ export class RecordSubscription extends plugin {
       } else if (gameTimeS === 0 && record.gametime !== undefined && record.gametime !== null) {
         // 如果 gametime 明确为 0，显示 0秒
         duration = '0秒'
-      } else {
-        // 如果 gametime 不存在或无效，记录警告
-        logger.warn(`[战绩订阅] 游戏时长无效: gametime=${record.gametime}, 类型=${typeof record.gametime}`)
       }
       
       // 对局结果
@@ -1001,9 +984,6 @@ export class RecordSubscription extends plugin {
         '3': '中途退出'
       }
       const result = mpResults[String(record.MatchResult)] || '未知结果'
-      if (result === '未知结果') {
-        logger.warn(`[战绩订阅] 未知的对局结果: MatchResult=${record.MatchResult}`)
-      }
       
       // 确定状态样式类
       let statusClass = 'fail'

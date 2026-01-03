@@ -1,14 +1,5 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
-import Config from '../../components/Config.js'
-
-function getClientID () {
-  const clientID = Config.getConfig()?.delta_force?.clientID
-  if (!clientID) {
-    console.error('clientID 未在配置文件中正确设置，请联系管理员。')
-  }
-  return clientID
-}
 
 export class Account extends plugin {
   constructor (e) {
@@ -61,7 +52,7 @@ export class Account extends plugin {
    * }|null>}
    */
   async _getGroupedAccounts() {
-    const clientID = getClientID();
+    const clientID = utils.getClientID();
     if (!clientID) {
       this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。');
       return null;
@@ -115,7 +106,7 @@ export class Account extends plugin {
     const token = this.e.msg.match(/^(#三角洲|\^)绑定\s*([a-zA-Z0-9\-]+)$/)[2]
     this.e.reply('正在尝试绑定 Token...')
 
-    const clientID = getClientID();
+    const clientID = utils.getClientID();
     if (!clientID) {
       this.e.reply('clientID 未在配置文件中正确设置，请联系管理员。')
       return;
@@ -194,7 +185,7 @@ export class Account extends plugin {
       }
       
       const tokenToUnbind = all[index].frameworkToken;
-      const clientID = getClientID(); // _getGroupedAccounts已确保存在
+      const clientID = utils.getClientID(); // _getGroupedAccounts已确保存在
 
       const unbindRes = await this.api.unbindUser({
           frameworkToken: tokenToUnbind,
@@ -256,7 +247,7 @@ export class Account extends plugin {
       
       if (deleteRes && (deleteRes.success || deleteRes.code === 0)) {
         // 删除成功后，同时解绑该账号
-        const clientID = getClientID();
+        const clientID = utils.getClientID();
         if (clientID) {
           const unbindRes = await this.api.unbindUser({
             frameworkToken: tokenToDelete,
