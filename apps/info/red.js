@@ -212,11 +212,14 @@ export class Red extends plugin {
       const itemImageUrl = `https://playerhub.df.qq.com/playerhub/60004/object/${objectId}.png`
 
       // 构建渲染数据（新模板使用流式布局，无需计算高度）
+      const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${e.user_id}&spec=640&img_type=jpg`
       const renderData = {
         userName: userName,
         userRank: userRank,
         userRankImage: userRankImage,
         userAvatar: userAvatar,
+        userId: e.user_id,
+        qqAvatarUrl: qqAvatarUrl,
         itemName: targetItem.objectName,
         itemType: targetItem.objectType || (targetItem.grade ? `GRADE ${targetItem.grade}` : ''),
         itemImageUrl: itemImageUrl,
@@ -431,11 +434,14 @@ export class Red extends plugin {
           // 静默处理
         }
 
+        const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${e.user_id}&spec=640&img_type=jpg`
         renderData = {
           userName,
           userRank,
           userRankImage,
           userAvatar,
+          userId: e.user_id,
+          qqAvatarUrl: qqAvatarUrl,
           statistics: {
             redGodCount: redGodCount.toString(),
             redTotalCount: redTotalCount.toString(),
@@ -555,11 +561,14 @@ export class Red extends plugin {
           unlockedCount = 74 - redGodCount
         }
 
+        const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${e.user_id}&spec=640&img_type=jpg`
         renderData = {
           userName,
           userRank,
           userRankImage,
           userAvatar,
+          userId: e.user_id,
+          qqAvatarUrl: qqAvatarUrl,
           title,
           subtitle,
           unlockDesc,

@@ -118,11 +118,14 @@ export class Info extends plugin {
       const tdmRankName = tdmRank.replace(/\s*\(\d+\)/, '');
 
       // 构建渲染数据
+      const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${this.e.user_id}&spec=640&img_type=jpg`
       const renderData = {
         // 背景和基础信息 - 移除模板变量，直接使用相对路径
         backgroundImage: DataManager.getRandomBackground(),
         userName: nickName,
         userAvatar: picUrl,
+        userId: this.e.user_id,
+        qqAvatarUrl: qqAvatarUrl,
         registerTime: this.formatDate(roleInfo.register_time),
         lastLoginTime: this.formatDate(roleInfo.lastlogintime),
         accountStatus: `账号封禁: ${isBanUser} | 禁言: ${isBanSpeak} | 防沉迷: ${isAdult}`,

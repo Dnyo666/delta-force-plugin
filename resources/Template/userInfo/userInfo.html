@@ -15,12 +15,9 @@
     
     <!-- 用户基础信息区域 -->
     <div class="user-header" style="width: 384px; height: 88px; left: 53px; top: 46px; position: absolute">
-        {{if userAvatar}}
         <img class="user-avatar" style="width: 88px; height: 88px; left: 0px; top: 0px; position: absolute" 
-             src="{{userAvatar}}" alt="头像" />
-        {{else}}
-        <div class="user-avatar-placeholder" style="width: 88px; height: 88px; left: 0px; top: 0px; position: absolute"></div>
-        {{/if}}
+             src="{{userAvatar}}" alt="头像" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';var placeholder=this.nextElementSibling;if(placeholder&&placeholder.classList.contains('user-avatar-placeholder')){placeholder.style.display='block';}}" />
+        <div class="user-avatar-placeholder" style="width: 88px; height: 88px; left: 0px; top: 0px; position: absolute; display: none;"></div>
         
         <div class="user-name" style="width: 294px; height: 40px; left: 112px; top: 0px; position: absolute">{{userName}}</div>
         <div class="user-register-time" style="width: 400px; height: 24px; left: 112px; top: 40px; position: absolute">注册时间: {{registerTime}}</div>
