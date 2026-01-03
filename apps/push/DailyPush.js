@@ -19,8 +19,14 @@ export class DailyPush extends plugin {
     super({
       name: '三角洲日报推送',
       dsc: '每日定时推送日报',
-      event: 'none',
-      priority: 100
+      event: 'message',
+      priority: 100,
+      rule: [
+        {
+          reg: '^\\^测试日报推送$',
+          fnc: 'testDailyPush'
+        }
+      ]
     });
 
     const dailyConfig = Config.getConfig()?.delta_force?.push_daily_report || {};
@@ -30,6 +36,63 @@ export class DailyPush extends plugin {
       cron: normalizeCronExpression(dailyConfig.cron || '0 0 10 * * ?'), 
       fnc: () => this.pushDailyReports()
     };
+  }
+
+  async testDailyPush(e) {
+    if (!e.isGroup) {
+      return e.reply('该指令只能在群聊中使用。');
+    }
+
+    const userId = String(e.user_id);
+    const groupId = String(e.group_id);
+
+    await e.reply('正在测试日报推送，请稍候...');
+
+    const config = Config.getConfig();
+    const dailyReportConfig = config?.delta_force?.push_daily_report || {};
+
+    if (!dailyReportConfig.enabled) {
+      return e.reply('日报推送功能当前未启用。');
+    }
+
+    const userConfig = dailyReportConfig[userId];
+    if (!userConfig || !userConfig.enabled) {
+      return e.reply('您尚未开启日报推送功能。');
+    }
+
+    const pushToGroups = userConfig.push_to?.group || [];
+    if (!pushToGroups.includes(groupId)) {
+      return e.reply('您尚未在本群开启日报推送。');
+    }
+
+    // 临时修改配置，只处理当前用户和当前群
+    const originalConfig = { ...dailyReportConfig };
+    const testConfig = {
+      enabled: true,
+      [userId]: {
+        ...userConfig,
+        push_to: {
+          group: [groupId]
+        }
+      }
+    };
+    
+    // 临时替换配置
+    config.delta_force.push_daily_report = testConfig;
+    
+    try {
+      // 调用推送方法
+      await this.pushDailyReports();
+      await e.reply('日报推送测试完成！');
+    } catch (error) {
+      logger.error(`[日报推送测试] 失败:`, error);
+      await e.reply(`日报推送测试失败: ${error.message}`);
+    } finally {
+      // 恢复原配置
+      config.delta_force.push_daily_report = originalConfig;
+    }
+
+    return true;
   }
 
   async pushDailyReports() {
@@ -54,7 +117,15 @@ export class DailyPush extends plugin {
         continue;
       }
       
-      const res = await api.getDailyRecord(token);
+      // 获取昨天日期（格式：YYYYMMDD），日报推送通常是推送昨天的数据
+      const yesterday = new Date()
+      yesterday.setDate(yesterday.getDate() - 1)
+      const year = yesterday.getFullYear()
+      const month = String(yesterday.getMonth() + 1).padStart(2, '0')
+      const day = String(yesterday.getDate()).padStart(2, '0')
+      const yesterdayDate = `${year}${month}${day}`
+      
+      const res = await api.getDailyRecord(token, '', yesterdayDate);
 
       if (!res || !res.success || !res.data) {
         logger.warn(`[日报推送] 用户 ${userId} API数据异常，跳过。(${res?.msg || '未知错误'})`);
@@ -95,20 +166,31 @@ export class DailyPush extends plugin {
         logger.debug(`[日报推送] 获取用户信息失败:`, error)
       }
 
+      // 获取当前日期（格式：YYYY-MM-DD）用于头部显示
+      const now = new Date()
+      const currentDateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
       // 构建模板数据
       const templateData = {
         type: 'daily',
         mode: '',
         userName: userName,
-        userAvatar: userAvatar
+        userAvatar: userAvatar,
+        currentDate: currentDateStr  // 头部显示的当前日期（YYYY-MM-DD）
       }
 
       // 处理全面战场数据
-      if (mpDetail) {
+      // 查询全部模式，需要显示卡片
+      // 判断是否有有效数据：recentDate 不为空且不为空字符串
+      const hasValidMpData = mpDetail && 
+        mpDetail.recentDate && 
+        mpDetail.recentDate.trim() !== ''
+      
+      if (hasValidMpData) {
         const mostUsedOperator = DataManager.getOperatorName(mpDetail.mostUseForceType);
         
         // 获取干员图片路径（相对路径，模板中会自动添加 _res_path）
-        const operatorImagePath = mostUsedOperator ? utils.getOperatorImagePath(mostUsedOperator) : null;
+        const operatorImagePath = mostUsedOperator ? DataManager.getOperatorImagePath(mostUsedOperator) : null;
         
         templateData.mpDetail = {
           recentDate: mpDetail.recentDate || '-',
@@ -128,7 +210,7 @@ export class DailyPush extends plugin {
           // 使用 DataManager 的方法获取地图背景图路径（相对路径）
           const mapBgPath = bestMatchMap ? DataManager.getMapImagePath(bestMatchMap, 'mp') : null;
           const bestOperator = DataManager.getOperatorName(best.ArmedForceId);
-          const bestOperatorImage = bestOperator ? utils.getOperatorImagePath(bestOperator) : null;
+          const bestOperatorImage = bestOperator ? DataManager.getOperatorImagePath(bestOperator) : null;
           
           templateData.mpDetail.bestMatch = {
             mapID: best.mapID,
@@ -142,10 +224,21 @@ export class DailyPush extends plugin {
             score: best.score?.toLocaleString() || '0'
           }
         }
+      } else {
+        // 没有数据，但需要显示卡片
+        templateData.mpDetail = {
+          isEmpty: true
+        }
       }
 
       // 处理烽火地带数据
-      if (solDetail && solDetail.recentGainDate) {
+      // 查询全部模式，需要显示卡片
+      // 判断是否有有效数据：recentGainDate 不为空且不为空字符串
+      const hasValidSolData = solDetail && 
+        solDetail.recentGainDate && 
+        solDetail.recentGainDate.trim() !== ''
+      
+      if (hasValidSolData) {
         const topItems = solDetail.userCollectionTop?.list || []
         
         // 为物品添加图片URL，优先使用接口返回的 pic 字段
@@ -177,8 +270,11 @@ export class DailyPush extends plugin {
           recentGain: solDetail.recentGain?.toLocaleString() || '0',
           topItems: itemsWithImages
         }
-      } else if (!mpDetail) {
-        templateData.solDetail = null
+      } else {
+        // 没有数据，但需要显示卡片
+        templateData.solDetail = {
+          isEmpty: true
+        }
       }
       
       const pushToGroups = userConfig.push_to.group || [];

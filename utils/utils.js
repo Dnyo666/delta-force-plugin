@@ -3,8 +3,16 @@ import Code from '../components/Code.js'; // 引入Code以调用API
 import fs from 'fs';
 import path from 'path';
 
+/**
+ * 获取客户端ID
+ * @returns {string|null} 客户端ID，如果未配置或为默认值则返回null
+ */
 function getClientID () {
-    return Config.getConfig()?.delta_force?.clientID;
+    const clientID = Config.getConfig()?.delta_force?.clientID;
+    if (!clientID || clientID === 'xxxxxx') {
+        return null;
+    }
+    return clientID;
 }
 
 /**
@@ -190,54 +198,6 @@ const utils = {
     handleApiError
 };
 
-/**
- * 获取地图背景图片路径
- * @param {string} mapName - 地图名称（如："巴克什-机密"、"航天基地-绝密"、"刀锋"）
- * @param {string} gameMode - 游戏模式 'sol'（烽火地带）或 'mp'（全面战场）
- * @returns {string} - 图片相对路径（用于模板，需要加上 _res_path 前缀）
- */
-function getMapImagePath(mapName, gameMode = 'sol') {
-    const modePrefix = gameMode === 'sol' ? '烽火' : '全面';
-    
-    // 处理地图名称：尝试精确匹配（包含难度级别）
-    const parts = mapName.split('-');
-    if (parts.length >= 2) {
-        // 有难度级别的情况：如 "巴克什-机密" -> "烽火-巴克什-机密.png"
-        const baseMapName = parts[0];
-        const difficulty = parts.slice(1).join('-'); // 处理多段式难度名称（如"零号大坝-终夜"）
-        
-        // 优先尝试 .png 格式（imgs/map 中多数详细地图都是 .png）
-        return `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`;
-    }
-    
-    // 只有基础地图名称的情况：如 "刀锋" -> "全面-刀锋.jpg"
-    // imgs/map 中基础地图通常是 .jpg 格式
-    const cleanMapName = parts[0];
-    return `imgs/map/${modePrefix}-${cleanMapName}.jpg`;
-}
-
-/**
- * 获取干员图片路径（优先使用 PNG，不存在则使用 JPG）
- * @param {string} operatorName - 干员名称（如："露娜"、"骇爪"）
- * @returns {string} - 图片相对路径（用于模板，需要加上 _res_path 前缀）
- */
-function getOperatorImagePath(operatorName) {
-    const pluginRoot = path.join(process.cwd(), 'plugins/delta-force-plugin/resources');
-    const pngPath = path.join(pluginRoot, `imgs/operator/${operatorName}.png`);
-    const jpgPath = path.join(pluginRoot, `imgs/operator/${operatorName}.jpg`);
-    
-    // 优先使用 PNG，如果不存在则使用 JPG
-    if (fs.existsSync(pngPath)) {
-        return `imgs/operator/${operatorName}.png`;
-    } else if (fs.existsSync(jpgPath)) {
-        return `imgs/operator/${operatorName}.jpg`;
-    } else {
-        // 如果都不存在，默认返回 PNG（让浏览器处理错误）
-        return `imgs/operator/${operatorName}.png`;
-    }
-}
-
-utils.getMapImagePath = getMapImagePath;
-utils.getOperatorImagePath = getOperatorImagePath;
+utils.getClientID = getClientID;
 
 export default utils; 

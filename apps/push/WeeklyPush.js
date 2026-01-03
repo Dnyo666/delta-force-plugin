@@ -19,8 +19,14 @@ export class WeeklyPush extends plugin {
     super({
       name: '三角洲周报推送',
       dsc: '每周定时推送周报',
-      event: 'none',
-      priority: 100
+      event: 'message',
+      priority: 100,
+      rule: [
+        {
+          reg: '^\\^测试周报推送$',
+          fnc: 'testWeeklyPush'
+        }
+      ]
     });
 
     const weeklyConfig = Config.getConfig()?.delta_force?.push_weekly_report || {};
@@ -30,6 +36,63 @@ export class WeeklyPush extends plugin {
       cron: normalizeCronExpression(weeklyConfig.cron || '0 0 10 * * 1'), 
       fnc: () => this.pushWeeklyReports()
     };
+  }
+
+  async testWeeklyPush(e) {
+    if (!e.isGroup) {
+      return e.reply('该指令只能在群聊中使用。');
+    }
+
+    const userId = String(e.user_id);
+    const groupId = String(e.group_id);
+
+    await e.reply('正在测试周报推送，请稍候...');
+
+    const config = Config.getConfig();
+    const weeklyReportConfig = config?.delta_force?.push_weekly_report || {};
+
+    if (!weeklyReportConfig.enabled) {
+      return e.reply('周报推送功能当前未启用。');
+    }
+
+    const userConfig = weeklyReportConfig[userId];
+    if (!userConfig || !userConfig.enabled) {
+      return e.reply('您尚未开启周报推送功能。');
+    }
+
+    const pushToGroups = userConfig.push_to?.group || [];
+    if (!pushToGroups.includes(groupId)) {
+      return e.reply('您尚未在本群开启周报推送。');
+    }
+
+    // 临时修改配置，只处理当前用户和当前群
+    const originalConfig = { ...weeklyReportConfig };
+    const testConfig = {
+      enabled: true,
+      [userId]: {
+        ...userConfig,
+        push_to: {
+          group: [groupId]
+        }
+      }
+    };
+    
+    // 临时替换配置
+    config.delta_force.push_weekly_report = testConfig;
+    
+    try {
+      // 调用推送方法
+      await this.pushWeeklyReports();
+      await e.reply('周报推送测试完成！');
+    } catch (error) {
+      logger.error(`[周报推送测试] 失败:`, error);
+      await e.reply(`周报推送测试失败: ${error.message}`);
+    } finally {
+      // 恢复原配置
+      config.delta_force.push_weekly_report = originalConfig;
+    }
+
+    return true;
   }
 
   async pushWeeklyReports() {
@@ -62,6 +125,7 @@ export class WeeklyPush extends plugin {
       }
       const solData = res.data?.sol?.data?.data;
       const mpData = res.data?.mp?.data?.data;
+      // 只有当两个模式都没有数据时，才跳过推送
       if (!solData && !mpData) {
         logger.info(`[周报推送] 用户 ${userId} 无周报数据，跳过。`);
         continue;
@@ -177,9 +241,27 @@ export class WeeklyPush extends plugin {
       };
 
       if (solData) {
+        // 判断是否有有效数据：总对局数大于0
+        const hasValidData = solData.total_sol_num && Number(solData.total_sol_num) > 0;
+        
+        if (!hasValidData) {
+          // 没有数据，但需要显示卡片
+          templateData.solData = {
+            isEmpty: true
+          };
+        } else {
         const solRank = solData.Rank_Score ? DataManager.getRankByScore(solData.Rank_Score, 'sol') : '-';
-        const profitRatio = solData.Gained_Price && solData.consume_Price ?
-          (solData.Gained_Price / solData.consume_Price).toFixed(2) : '0';
+        
+        // 检查收益和消费数据，避免NaN
+        const gainedPrice = Number(solData.Gained_Price) || 0;
+        const consumePrice = Number(solData.consume_Price) || 0;
+        let profitRatio = '0';
+        if (gainedPrice > 0 && consumePrice > 0) {
+          profitRatio = (gainedPrice / consumePrice).toFixed(2);
+        } else if (gainedPrice > 0 && consumePrice === 0) {
+          profitRatio = '∞'; // 收益大于0但消费为0
+          logger.warn(`[周报推送] 烽火地带赚损比异常 - 收益: ${gainedPrice}, 消费: ${consumePrice}, 设置为∞`);
+        }
         
         // 获取段位图片路径
         const solRankImagePath = solRank !== '-' ? DataManager.getRankImagePath(solRank, 'sol') : null;
@@ -407,12 +489,41 @@ export class WeeklyPush extends plugin {
             assistCnt: t.Friend_total_sol_AssistCnt || 0
           };
         });
+        }
+      } else {
+        // 没有数据，但需要显示卡片
+        templateData.solData = {
+          isEmpty: true
+        };
       }
 
       if (mpData) {
-        const winRate = mpData.total_num > 0 ? (mpData.win_num / mpData.total_num * 100).toFixed(1) + '%' : '0%';
+        // 判断是否有有效数据：总对局数大于0
+        const hasValidData = mpData.total_num && Number(mpData.total_num) > 0;
+        
+        if (!hasValidData) {
+          // 没有数据，但需要显示卡片
+          templateData.mpData = {
+            isEmpty: true
+          };
+        } else {
+        // 检查胜率计算，避免NaN
+        const totalNum = Number(mpData.total_num) || 0;
+        const winNum = Number(mpData.win_num) || 0;
+        let winRate = '0%';
+        if (totalNum > 0) {
+          winRate = ((winNum / totalNum) * 100).toFixed(1) + '%';
+        }
+        
         const mpRank = mpData.Rank_Match_Score ? DataManager.getRankByScore(mpData.Rank_Match_Score, 'tdm') : '-';
-        const hitRate = mpData.Consume_Bullet_Num > 0 ? (mpData.Hit_Bullet_Num / mpData.Consume_Bullet_Num * 100).toFixed(1) + '%' : '0%';
+        
+        // 检查命中率计算，避免NaN
+        const consumeBullet = Number(mpData.Consume_Bullet_Num) || 0;
+        const hitBullet = Number(mpData.Hit_Bullet_Num) || 0;
+        let hitRate = '0%';
+        if (consumeBullet > 0) {
+          hitRate = ((hitBullet / consumeBullet) * 100).toFixed(1) + '%';
+        }
 
         // 获取段位图片路径
         const mpRankImagePath = mpRank !== '-' ? DataManager.getRankImagePath(mpRank, 'tdm') : null;
@@ -500,6 +611,12 @@ export class WeeklyPush extends plugin {
             maxScore: t.Friend_Max_Score?.toLocaleString() || '0'
           };
         });
+        }
+      } else {
+        // 没有数据，但需要显示卡片
+        templateData.mpData = {
+          isEmpty: true
+        };
       }
 
       // --- 推送 ---

@@ -112,56 +112,49 @@ class HelpConfig {
    * 获取帮助配置（每次调用时尝试重新加载）
    */
   getHelpCfg() {
-    this.loadConfigSync()
-    return this.cache.helpCfg || {}
+    return (this.loadConfigSync().helpCfg || {})
   }
 
   /**
    * 获取娱乐帮助配置（每次调用时尝试重新加载）
    */
   getEntertainmentHelpCfg() {
-    this.loadConfigSync()
-    return this.cache.entertainmentHelpCfg || {}
+    return (this.loadConfigSync().entertainmentHelpCfg || {})
   }
 
   /**
    * 获取帮助列表（每次调用时尝试重新加载）
    */
   getHelpList() {
-    this.loadConfigSync()
-    return this.cache.helpList || []
+    return (this.loadConfigSync().helpList || [])
   }
 
   /**
    * 获取娱乐帮助列表（每次调用时尝试重新加载）
    */
   getEntertainmentHelpList() {
-    this.loadConfigSync()
-    return this.cache.entertainmentHelpList || []
+    return (this.loadConfigSync().entertainmentHelpList || [])
   }
 
   /**
    * 获取计算器帮助配置（每次调用时尝试重新加载）
    */
   getCalculatorHelpCfg() {
-    this.loadConfigSync()
-    return this.cache.calculatorHelpCfg || {}
+    return (this.loadConfigSync().calculatorHelpCfg || {})
   }
 
   /**
    * 获取计算器映射表配置（每次调用时尝试重新加载）
    */
   getCalculatorMappingCfg() {
-    this.loadConfigSync()
-    return this.cache.calculatorMappingCfg || {}
+    return (this.loadConfigSync().calculatorMappingCfg || {})
   }
 
   /**
    * 获取计算器帮助列表（每次调用时尝试重新加载）
    */
   getCalculatorHelpList() {
-    this.loadConfigSync()
-    return this.cache.calculatorHelpList || []
+    return (this.loadConfigSync().calculatorHelpList || [])
   }
 
   /**

@@ -254,6 +254,17 @@ body:has(.container.single-mode) {
     color: #FFFFFF;
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
     letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.mode-date {
+    font-size: 14px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.7);
+    text-shadow: none;
+    letter-spacing: 0.5px;
 }
 
 

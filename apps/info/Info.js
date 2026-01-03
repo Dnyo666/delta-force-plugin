@@ -69,23 +69,6 @@ export class Info extends plugin {
     }
   }
 
-  // 格式化时长函数
-  formatDuration(value, unit = 'seconds') {
-    if (!value || isNaN(value)) return '未知';
-    const numValue = Number(value);
-    if (isNaN(numValue)) return '未知';
-
-    let totalMinutes;
-    if (unit === 'seconds') {
-      totalMinutes = Math.floor(numValue / 60);
-    } else { // minutes
-      totalMinutes = numValue;
-    }
-    const h = Math.floor(totalMinutes / 60);
-    const m = Math.floor(totalMinutes % 60);
-    return `${h}小时${m}分钟`;
-  }
-
   async getUserInfo() {
     const token = await utils.getAccount(this.e.user_id)
     if (!token) {
@@ -152,7 +135,7 @@ export class Info extends plugin {
         solTotalEscape: careerData.solttotalescape || '-',
         solEscapeRatio: careerData.solescaperatio || '-',
         solTotalKill: careerData.soltotalkill || '-',
-        solDuration: this.formatDuration(careerData.solduration),
+        solDuration: utils.formatDuration(careerData.solduration),
 
         // 全面战场信息
         tdmLevel: roleInfo.tdmlevel || '-',
@@ -162,7 +145,7 @@ export class Info extends plugin {
         tdmTotalWin: careerData.totalwin || '-',
         tdmWinRatio: careerData.tdmsuccessratio || '-',
         tdmTotalKill: careerData.tdmtotalkill || '-',
-        tdmDuration: this.formatDuration(careerData.tdmduration, 'minutes'),
+        tdmDuration: utils.formatDuration(careerData.tdmduration, 'minutes'),
 
         // 资产信息
         hafCoin: roleInfo.hafcoinnum?.toLocaleString() || '-',

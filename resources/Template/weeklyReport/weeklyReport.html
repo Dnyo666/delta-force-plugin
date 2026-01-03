@@ -45,6 +45,9 @@
                 </div>
                 
                 <div class="card-body">
+                    {{if solData.isEmpty}}
+                    <div class="no-data-text">暂无数据</div>
+                    {{else}}
                     <!-- 总览 -->
                     <div class="stats-overview">
                         <div class="stat-item">
@@ -251,6 +254,7 @@
                         </div>
                     </div>
                     {{/if}}
+                    {{/if}}
                 </div>
             </div>
             {{/if}}
@@ -263,6 +267,9 @@
                 </div>
                 
                 <div class="card-body">
+                    {{if mpData.isEmpty}}
+                    <div class="no-data-text">暂无数据</div>
+                    {{else}}
                     <!-- 总览 -->
                     <div class="stats-overview">
                         <div class="stat-item">
@@ -392,6 +399,7 @@
                             {{/each}}
                         </div>
                     </div>
+                    {{/if}}
                     {{/if}}
                 </div>
             </div>

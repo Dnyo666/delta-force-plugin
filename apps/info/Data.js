@@ -21,6 +21,15 @@ export class Data extends plugin {
     this.api = new Code(e)
   }
 
+  // URL解码函数
+  decodeUserInfo(str) {
+    try {
+      return decodeURIComponent(str || '')
+    } catch (e) {
+      return str || ''
+    }
+  }
+
   async getPersonalData () {
     const token = await utils.getAccount(this.e.user_id)
     if (!token) {
@@ -79,9 +88,46 @@ export class Data extends plugin {
       return true
     }
 
+    // 获取用户信息（包括头像）
+    let userName = this.e.sender.card || this.e.sender.nickname
+    let userAvatar = ''
+    try {
+      const personalInfoRes = await this.api.getPersonalInfo(token)
+      if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
+        const { userData, careerData } = personalInfoRes.data
+        const { roleInfo } = personalInfoRes
+
+        // 获取用户名（优先使用游戏内名称）
+        const gameUserName = this.decodeUserInfo(userData?.charac_name || roleInfo?.charac_name)
+        if (gameUserName) {
+          userName = gameUserName
+        }
+
+        // 获取用户头像
+        const picUrl = this.decodeUserInfo(userData?.picurl || roleInfo?.picurl)
+        if (picUrl) {
+          if (/^[0-9]+$/.test(picUrl)) {
+            userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${picUrl}.webp`
+          } else {
+            userAvatar = picUrl
+          }
+        }
+      }
+    } catch (error) {
+      // 获取个人信息失败，使用默认值
+      logger.debug(`[Data] 获取用户信息失败:`, error)
+    }
+
+    // 获取当前时间
+    const now = new Date()
+    const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
     // 构建模板数据
     const templateData = {
-      nickname: this.e.sender.nickname,
+      nickname: userName,
+      userName: userName,
+      userAvatar: userAvatar,
+      currentDate: currentDate,
       season: season === 'all' ? '全部' : season
     }
     
@@ -148,7 +194,7 @@ export class Data extends plugin {
       scale: 1.0,
       renderCfg: {
         viewPort: {
-          width: 1300,
+          width: 680,
           height: 5000
         }
       }

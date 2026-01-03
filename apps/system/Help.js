@@ -22,12 +22,13 @@ export class Help extends plugin {
         });
     }
 
-    async help(e) {
-        const helpList = HelpConfig.getHelpList();
-        const helpCfg = HelpConfig.getHelpCfg();
-        
-        // 处理帮助组图标和权限
-        const processGroup = (group) => {
+    /**
+     * 处理帮助组：检查权限和处理图标
+     * @param {object} group - 帮助组对象
+     * @param {object} e - 事件对象
+     * @returns {object|null} 处理后的组对象，如果无权限则返回 null
+     */
+    processGroup(group, e) {
             // 权限检查：如果是masterOnly组且用户不是master，则返回null
             if (group.masterOnly && !e.isMaster) {
                 return null;
@@ -48,26 +49,55 @@ export class Help extends plugin {
             }
             
             return group;
-        };
+    }
 
+    /**
+     * 处理并排序帮助组数组
+     * @param {Array} groups - 帮助组数组
+     * @param {object} e - 事件对象
+     * @returns {Array} 处理并排序后的组数组
+     */
+    processAndSortGroups(groups, e) {
+        const DEFAULT_ORDER = 999;
+        return groups
+            .map(group => this.processGroup(group, e))
+            .filter(g => g !== null)
+            .sort((a, b) => (a.order || DEFAULT_ORDER) - (b.order || DEFAULT_ORDER));
+    }
+
+    /**
+     * 获取组的排序值（用于比较）
+     * @param {object} group - 帮助组对象
+     * @returns {number} 排序值
+     */
+    getGroupOrder(group) {
+        return group.order || 999;
+    }
+
+    /**
+     * 处理帮助列表：根据配置格式处理并分组
+     * @param {object|Array} helpList - 帮助列表（新格式对象或旧格式数组）
+     * @param {object} helpCfg - 帮助配置
+     * @param {object} e - 事件对象
+     * @returns {object} 包含 leftGroups, rightGroups, topFullWidthGroups, bottomFullWidthGroups, helpGroup, helpCfg
+     */
+    processHelpList(helpList, helpCfg, e) {
         let leftGroups = [];
         let rightGroups = [];
         let topFullWidthGroups = [];
         let bottomFullWidthGroups = [];
         let helpGroup = [];
+        const ORDER_THRESHOLD = 50;
 
         // 检查是新格式（对象）还是旧格式（数组）
         if (helpList && typeof helpList === 'object' && !Array.isArray(helpList)) {
             // 新格式：从 left/right/fullWidth 中获取组
             // 处理 fullWidth 组，分为顶部和底部两部分
             if (helpList.fullWidth && Array.isArray(helpList.fullWidth)) {
-                const sorted = helpList.fullWidth
-                    .map(processGroup)
-                    .filter(g => g !== null)
-                    .sort((a, b) => (a.order || 999) - (b.order || 999));
+                const sorted = this.processAndSortGroups(helpList.fullWidth, e);
                 // order < 50 的显示在顶部，order >= 50 的显示在底部
                 sorted.forEach(group => {
-                    if ((group.order || 999) < 50) {
+                    if (this.getGroupOrder(group) < ORDER_THRESHOLD) {
                         topFullWidthGroups.push(group);
                     } else {
                         bottomFullWidthGroups.push(group);
@@ -77,20 +107,12 @@ export class Help extends plugin {
 
             // 处理 left 组
             if (helpList.left && Array.isArray(helpList.left)) {
-                const sorted = helpList.left
-                    .map(processGroup)
-                    .filter(g => g !== null)
-                    .sort((a, b) => (a.order || 999) - (b.order || 999));
-                leftGroups.push(...sorted);
+                leftGroups.push(...this.processAndSortGroups(helpList.left, e));
             }
 
             // 处理 right 组
             if (helpList.right && Array.isArray(helpList.right)) {
-                const sorted = helpList.right
-                    .map(processGroup)
-                    .filter(g => g !== null)
-                    .sort((a, b) => (a.order || 999) - (b.order || 999));
-                rightGroups.push(...sorted);
+                rightGroups.push(...this.processAndSortGroups(helpList.right, e));
             }
 
             // 合并所有组用于单列布局
@@ -98,7 +120,7 @@ export class Help extends plugin {
         } else {
             // 旧格式：兼容原有数组格式
             _.forEach(helpList, (group) => {
-                const processed = processGroup(group);
+                const processed = this.processGroup(group, e);
                 if (processed) {
                     helpGroup.push(processed);
                 }
@@ -111,7 +133,7 @@ export class Help extends plugin {
                 helpGroup.forEach((group) => {
                     if (group.fullWidth) {
                         // 根据 order 分配到顶部或底部
-                        if ((group.order || 999) < 50) {
+                        if (this.getGroupOrder(group) < ORDER_THRESHOLD) {
                             topFullWidthGroups.push(group);
                         } else {
                             bottomFullWidthGroups.push(group);
@@ -156,6 +178,16 @@ export class Help extends plugin {
             }
         }
 
+        return { leftGroups, rightGroups, topFullWidthGroups, bottomFullWidthGroups, helpGroup, helpCfg };
+    }
+
+    async help(e) {
+        const helpList = HelpConfig.getHelpList();
+        const helpCfg = HelpConfig.getHelpCfg();
+        
+        const { leftGroups, rightGroups, topFullWidthGroups, bottomFullWidthGroups, helpGroup } = 
+            this.processHelpList(helpList, helpCfg, e);
+
         let themeData = await this.getThemeData(helpCfg, helpCfg) || {};
         return await Render.render('help/index.html', {
             helpCfg,
@@ -173,31 +205,32 @@ export class Help extends plugin {
     async entertainmentHelp(e) {
         const entertainmentHelpList = HelpConfig.getEntertainmentHelpList();
         const entertainmentHelpCfg = HelpConfig.getEntertainmentHelpCfg();
+        
+        // 处理娱乐帮助列表（使用相同的处理逻辑，但不需要权限检查）
         let helpGroup = [];
         _.forEach(entertainmentHelpList, (group) => {
-            _.forEach(group.list, (help) => {
-                let icon = help.icon * 1;
-                if (!icon) {
-                    help.css = 'display:none';
-                } else {
-                    let x = (icon - 1) % 10;
-                    let y = (icon - x - 1) / 10;
-                    help.css = `background-position:-${x * 50}px -${y * 50}px`;
-                }
-            });
-            helpGroup.push(group);
+            const processed = this.processGroup(group, e);
+            if (processed) {
+                helpGroup.push(processed);
+            }
         });
 
         // 如果启用两列布局，预先分割数组
         let leftGroups = [];
         let rightGroups = [];
-        let fullWidthGroups = [];
+        let topFullWidthGroups = [];
+        let bottomFullWidthGroups = [];
         if (entertainmentHelpCfg.twoColumnLayout) {
             // 分离出需要跨列显示的组
             const normalGroups = [];
             helpGroup.forEach((group) => {
                 if (group.fullWidth) {
-                    fullWidthGroups.push(group);
+                    // 根据 order 分配到顶部或底部
+                    if (this.getGroupOrder(group) < 50) {
+                        topFullWidthGroups.push(group);
+                    } else {
+                        bottomFullWidthGroups.push(group);
+                    }
                 } else if (group.column === 'left') {
                     leftGroups.push(group);
                 } else if (group.column === 'right') {
@@ -243,8 +276,8 @@ export class Help extends plugin {
             helpGroup,
             leftGroups,
             rightGroups,
-            topFullWidthGroups: [],
-            bottomFullWidthGroups: [],
+            topFullWidthGroups,
+            bottomFullWidthGroups,
             ...themeData,
             themePath: themeData.themePath || 'default',
             element: 'default'

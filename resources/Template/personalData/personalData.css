@@ -5,17 +5,17 @@
 }
 
 body {
-    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif !important;
     background: #0b0f13 !important;
-    width: 100% !important;
-    min-height: 100vh !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-    padding: 30px !important;
-    box-sizing: border-box !important;
+    color: #F2F2F2 !important;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 680px !important;
+    height: auto !important;
+    min-height: 400px !important;
     transform: none !important;
     transform-origin: unset !important;
+    overflow: visible !important;
 }
 
 /* 覆盖 defaultLayout 中的 container 样式 */
@@ -23,29 +23,16 @@ body {
     width: 100% !important;
     padding: 0 !important;
     background-size: initial !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
+    height: auto !important;
 }
 
-/* 隐藏 defaultLayout 中的外部页脚 */
-.container > .copyright,
-#container > .copyright {
-    display: none;
-}
-
-.personal-data-container {
-    width: 1200px;
+.container {
+    position: relative;
+    width: 680px;
+    min-height: 400px;
     margin: 0 auto;
     background: transparent;
-    border: 2px solid #0FF796;
-    border-radius: 12px;
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 0 30px rgba(15, 247, 150, 0.1);
-    display: flex;
-    flex-direction: column;
-    box-sizing: border-box;
+    overflow: visible;
 }
 
 .bg-image {
@@ -55,10 +42,10 @@ body {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center;
-    opacity: 0.6;
+    opacity: 0.25;
     z-index: 0;
     pointer-events: none;
+    border-radius: 0;
 }
 
 .bg-overlay {
@@ -67,10 +54,7 @@ body {
     left: 0;
     width: 100%;
     height: 100%;
-    background: 
-        linear-gradient(to bottom, rgba(13, 18, 23, 0.15) 0%, rgba(13, 18, 23, 0.1) 50%, rgba(13, 18, 23, 0.15) 100%),
-        radial-gradient(ellipse 600px 400px at top center, rgba(15, 247, 150, 0.06) 0%, transparent 50%),
-        radial-gradient(ellipse 400px 300px at bottom right, rgba(15, 247, 150, 0.03) 0%, transparent 50%);
+    background: linear-gradient(135deg, rgba(11, 15, 19, 0.96) 0%, rgba(13, 18, 23, 0.96) 100%);
     z-index: 1;
     pointer-events: none;
 }
@@ -78,88 +62,161 @@ body {
 /* ========== 头部区域 ========== */
 .header {
     position: relative;
-    z-index: 1;
-    padding: 24px 28px;
-    background: rgba(15, 247, 150, 0.03);
-    border-bottom: 1px solid rgba(15, 247, 150, 0.2);
+    z-index: 2;
+    margin-bottom: 25px;
+    padding: 20px;
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #0FF796, transparent) 1;
+}
+
+.header-content {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 20px;
+    position: relative;
 }
 
-.game-meta {
+.header-left {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 20px;
 }
 
 .game-logo {
+    height: 35px;
     width: auto;
-    height: 32px;
-    object-fit: contain;
-    display: block;
-}
-
-.title-section {
-    display: flex;
-    align-items: center;
-    gap: 12px;
+    opacity: 0.95;
+    filter: drop-shadow(0 0 8px rgba(15, 247, 150, 0.3));
+    flex-shrink: 0;
 }
 
 .title {
-    font-size: 28px;
-    font-weight: 700;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    font-weight: bold;
     background: linear-gradient(135deg, #0FF796, #00d4aa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+    margin: 0;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.user-avatar-wrapper {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(15, 247, 150, 0.5);
+    box-shadow: 0 0 12px rgba(15, 247, 150, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+.user-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.user-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.user-name {
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 16px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.5px;
+}
+
+.report-date {
+    color: rgba(15, 247, 150, 1);
+    font-weight: 600;
+    font-size: 13px;
     letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(15, 247, 150, 0.5);
 }
 
 .season-badge {
-    padding: 4px 12px;
+    padding: 3px 10px;
     background: linear-gradient(135deg, rgba(15, 247, 150, 0.2), rgba(15, 247, 150, 0.1));
     border: 1px solid rgba(15, 247, 150, 0.4);
-    border-radius: 12px;
+    border-radius: 10px;
     color: #0FF796;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
+    letter-spacing: 0.5px;
+    text-shadow: 0 0 8px rgba(15, 247, 150, 0.5);
+    box-shadow: 0 0 12px rgba(15, 247, 150, 0.2);
+    white-space: nowrap;
+    line-height: 1.2;
+}
+
+/* ========== 内容区域 ========== */
+.content {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 15px;
+    padding: 0 30px;
 }
 
 /* ========== 数据卡片区域 ========== */
 .data-grid {
-    position: relative;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-    padding: 24px 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
 }
 
 .data-card {
-    background: linear-gradient(135deg, rgba(44, 44, 50, 0.75), rgba(35, 35, 40, 0.75));
+    background: linear-gradient(135deg, rgba(44, 44, 50, 0.98), rgba(35, 35, 40, 0.98));
     border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    overflow: visible;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 
-        0 4px 15px rgba(0, 0, 0, 0.4),
-        0 0 20px rgba(15, 247, 150, 0.05);
-    overflow: hidden;
-    backdrop-filter: blur(3px);
+    height: fit-content;
+    min-height: auto;
 }
 
 .card-header {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    justify-content: flex-start;
-    gap: 12px;
-    padding: 18px 24px;
+    padding: 5px 12px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
     border-bottom: 2px solid rgba(15, 247, 150, 0.3);
     position: relative;
     overflow: hidden;
-    min-height: 60px;
+    min-height: 36px;
+    border-radius: 12px 12px 0 0;
 }
 
 .card-header::before {
@@ -180,25 +237,22 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(15, 247, 150, 0.1), rgba(15, 247, 150, 0.05));
+    background: linear-gradient(135deg, rgba(15, 247, 150, 0.2), rgba(15, 247, 150, 0.05));
     z-index: 1;
+    border-radius: 12px 12px 0 0;
 }
 
 .card-header > * {
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 
-
 .card-title {
-    font-size: 24px;
-    font-weight: 700;
+    font-size: 14px;
+    font-weight: bold;
     color: #FFFFFF;
-    letter-spacing: 2px;
-    text-shadow: 
-        0 0 10px rgba(15, 247, 150, 0.8),
-        0 0 20px rgba(15, 247, 150, 0.4),
-        0 2px 4px rgba(0, 0, 0, 0.8);
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    letter-spacing: 1px;
 }
 
 .mp-card .card-header {
@@ -206,154 +260,182 @@ body {
 }
 
 .mp-card .card-header::after {
-    background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 82, 82, 0.05));
-}
-
-.mp-card .card-title {
-    color: #FFFFFF;
-    text-shadow: 
-        0 0 10px rgba(255, 107, 107, 0.8),
-        0 0 20px rgba(255, 107, 107, 0.4),
-        0 2px 4px rgba(0, 0, 0, 0.8);
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 82, 82, 0.05));
 }
 
 .card-content {
-    padding: 18px;
-}
-
-.stat-row {
+    padding: 14px 16px;
     display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-direction: column;
+    gap: 7px;
 }
 
-.stat-row:last-child {
-    border-bottom: none;
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
 }
 
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 8px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    position: relative;
+}
+
+.stat-item.full-width {
+    grid-column: 1 / -1;
+}
+
+/* 统一标题样式 - 用于所有小标题 */
+.stat-label-overlay {
+    color: #FFFFFF;
+    font-weight: 700;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* 兼容旧样式 */
 .stat-label {
-    color: #B0B3B5;
-    font-size: 15px;
+    color: #999;
     font-weight: 500;
-    flex-shrink: 0;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .stat-value {
-    color: #FFFFFF;
-    font-size: 16px;
-    font-weight: 600;
-    text-align: right;
-    flex: 1;
-    margin-left: 12px;
+    color: #F2F2F2;
+    font-weight: 700;
+    font-size: 14px;
+    margin-top: 2px;
+    line-height: 1.3;
+    word-break: break-word;
 }
 
 .stat-value.highlight {
     color: #0FF796;
-    font-weight: 700;
+    font-size: 16px;
 }
 
 .mp-card .stat-value.highlight {
     color: #ff6b6b;
 }
 
-.rank-row {
-    align-items: center;
+/* 带图标的统计项 */
+.stat-item-with-icon {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
-.rank-display {
+.stat-value-with-icon {
     display: flex;
     align-items: center;
-    gap: 8px;
-    flex: 1;
-    justify-content: flex-end;
-    margin-left: 12px;
+    gap: 6px;
+    flex-wrap: wrap;
 }
 
-.rank-image {
-    width: 32px;
-    height: 32px;
+.rank-icon {
+    width: 24px;
+    height: 24px;
     object-fit: contain;
     flex-shrink: 0;
-    order: 2;
-}
-
-.stat-value.rank-value {
-    color: #0FF796;
-    font-weight: 700;
-    font-size: 16px;
-    margin-left: 0;
-    order: 1;
-}
-
-.mp-card .stat-value.rank-value {
-    color: #ff6b6b;
 }
 
 .sub-text {
     color: #858788;
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 400;
 }
 
 /* ========== KD 区域 ========== */
 .kd-section {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 2px solid rgba(15, 247, 150, 0.2);
+    margin-top: 2px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(15, 247, 150, 0.2);
 }
 
 .kd-title {
-    color: #0FF796;
-    font-size: 16px;
+    color: #FFFFFF;
     font-weight: 700;
-    margin-bottom: 12px;
-    text-align: center;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6px 12px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
 }
 
 .kd-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 10px;
+    gap: 6px;
 }
 
 .kd-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 6px;
-    padding: 10px;
-    background: rgba(15, 247, 150, 0.05);
-    border: 1px solid rgba(15, 247, 150, 0.15);
-    border-radius: 8px;
+    gap: 4px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
 }
 
 .kd-label {
-    color: #858788;
-    font-size: 12px;
+    color: #999;
+    font-size: 10px;
     font-weight: 500;
 }
 
 .kd-value {
     color: #0FF796;
-    font-size: 18px;
+    font-size: 16px;
     font-weight: 700;
 }
 
 /* ========== 页脚 ========== */
+
+/* 隐藏 defaultLayout 中的外部页脚 */
+.container > .copyright {
+    display: none;
+}
+
 .template-footer {
     position: relative;
     z-index: 2;
-    padding: 20px 28px 24px;
+    padding: 15px 20px;
     background: rgba(15, 247, 150, 0.02);
     border-top: 1px solid rgba(15, 247, 150, 0.1);
+    margin-top: 15px;
 }
 
 .copyright-text {
     text-align: center;
     color: #FFFFFF;
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 300;
     letter-spacing: 1px;
     opacity: 0.6;

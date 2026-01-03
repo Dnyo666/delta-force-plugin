@@ -57,15 +57,6 @@ export class PlaceStatus extends plugin {
     const forwardMsg = []
     const bot = global.Bot
 
-    // --- 数据处理函数 ---
-    const formatDuration = (seconds) => {
-        if (!seconds || isNaN(seconds)) return 'N/A';
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
-        return `${h}小时${m}分钟${s}秒`;
-    }
-    
     // 添加消息头 - 总体状态
     const title = `总设施: ${stats.total} | 生产中: ${stats.producing} | 闲置: ${stats.idle}`;
     forwardMsg.push({
@@ -80,7 +71,15 @@ export class PlaceStatus extends plugin {
       if (place.objectDetail) {
         msg += `状态: 生产中\n`;
         msg += `物品: ${place.objectDetail.objectName}\n`;
-        msg += `剩余时间: ${formatDuration(place.leftTime)}`;
+        const leftTime = place.leftTime;
+        if (leftTime && !isNaN(leftTime)) {
+            const h = Math.floor(leftTime / 3600);
+            const m = Math.floor((leftTime % 3600) / 60);
+            const s = leftTime % 60;
+            msg += `剩余时间: ${h}小时${m}分钟${s}秒`;
+        } else {
+            msg += `剩余时间: N/A`;
+        }
       } else {
         msg += `状态: ${place.status}`;
       }
