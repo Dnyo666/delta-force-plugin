@@ -41,10 +41,10 @@
     
     <!-- 主标题和描述 -->
     <div class="title-primary" style="width: 600px; left: 52px; top: 521px; position: absolute">{{title}}</div>
-    <div class="subtitle" style="width: 700px; height: 27px; left: 40px; top: 637px; position: absolute">"{{subtitle}}"</div>
+    <div class="subtitle" style="width: 700px; min-height: 27px; left: 40px; top: 637px; position: absolute">"{{subtitle}}"</div>
     <div class="decor-line" style="width: 2px; height: 52px; left: 46px; top: 692px"></div>
     <div class="description" 
-         style="width: 686px; height: 52px; left: 56px; top: 692px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+         style="width: 686px; min-height: 52px; left: 56px; top: 692px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{unlockDesc}}
     </div>
     
@@ -59,31 +59,31 @@
     <!-- 统计数据 -->
     <!-- 第一个卡片 -->
     <div class="stat-value" 
-         style="width: 340px; left: 38px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">
+         style="width: 340px; left: 38px; top: 790px; position: absolute; display: flex; align-items: center; justify-content: center;">
         {{statistics.redGodCount}}
     </div>
     <div class="stat-label" 
-         style="width: 340px; height: 44px; left: 38px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">
+         style="width: 340px; min-height: 44px; left: 38px; top: 905px; position: absolute; justify-content: center; display: flex; align-items: center;">
         收藏大红种数
     </div>
     
     <!-- 第二个卡片 -->
     <div class="stat-value" 
-         style="width: 340px; left: 408px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">
+         style="width: 340px; left: 408px; top: 790px; position: absolute; display: flex; align-items: center; justify-content: center;">
         {{statistics.redTotalCount}}
     </div>
     <div class="stat-label" 
-         style="width: 340px; height: 44px; left: 408px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">
+         style="width: 340px; min-height: 44px; left: 408px; top: 905px; position: absolute; justify-content: center; display: flex; align-items: center;">
         收藏大红个数
     </div>
     
     <!-- 第三个卡片 -->
     <div class="large-value" 
-         style="width: 340px; left: 778px; top: 783px; position: absolute; display: flex; align-items: center; justify-content: center;">
+         style="width: 340px; left: 778px; top: 790px; position: absolute; display: flex; align-items: center; justify-content: center;">
         {{statistics.redTotalValue}}
     </div>
     <div class="stat-label" 
-         style="width: 340px; height: 44px; left: 778px; top: 910px; position: absolute; justify-content: center; display: flex; align-items: center;">
+         style="width: 340px; min-height: 44px; left: 778px; top: 905px; position: absolute; justify-content: center; display: flex; align-items: center;">
         收藏大红价值
     </div>
     
@@ -116,16 +116,16 @@
     <div style="width: 160px; height: 160px; left: 116px; top: 1240px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[0].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 76px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 76px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[0].name}}
     </div>
     <div class="data-text" 
-         style="width: 65px; height: 24px; left: 296px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+         style="width: 65px; min-height: 24px; left: 296px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[0].count}}个
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 91px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 91px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[0].value}}
     </div>
     {{/if}}
@@ -135,16 +135,16 @@
     <div style="width: 160px; height: 160px; left: 491px; top: 1240px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[1].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 446px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 446px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[1].name}}
     </div>
     <div class="data-text" 
-         style="width: 65px; height: 24px; left: 666px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+         style="width: 65px; min-height: 24px; left: 666px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[1].count}}个
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 471px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 471px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[1].value}}
     </div>
     {{/if}}
@@ -154,16 +154,16 @@
     <div style="width: 160px; height: 160px; left: 861px; top: 1240px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[2].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 816px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 816px; top: 1210px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[2].name}}
     </div>
     <div class="data-text" 
-         style="width: 65px; height: 24px; left: 1036px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+         style="width: 65px; min-height: 24px; left: 1036px; top: 1210px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[2].count}}个
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 841px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 841px; top: 1410px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[2].value}}
     </div>
     {{/if}}
@@ -173,16 +173,16 @@
     <div style="width: 160px; height: 160px; left: 116px; top: 1577px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[3].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 76px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 76px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[3].name}}
     </div>
     <div class="data-text" 
-         style="width: 65px; height: 24px; left: 296px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+         style="width: 65px; min-height: 24px; left: 296px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[3].count}}个
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 91px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 91px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[3].value}}
     </div>
     {{/if}}
@@ -192,16 +192,16 @@
     <div style="width: 160px; height: 160px; left: 491px; top: 1577px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[4].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 446px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 446px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[4].name}}
     </div>
     <div class="data-text" 
-         style="width: 65px; height: 24px; left: 666px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+         style="width: 65px; min-height: 24px; left: 666px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[4].count}}个
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 471px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 471px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[4].value}}
     </div>
     {{/if}}
@@ -211,16 +211,16 @@
     <div style="width: 160px; height: 160px; left: 861px; top: 1577px; position: absolute;">
         <img class="collection-item-image" src="{{topCollections[5].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 816px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 816px; top: 1547px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[5].name}}
     </div>
     <div class="data-text" 
-         style="width: 65px; height: 24px; left: 1036px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
+         style="width: 65px; min-height: 24px; left: 1036px; top: 1547px; position: absolute; text-align: right; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[5].count}}个
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 841px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 841px; top: 1747px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{topCollections[5].value}}
     </div>
     {{/if}}
@@ -240,12 +240,12 @@
     <div style="width: 160px; height: 160px; left: 116px; top: 2018px; position: absolute;">
         <img class="collection-item-image" src="{{unlockedCollections[0].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 76px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 76px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{unlockedCollections[0].name}}
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 91px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 91px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{unlockedCollections[0].price}}
     </div>
     {{/if}}
@@ -254,12 +254,12 @@
     <div style="width: 160px; height: 160px; left: 491px; top: 2018px; position: absolute;">
         <img class="collection-item-image" src="{{unlockedCollections[1].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 446px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 446px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{unlockedCollections[1].name}}
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 461px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 461px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{unlockedCollections[1].price}}
     </div>
     {{/if}}
@@ -268,12 +268,12 @@
     <div style="width: 160px; height: 160px; left: 861px; top: 2018px; position: absolute;">
         <img class="collection-item-image" src="{{unlockedCollections[2].imageUrl}}" onerror="this.style.display='none'" />
     </div>
-    <div class="data-text" 
-         style="width: 220px; height: 24px; left: 816px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text collection-name" 
+         style="width: 220px; min-height: 24px; left: 816px; top: 1988px; position: absolute; justify-content: center; display: flex; flex-direction: column">
         {{unlockedCollections[2].name}}
     </div>
-    <div class="data-text" 
-         style="width: 200px; height: 24px; left: 831px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
+    <div class="data-text value-text" 
+         style="width: 200px; min-height: 24px; left: 831px; top: 2188px; position: absolute; text-align: center; justify-content: center; display: flex; flex-direction: column">
         {{unlockedCollections[2].price}}
     </div>
     {{/if}}

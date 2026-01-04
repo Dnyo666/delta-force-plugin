@@ -35,6 +35,31 @@ export class Red extends plugin {
   }
 
   /**
+   * 格式化数字为 K/M/B 格式
+   * @param {number} num - 要格式化的数字
+   * @returns {string} - 格式化后的字符串
+   */
+  formatNumber(num) {
+    if (typeof num !== 'number' || isNaN(num)) {
+      return '0'
+    }
+    
+    if (num >= 1000000000) {
+      // 十亿以上，使用 B
+      return (num / 1000000000).toFixed(1).replace(/\.0$/, '') + 'B'
+    } else if (num >= 1000000) {
+      // 百万以上，使用 M
+      return (num / 1000000).toFixed(1).replace(/\.0$/, '') + 'M'
+    } else if (num >= 1000) {
+      // 千以上，使用 K
+      return (num / 1000).toFixed(1).replace(/\.0$/, '') + 'K'
+    } else {
+      // 小于1000，直接返回
+      return num.toString()
+    }
+  }
+
+  /**
    * 解析用户信息（公共方法）
    * @param {Object} personalInfoRes - 个人信息API响应
    * @returns {Object} { userName, userAvatar, userRank, userRankImage }
@@ -413,7 +438,7 @@ export class Red extends plugin {
           .map(item => ({
             name: item.name,
             count: item.count,
-            value: item.totalValue.toLocaleString(),
+            value: this.formatNumber(item.totalValue),
             imageUrl: item.imageUrl
           }))
         
@@ -445,7 +470,7 @@ export class Red extends plugin {
           statistics: {
             redGodCount: redGodCount.toString(),
             redTotalCount: redTotalCount.toString(),
-            redTotalValue: redTotalValue.toLocaleString(),
+            redTotalValue: this.formatNumber(redTotalValue),
             unlockedCount: unlockedCount > 0 ? unlockedCount.toString() : ''
           },
           records: sortedRecords,
@@ -530,7 +555,7 @@ export class Red extends plugin {
           rank: index + 1,
           name: objectNames[item.objectID] || `物品${item.objectID}`,
           count: item.count || 1,
-          value: (item.price || 0).toLocaleString(),
+          value: this.formatNumber(item.price || 0),
           imageUrl: `https://playerhub.df.qq.com/playerhub/60004/object/${item.objectID}.png`
         }))
 
@@ -551,7 +576,7 @@ export class Red extends plugin {
               unlockedCollections = shuffled.slice(0, 3).map(item => ({
                 name: item.objectName,
                 objectID: item.objectID,
-                price: (item.avgPrice || 0).toLocaleString(),
+                price: this.formatNumber(item.avgPrice || 0),
                 imageUrl: `https://playerhub.df.qq.com/playerhub/60004/object/${item.objectID}.png`
               }))
             }
@@ -576,7 +601,7 @@ export class Red extends plugin {
           statistics: {
             redGodCount: redGodCount.toString(),
             redTotalCount: redTotalCount.toString(),
-            redTotalValue: redTotalMoney.toLocaleString(),
+            redTotalValue: this.formatNumber(redTotalMoney),
             unlockedCount: unlockedCount.toString()
           },
           topCollections,
