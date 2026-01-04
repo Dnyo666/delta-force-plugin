@@ -17,6 +17,7 @@ body {
     background: white;
     padding: 0 !important;
     margin: 0 !important;
+    overflow: visible;
 }
 
 /* 隐藏 defaultLayout 中的外部页脚 */
@@ -50,7 +51,9 @@ body {
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
-    white-space: nowrap; 
+    overflow: visible;
+    line-height: 1.2;
+    white-space: normal;
 }
 
 /* 副标题样式 - "能把肾上腺素换算成子弹汇率的鬼才" */
@@ -60,7 +63,9 @@ body {
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     word-wrap: break-word;
-    white-space: nowrap; 
+    overflow: visible;
+    line-height: 1.3;
+    white-space: normal;
 }
 
 /* 描述文本样式 - 总价值突破800万... */
@@ -69,7 +74,10 @@ body {
     font-size: 32px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
+    word-wrap: break-word;
+    overflow: visible;
+    line-height: 1.3;
+    white-space: normal;
 }
 
 /* 用户信息容器 */
@@ -178,7 +186,7 @@ body {
 /* 统计数值 - 19、37 */
 .stat-value { 
     color: #0FF796; 
-    font-size: 96px; 
+    font-size: 88px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     text-align: center;
@@ -190,10 +198,10 @@ body {
     justify-content: center;
 }
 
-/* 大数值 - 21,554,811 */
+/* 大数值 - 46.1M */
 .large-value { 
     color: #0FF796; 
-    font-size: 64px; 
+    font-size: 88px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
     text-align: center;
@@ -203,7 +211,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    letter-spacing: -1px;
+    letter-spacing: -0.5px;
 }
 
 /* 统计标签 - 收藏大红种数、收藏大红个数 */
@@ -212,8 +220,11 @@ body {
     font-size: 36px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
+    word-wrap: break-word;
+    overflow: visible;
     text-align: center;
+    line-height: 1.2;
+    white-space: normal;
 }
 
 /* 数据文本 - 226,045、2,116,357 */
@@ -222,9 +233,20 @@ body {
     font-size: 30px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
+    line-height: 1.2;
+}
+
+/* 物品名称 - 不换行，超出显示省略号 */
+.data-text.collection-name {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+}
+
+/* 数值文本 - 不换行 */
+.data-text.value-text {
+    white-space: nowrap;
+    overflow: visible;
 }
 
 /* 高亮文本 - 39个 */
