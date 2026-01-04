@@ -17,11 +17,8 @@
         <div class="user-profile">
             <div class="profile-sidebar"></div>
             <div class="avatar-wrapper">
-                {{if userAvatar}}
-                <img class="avatar" src="{{userAvatar}}" onerror="this.style.display='none'" />
-                {{else}}
-                <div class="avatar-placeholder"></div>
-                {{/if}}
+                <img class="avatar" src="{{userAvatar}}" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';var placeholder=this.nextElementSibling;if(placeholder&&placeholder.classList.contains('avatar-placeholder')){placeholder.style.display='block';}}" />
+                <div class="avatar-placeholder" style="display: none;"></div>
             </div>
             <div class="user-meta">
                 <div class="nickname">{{userName}}</div>

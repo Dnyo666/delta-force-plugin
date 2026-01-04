@@ -123,10 +123,13 @@ export class Data extends plugin {
     const currentDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
 
     // 构建模板数据
+    const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${this.e.user_id}&spec=640&img_type=jpg`
     const templateData = {
       nickname: userName,
       userName: userName,
       userAvatar: userAvatar,
+      userId: this.e.user_id,
+      qqAvatarUrl: qqAvatarUrl,
       currentDate: currentDate,
       season: season === 'all' ? '全部' : season
     }

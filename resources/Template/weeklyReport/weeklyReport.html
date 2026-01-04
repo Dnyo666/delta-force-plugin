@@ -18,11 +18,9 @@
             </div>
             <div class="title">周报</div>
             <div class="header-right">
-                {{if userAvatar}}
                 <div class="user-avatar-wrapper">
-                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" onerror="this.style.display='none'; this.parentElement.style.display='none';" />
+                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';this.parentElement.style.display='none';}" />
                 </div>
-                {{/if}}
                 <div class="header-meta">
                     {{if userName}}
                     <span class="user-name">{{userName}}</span>

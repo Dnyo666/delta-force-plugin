@@ -19,11 +19,8 @@
     <div class="user-profile-container" style="left: 38px; top: 153px; position: absolute;">
         <div class="profile-sidebar"></div>
         <div class="avatar-wrapper">
-            {{if userAvatar}}
-            <img class="user-avatar" src="{{userAvatar}}" onerror="this.style.display='none'" />
-            {{else}}
-            <div class="user-avatar-placeholder"></div>
-            {{/if}}
+            <img class="user-avatar" src="{{userAvatar}}" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';var placeholder=this.nextElementSibling;if(placeholder&&placeholder.classList.contains('user-avatar-placeholder')){placeholder.style.display='block';}}" />
+            <div class="user-avatar-placeholder" style="display: none;"></div>
         </div>
         <div class="user-meta">
             <div class="user-name">{{userName}}</div>

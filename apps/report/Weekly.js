@@ -205,9 +205,12 @@ export class Weekly extends plugin {
         }
 
         // --- 构建模板数据 ---
+        const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${e.user_id}&spec=640&img_type=jpg`
         const templateData = {
             userName: userName,
             userAvatar: userAvatar,
+            userId: e.user_id,
+            qqAvatarUrl: qqAvatarUrl,
             date: displayDate
         };
 

@@ -122,11 +122,14 @@ export class Daily extends plugin {
     }
 
     // 构建模板数据
+    const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${e.user_id}&spec=640&img_type=jpg`
     const templateData = {
       type: 'daily',
       mode: mode,
       userName: userName,
       userAvatar: userAvatar,
+      userId: e.user_id,
+      qqAvatarUrl: qqAvatarUrl,
       currentDate: currentDateStr  // 头部显示的当前日期（YYYY-MM-DD）
     }
 
@@ -301,19 +304,43 @@ export class Daily extends plugin {
       logger.debug(`[Daily] 获取用户信息失败:`, error)
     }
 
+    // 为物品添加图片URL
+    // 优先使用接口返回的 pic 字段，如果没有则通过 objectID 构造
+    const itemsWithImages = topItems.slice(0, 3).map((item) => {
+      const objectName = item.objectName || '未知物品'
+      let imageUrl = null
+      
+      // 优先使用接口返回的 pic 字段
+      if (item.pic) {
+        imageUrl = item.pic
+      } else {
+        // 如果没有 pic，尝试通过 objectID 构造
+        const objectID = item.objectID || item.itemId || item.objectId
+        if (objectID) {
+          imageUrl = `https://playerhub.df.qq.com/playerhub/60004/object/${String(objectID)}.png`
+        }
+      }
+      
+      return {
+        objectName: objectName,
+        price: parseFloat(item.price || 0).toLocaleString(),
+        count: item.count || 0,
+        imageUrl: imageUrl
+      }
+    })
+
     // 构建模板数据
+    const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${e.user_id}&spec=640&img_type=jpg`
     const templateData = {
       type: 'profit',
       userName: userName,
       userAvatar: userAvatar,
+      userId: e.user_id,
+      qqAvatarUrl: qqAvatarUrl,
       profitData: {
         gainDate: gainDate,
         recentGain: recentGain,
-        topItems: topItems.slice(0, 3).map(item => ({
-          objectName: item.objectName || '未知物品',
-          price: parseFloat(item.price || 0).toLocaleString(),
-          count: item.count || 0
-        }))
+        topItems: itemsWithImages
       }
     }
 
