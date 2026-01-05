@@ -1,23 +1,15 @@
 body {
-    background: #0b0f13 !important;
-    color: #F2F2F2 !important;
-    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 680px !important;
-    height: auto !important;
-    min-height: 400px !important;
-    transform: none !important;
-    transform-origin: unset !important;
-    overflow: visible !important;
-}
-
-/* 覆盖 defaultLayout 中的 container 样式 */
-#container.container {
-    width: 100% !important;
-    padding: 0 !important;
-    background-size: initial !important;
-    height: auto !important;
+    background: #0b0f13;
+    color: #F2F2F2;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 680px;
+    height: auto;
+    min-height: 400px;
+    transform: none;
+    transform-origin: unset;
+    overflow: visible;
 }
 
 .container {
@@ -997,26 +989,3 @@ body {
     border: 2px dashed rgba(255, 255, 255, 0.1);
 }
 
-/* 隐藏 defaultLayout 中的外部页脚 */
-.container > .copyright {
-    display: none;
-}
-
-/* 页脚 */
-.template-footer {
-    position: relative;
-    z-index: 2;
-    padding: 12px 30px;
-    background: rgba(15, 247, 150, 0.02);
-    border-top: 1px solid rgba(15, 247, 150, 0.1);
-    margin-top: 12px;
-}
-
-.copyright-text {
-    text-align: center;
-    color: #FFFFFF;
-    font-size: 10px;
-    font-weight: 300;
-    letter-spacing: 1px;
-    opacity: 0.6;
-}

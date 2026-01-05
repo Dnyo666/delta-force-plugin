@@ -3,26 +3,25 @@ body {
     padding: 0;
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     background: white;
-    width: 1125px !important;
-    height: 2320px !important;
+    width: 1220px;
+    min-width: 1220px;
+    height: 2320px;
     overflow: hidden;
-    transform: scale(1) !important;
-    transform-origin: 0 0 !important;
+    transform: scale(1);
+    transform-origin: 0 0;
+    box-sizing: border-box;
 }
 
 .container { 
-    width: 1125px !important; 
-    height: 2320px !important; 
+    width: 1220px;
+    min-width: 1220px;
+    height: 2320px;
     position: relative; 
     background: white;
-    padding: 0 !important;
-    margin: 0 !important;
+    padding: 0;
+    margin: 0;
     overflow: visible;
-}
-
-/* 隐藏 defaultLayout 中的外部页脚 */
-.container > .copyright {
-    display: none;
+    box-sizing: border-box;
 }
 
 /* ========== 页脚 ========== */
@@ -30,10 +29,11 @@ body {
     position: absolute;
     left: 0;
     right: 0;
-    top: 2250px;
-    z-index: 10;
+    bottom: 0;
+    z-index: 1000;
     padding: 20px;
     text-align: center;
+    pointer-events: none;
 }
 
 .copyright-text {
@@ -42,6 +42,8 @@ body {
     font-weight: 300;
     letter-spacing: 0.5px;
     opacity: 0.5;
+    pointer-events: auto;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* 主标题样式 - 血色会计 */
@@ -50,10 +52,9 @@ body {
     font-size: 96px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word;
     overflow: visible;
     line-height: 1.2;
-    white-space: normal;
+    white-space: nowrap;
 }
 
 /* 副标题样式 - "能把肾上腺素换算成子弹汇率的鬼才" */
@@ -62,10 +63,9 @@ body {
     font-size: 32px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word;
     overflow: visible;
     line-height: 1.3;
-    white-space: normal;
+    white-space: nowrap;
 }
 
 /* 描述文本样式 - 总价值突破800万... */
@@ -74,10 +74,9 @@ body {
     font-size: 32px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word;
     overflow: visible;
     line-height: 1.3;
-    white-space: normal;
+    white-space: nowrap;
 }
 
 /* 用户信息容器 */
@@ -139,7 +138,7 @@ body {
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     font-weight: 500;
     line-height: 1.2;
-    word-wrap: break-word;
+    white-space: nowrap;
 }
 
 .user-rank {
@@ -171,7 +170,7 @@ body {
     font-size: 32px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 500; 
-    word-wrap: break-word; 
+    white-space: nowrap;
 }
 
 /* 赛季标题 - 所有赛季 */
@@ -180,7 +179,7 @@ body {
     font-size: 48px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word; 
+    white-space: nowrap;
 }
 
 /* 统计数值 - 19、37 */
@@ -220,11 +219,10 @@ body {
     font-size: 36px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 700; 
-    word-wrap: break-word;
     overflow: visible;
     text-align: center;
     line-height: 1.2;
-    white-space: normal;
+    white-space: nowrap;
 }
 
 /* 数据文本 - 226,045、2,116,357 */
@@ -255,7 +253,7 @@ body {
     font-size: 45px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 500; 
-    word-wrap: break-word; 
+    white-space: nowrap;
 }
 
 /* 普通文本 - 你还有、未解锁的大红藏品 */
@@ -264,7 +262,7 @@ body {
     font-size: 45px; 
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif; 
     font-weight: 500; 
-    word-wrap: break-word; 
+    white-space: nowrap;
 }
 
 /* 装饰线条 */
@@ -292,12 +290,3 @@ img {
     left: 50%;
     transform: translate(-50%, -50%);
 }
-
-/* 响应式设计 */
-@media (max-width: 1200px) {
-    body {
-        width: 100%;
-        transform: scale(0.8);
-        transform-origin: top left;
-    }
-} 

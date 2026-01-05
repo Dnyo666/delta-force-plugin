@@ -1,0 +1,162 @@
+/* ========== 项目统一字体定义 ========== */
+@font-face {
+  font-family: 'ProjectD';
+  src: url("../../fonts/p-med.ttf") format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ProjectD';
+  src: url("../../fonts/p-bold.ttf") format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ========== 兼容旧类名 ========== */
+.font-YS {
+  font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+.font-NZBZ {
+  font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+  font-weight: 700;
+}
+
+/* ========== 基础重置样式 ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ========== 默认字体设置 ========== */
+body {
+  font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+}
+
+/* ========== 用户头部通用样式 ========== */
+.user-header {
+  position: relative; 
+  z-index: 1;
+  padding: 24px;
+  background: rgba(15, 247, 150, 0.03);
+  border-bottom: 1px solid rgba(15, 247, 150, 0.2);
+}
+
+.game-meta {
+  display: flex;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.game-logo {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+}
+
+.profile-sidebar {
+  width: 3px;
+  height: 52px;
+  background: linear-gradient(180deg, #0FF796 0%, #00D9FF 100%);
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 8px rgba(15, 247, 150, 0.4);
+}
+
+.avatar-wrapper {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  border: 2px solid #0FF796;
+  box-shadow: 0 0 8px rgba(15, 247, 150, 0.25);
+  display: block;
+}
+
+.avatar-placeholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  border: 2px solid #0FF796;
+  background: rgba(15, 247, 150, 0.1);
+  box-shadow: 0 0 8px rgba(15, 247, 150, 0.25);
+}
+
+.user-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.nickname {
+  color: #fff;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 6px;
+  line-height: 1.2;
+}
+
+.rank-tag {
+  color: #0FF796;
+  font-size: 13px;
+  background: rgba(15, 247, 150, 0.1);
+  padding: 4px 10px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.rank-text {
+  flex-shrink: 0;
+}
+
+.rank-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+/* ========== 页脚通用样式 ========== */
+.template-footer {
+  position: relative;
+  z-index: 2;
+  padding: 20px 28px 24px;
+  background: rgba(15, 247, 150, 0.02);
+  border-top: 1px solid rgba(15, 247, 150, 0.1);
+  margin-top: auto;
+  width: 100%;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.copyright-text {
+  text-align: center;
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 300;
+  letter-spacing: 1px;
+  opacity: 0.7;
+  display: block;
+  line-height: 1.5;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}

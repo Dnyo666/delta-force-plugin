@@ -1,19 +1,12 @@
 body {
-    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%) !important;
-    color: #F2F2F2 !important;
-    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif !important;
-    margin: 0 !important;
-    padding: 20px !important;
-    width: 600px !important;
-    transform: none !important;
-    transform-origin: unset !important;
-}
-
-/* 覆盖 defaultLayout 中的 container 样式 */
-#container.container {
-    width: 100% !important;
-    padding: 0 !important;
-    background-size: initial !important;
+    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+    color: #F2F2F2;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+    margin: 0;
+    padding: 20px;
+    width: 600px;
+    transform: none;
+    transform-origin: unset;
 }
 
 .container {
@@ -157,21 +150,21 @@ body {
 }
 
 .record-status.success {
-    background: linear-gradient(135deg, rgba(15, 247, 150, 0.25), rgba(15, 247, 150, 0.15)) !important;
-    color: #0FF796 !important;
-    border: 1.5px solid rgba(15, 247, 150, 0.5) !important;
+    background: linear-gradient(135deg, rgba(15, 247, 150, 0.25), rgba(15, 247, 150, 0.15));
+    color: #0FF796;
+    border: 1.5px solid rgba(15, 247, 150, 0.5);
 }
 
 .record-status.fail {
-    background: linear-gradient(135deg, rgba(255, 82, 82, 0.25), rgba(255, 82, 82, 0.15)) !important;
-    color: #ff5252 !important;
-    border: 1.5px solid rgba(255, 82, 82, 0.5) !important;
+    background: linear-gradient(135deg, rgba(255, 82, 82, 0.25), rgba(255, 82, 82, 0.15));
+    color: #ff5252;
+    border: 1.5px solid rgba(255, 82, 82, 0.5);
 }
 
 .record-status.exit {
-    background: linear-gradient(135deg, rgba(255, 180, 0, 0.25), rgba(255, 180, 0, 0.15)) !important;
-    color: #ffb400 !important;
-    border: 1.5px solid rgba(255, 180, 0, 0.5) !important;
+    background: linear-gradient(135deg, rgba(255, 180, 0, 0.25), rgba(255, 180, 0, 0.15));
+    color: #ffb400;
+    border: 1.5px solid rgba(255, 180, 0, 0.5);
 }
 
 .card-body {
@@ -226,39 +219,16 @@ body {
 
 /* 击杀数字颜色 - 为不同类型的击杀添加颜色 */
 .kill-player {
-    color: #0FF796 !important;
-    font-weight: 700 !important;
+    color: #0FF796;
+    font-weight: 700;
 }
 
 .kill-ai-player {
-    color: #ff5252 !important;
-    font-weight: 700 !important;
+    color: #ff5252;
+    font-weight: 700;
 }
 
 .kill-ai {
-    color: #ffb400 !important;
-    font-weight: 700 !important;
-}
-
-/* 隐藏 defaultLayout 中的外部页脚 */
-.container > .copyright {
-    display: none;
-}
-
-/* ========== 页脚 ========== */
-.template-footer {
-    position: relative;
-    z-index: 2;
-    padding: 20px 28px 24px;
-    background: rgba(15, 247, 150, 0.02);
-    border-top: 1px solid rgba(15, 247, 150, 0.1);
-}
-
-.copyright-text {
-    text-align: center;
-    color: #FFFFFF;
-    font-size: 12px;
-    font-weight: 300;
-    letter-spacing: 1px;
-    opacity: 0.6;
+    color: #ffb400;
+    font-weight: 700;
 }

@@ -1,9 +1,7 @@
-{{extend defaultLayout}}
-
+{{extend commonLayout}}
 {{block 'css'}}
 <link rel="stylesheet" type="text/css" href="{{_res_path}}Template/weeklyReport/weeklyReport.css"/>
 {{/block}}
-
 {{block 'main'}}
 <div class="container">
     <!-- 背景图片 -->
@@ -404,10 +402,11 @@
             {{/if}}
         </div>
     </div>
-
+    
     <!-- 页脚 -->
     <div class="template-footer">
         <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
     </div>
 </div>
 {{/block}}
+{{block 'footer'}}{{/block}}

@@ -8,7 +8,7 @@ helpCfg:
   themeName: "default" # 主题名称，对应 resources/help/imgs/ 下的文件夹名称（如 default、dark、light 等）
   
   # 布局配置
-  colWidth: 380        # 列宽度（像素）
+  colWidth: 420        # 列宽度（像素）
   colCount: 2          # 列数
   twoColumnLayout: true # 是否使用两列大表格布局（左右各一个表格）
   bgBlur: true         # 是否启用背景模糊效果
