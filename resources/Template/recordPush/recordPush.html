@@ -5,7 +5,9 @@
 {{block 'main'}}
 <div class="container">
     <div class="header">
-        <div class="title">{{displayName}}-战绩订阅-{{modeName}}</div>
+        <div class="title">
+            {{if isRecent}}<span class="recent-prefix">最近的战绩-</span>{{/if}}{{displayName}}-战绩订阅-{{modeName}}
+        </div>
         <div class="subtitle">{{time}}</div>
     </div>
 
