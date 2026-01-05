@@ -8,6 +8,7 @@ import Render from '../../components/Render.js'
 import Runtime from '../../../../lib/plugins/runtime.js'
 import { segment } from 'oicq'
 import fs from 'fs'
+import common from '../../../../lib/common/common.js'
 
 /**
  * 战绩订阅插件
@@ -16,6 +17,8 @@ import fs from 'fs'
 export class RecordSubscription extends plugin {
   static _listenerRegistered = false
   static _nicknameCache = new Map() // 缓存 frameworkToken -> 昵称的映射
+  static _recentRecordCache = new Map() // 缓存 isRecent 战绩，用于批量合并转发
+  static _recentRecordTimers = new Map() // 缓存定时器，用于延迟批量发送
 
   constructor(e) {
     super({
@@ -546,6 +549,9 @@ export class RecordSubscription extends plugin {
       logger.debug(`[战绩订阅] 跳过缓存战绩: platformID=${platformID} | 模式: ${modeText}`)
       return
     }
+
+    // 判断是否为 isRecent 战绩（非 isNew）
+    const isRecentRecord = (isNew === undefined || isNew === false) && isRecent === true
     
     // 生成战绩唯一标识，防止重复推送
     // 使用关键字段生成唯一ID，确保同一场对局不会重复推送
@@ -576,7 +582,7 @@ export class RecordSubscription extends plugin {
     // 标记为已推送，保存到 Redis，24小时后过期（防止重启后重复推送）
     await redis.set(recordKey, Date.now().toString(), { EX: 24 * 60 * 60 })
     
-    logger.info(`[战绩订阅] 处理新战绩: platformID=${platformID} | 模式: ${modeText}`)
+    logger.info(`[战绩订阅] 处理新战绩: platformID=${platformID} | 模式: ${modeText} | isRecent=${isRecentRecord}`)
 
     try {
       // 1. 检查用户是否启用了战绩订阅
@@ -600,68 +606,206 @@ export class RecordSubscription extends plugin {
         return
       }
 
-      // 3. 格式化战绩消息（使用图片渲染）
-      let message
-      try {
-        logger.debug(`[战绩订阅] 开始格式化战绩消息: ${platformID} | 模式: ${modeText}`)
-        message = await this.formatRecordMessage(recordType, record, frameworkToken, platformID)
-        logger.debug(`[战绩订阅] 战绩消息格式化完成: ${platformID} | 模式: ${modeText}`)
-      } catch (error) {
-        logger.error(`[战绩订阅] 格式化战绩消息失败: ${platformID} | 模式: ${modeText}`, error)
-        // 使用文本消息作为降级
-        const mapId = record.MapID || record.MapId
-        const armedForceId = record.ArmedForceId
-        let mapName = DataManager.getMapName(mapId)
-        const operatorName = DataManager.getOperatorName(armedForceId)
-        const displayName = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家'
-        message = this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+      // 3. 如果是 isRecent 战绩，使用批量合并转发
+      if (isRecentRecord) {
+        await this.addToRecentRecordCache(platformID, recordType, record, frameworkToken, pushConfig)
+        return
       }
 
-      // 4. 推送到私聊
+      // 4. 格式化战绩消息（使用图片渲染）- 新战绩立即发送
+      const message = await this.formatRecordMessageWithFallback(recordType, record, frameworkToken, platformID, false)
+
+      // 5. 推送到私聊
       if (pushConfig.private) {
-        // 应用私信筛选条件
-        if (pushConfig.filters && pushConfig.filters.length > 0) {
-          if (!this.checkFilters(recordType, record, pushConfig.filters)) {
-            logger.debug(`[战绩订阅] 战绩不符合私信筛选条件: ${platformID} | 模式: ${modeText}`)
-          } else {
-            try {
-              await Bot.pickUser(platformID).sendMsg(message)
-            } catch (error) {
-              logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 模式: ${modeText}`, error)
-            }
-          }
-        } else {
-          // 无筛选条件，推送所有
+        const shouldPush = !pushConfig.filters || pushConfig.filters.length === 0 || 
+                          this.checkFilters(recordType, record, pushConfig.filters)
+        if (shouldPush) {
           try {
             await Bot.pickUser(platformID).sendMsg(message)
           } catch (error) {
             logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 模式: ${modeText}`, error)
           }
+        } else {
+          logger.debug(`[战绩订阅] 战绩不符合私信筛选条件: ${platformID} | 模式: ${modeText}`)
         }
       }
 
-      // 5. 推送到符合筛选条件的群
+      // 6. 推送到符合筛选条件的群
       if (pushConfig.groups && pushConfig.groups.length > 0) {
         for (const groupConfig of pushConfig.groups) {
-          try {
-            // 应用群筛选条件
-            if (groupConfig.filters && groupConfig.filters.length > 0) {
-              if (!this.checkFilters(recordType, record, groupConfig.filters)) {
-                logger.debug(`[战绩订阅] 战绩不符合筛选条件，跳过推送到群${groupConfig.groupId} | 模式: ${modeText}`)
-                continue
-              }
+          const shouldPush = !groupConfig.filters || groupConfig.filters.length === 0 || 
+                            this.checkFilters(recordType, record, groupConfig.filters)
+          if (shouldPush) {
+            try {
+              await Bot.pickGroup(groupConfig.groupId).sendMsg(message)
+            } catch (error) {
+              logger.error(`[战绩订阅] 推送失败到群${groupConfig.groupId} | 模式: ${modeText}`, error)
             }
-
-            logger.debug(`[战绩订阅] 开始群推送: ${platformID} | 模式: ${modeText} -> 群${groupConfig.groupId}`)
-            await Bot.pickGroup(groupConfig.groupId).sendMsg(message)
-          } catch (error) {
-            logger.error(`[战绩订阅] 推送失败到群${groupConfig.groupId} | 模式: ${modeText}:`, error)
+          } else {
+            logger.debug(`[战绩订阅] 战绩不符合筛选条件，跳过推送到群${groupConfig.groupId} | 模式: ${modeText}`)
           }
         }
       }
 
     } catch (error) {
       logger.error(`[战绩订阅] 处理推送失败: ${platformID} | 模式: ${modeText}`, error)
+    }
+  }
+
+
+  /**
+   * 格式化战绩消息（带降级处理）
+   * @param {string} recordType - 战绩类型
+   * @param {Object} record - 战绩对象
+   * @param {string} frameworkToken - 游戏账号令牌
+   * @param {string} platformID - 用户ID
+   * @param {boolean} isRecent - 是否为 isRecent 战绩
+   * @returns {Promise<string>} 格式化后的消息
+   */
+  async formatRecordMessageWithFallback(recordType, record, frameworkToken, platformID, isRecent) {
+    try {
+      logger.debug(`[战绩订阅] 开始格式化战绩消息: ${platformID} | isRecent=${isRecent}`)
+      const message = await this.formatRecordMessage(recordType, record, frameworkToken, platformID, isRecent)
+      logger.debug(`[战绩订阅] 战绩消息格式化完成: ${platformID}`)
+      return message
+    } catch (error) {
+      logger.error(`[战绩订阅] 格式化战绩消息失败: ${platformID}`, error)
+      // 使用文本消息作为降级
+      const mapId = record.MapID || record.MapId
+      const armedForceId = record.ArmedForceId
+      const mapName = DataManager.getMapName(mapId)
+      const operatorName = DataManager.getOperatorName(armedForceId)
+      const displayName = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家'
+      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
+    }
+  }
+
+
+
+  /**
+   * 添加 isRecent 战绩到缓存，用于批量合并转发
+   * @param {string} platformID - 用户ID
+   * @param {string} recordType - 战绩类型
+   * @param {Object} record - 战绩对象
+   * @param {string} frameworkToken - 游戏账号令牌
+   * @param {Object} pushConfig - 推送配置
+   */
+  async addToRecentRecordCache(platformID, recordType, record, frameworkToken, pushConfig) {
+    // 为每个推送目标创建缓存键
+    const cacheKeys = []
+    
+    // 私信推送
+    if (pushConfig.private) {
+      const shouldPush = !pushConfig.filters || pushConfig.filters.length === 0 || 
+                        this.checkFilters(recordType, record, pushConfig.filters)
+      if (shouldPush) {
+        cacheKeys.push(`private:${platformID}`)
+      }
+    }
+    
+    // 群推送
+    if (pushConfig.groups && pushConfig.groups.length > 0) {
+      for (const groupConfig of pushConfig.groups) {
+        const shouldPush = !groupConfig.filters || groupConfig.filters.length === 0 || 
+                          this.checkFilters(recordType, record, groupConfig.filters)
+        if (shouldPush) {
+          cacheKeys.push(`group:${groupConfig.groupId}:${platformID}`)
+        }
+      }
+    }
+
+    // 为每个推送目标添加战绩到缓存
+    for (const cacheKey of cacheKeys) {
+      if (!RecordSubscription._recentRecordCache.has(cacheKey)) {
+        RecordSubscription._recentRecordCache.set(cacheKey, [])
+      }
+      
+      const cache = RecordSubscription._recentRecordCache.get(cacheKey)
+      cache.push({
+        platformID,
+        recordType,
+        record,
+        frameworkToken
+      })
+
+      // 清除之前的定时器
+      if (RecordSubscription._recentRecordTimers.has(cacheKey)) {
+        clearTimeout(RecordSubscription._recentRecordTimers.get(cacheKey))
+      }
+
+      // 设置新的定时器，500ms 后批量发送
+      const timer = setTimeout(async () => {
+        await this.sendRecentRecordsBatch(cacheKey)
+      }, 500)
+      
+      RecordSubscription._recentRecordTimers.set(cacheKey, timer)
+    }
+  }
+
+  /**
+   * 批量发送 isRecent 战绩（合并转发）
+   * @param {string} cacheKey - 缓存键
+   */
+  async sendRecentRecordsBatch(cacheKey) {
+    const cache = RecordSubscription._recentRecordCache.get(cacheKey)
+    if (!cache || cache.length === 0) {
+      return
+    }
+
+    // 清空缓存
+    RecordSubscription._recentRecordCache.delete(cacheKey)
+    RecordSubscription._recentRecordTimers.delete(cacheKey)
+
+    const [targetType, ...rest] = cacheKey.split(':')
+    const platformID = rest[rest.length - 1]
+    
+    try {
+      // 格式化所有战绩消息
+      const messages = []
+      for (const item of cache) {
+        const message = await this.formatRecordMessageWithFallback(
+          item.recordType,
+          item.record,
+          item.frameworkToken,
+          item.platformID,
+          true // isRecent = true
+        )
+        // 如果返回的是 base64 图片，使用 segment.image 包装
+        if (typeof message === 'string' && (message.startsWith('base64://') || message.startsWith('data:image'))) {
+          messages.push([segment.image(message)])
+        } else {
+          messages.push([message])
+        }
+      }
+
+      if (messages.length === 0) {
+        return
+      }
+
+      // 创建伪事件对象用于合并转发
+      const fakeE = this.createFakeEvent(platformID)
+      if (!fakeE) {
+        logger.error(`[战绩订阅] 创建伪事件对象失败，无法发送合并转发: ${platformID}`)
+        return
+      }
+
+      // 使用合并转发发送
+      const forwardMsg = common.makeForwardMsg(fakeE, messages, '最近的战绩')
+      const targetId = targetType === 'private' ? platformID : rest[0]
+      
+      try {
+        if (targetType === 'private') {
+          await Bot.pickUser(targetId).sendMsg(forwardMsg)
+        } else if (targetType === 'group') {
+          await Bot.pickGroup(targetId).sendMsg(forwardMsg)
+        }
+        logger.info(`[战绩订阅] 已批量发送 ${messages.length} 条 isRecent 战绩到${targetType === 'private' ? '私信' : `群${targetId}`}: ${platformID}`)
+      } catch (error) {
+        const targetName = targetType === 'private' ? '私信' : `群${targetId}`
+        logger.error(`[战绩订阅] ${targetName}批量推送失败: ${platformID}`, error)
+      }
+    } catch (error) {
+      logger.error(`[战绩订阅] 批量发送 isRecent 战绩失败: ${cacheKey}`, error)
     }
   }
 
@@ -793,30 +937,29 @@ export class RecordSubscription extends plugin {
    * @param {Object} record - 战绩对象
    * @param {string} frameworkToken - 游戏账号令牌（可选）
    * @param {string} platformID - 用户ID（用于创建伪事件对象）
+   * @param {boolean} isRecent - 是否为 isRecent 战绩（标题显示"最近的战绩"）
    * @returns {Promise<Array|string>}
    */
-  async formatRecordMessage(recordType, record, frameworkToken, platformID) {
+  async formatRecordMessage(recordType, record, frameworkToken, platformID, isRecent = false) {
     const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
-    // 全面战场使用 MapID，烽火地带使用 MapId
     const mapId = record.MapID || record.MapId
     const armedForceId = record.ArmedForceId
-    
-    let mapName = DataManager.getMapName(mapId)
+    const mapName = DataManager.getMapName(mapId)
     const operatorName = DataManager.getOperatorName(armedForceId)
+    let displayName = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家'
 
     // 获取昵称
-    let nickname = null
     if (frameworkToken) {
       try {
-        nickname = await this.getNickname(frameworkToken)
+        const nickname = await this.getNickname(frameworkToken)
+        if (nickname) {
+          displayName = nickname
+        }
       } catch (error) {
         logger.warn(`[战绩订阅] 获取昵称失败: ${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`, error)
         // 继续执行，使用默认显示名称
       }
     }
-    
-    // 标题显示昵称或账号
-    const displayName = nickname || (frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家')
 
     // 构建地图背景图路径的辅助函数（使用新的统一路径，支持降级匹配）
     const getMapBgPath = (mapName, gameMode) => {
@@ -884,16 +1027,18 @@ export class RecordSubscription extends plugin {
       fakeE = this.createFakeEvent(platformID)
       if (!fakeE) {
         logger.warn(`[战绩订阅] 创建伪事件对象失败: ${platformID}，使用文本消息降级`)
-        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
       }
     } catch (error) {
       logger.error(`[战绩订阅] 创建伪事件对象异常: ${platformID}`, error)
-      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
     }
 
     // 准备模板数据
+    // 如果是 isRecent 战绩，标题显示"最近的战绩"
     const templateData = {
-      displayName,
+      isRecent: isRecent,
+      displayName: displayName,
       modeName: modeText,
       time: record.dtEventTime,
       map: mapName || '未知地图',
@@ -1013,21 +1158,29 @@ export class RecordSubscription extends plugin {
       } else {
         // 如果渲染失败，返回文本消息作为降级
         logger.warn(`[战绩订阅] 图片渲染返回空值，使用文本消息降级: ${platformID} | 模式: ${modeText}`)
-        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
       }
     } catch (error) {
       logger.error(`[战绩订阅] 图片渲染异常: ${platformID} | 模式: ${modeText}`, error)
       // 如果渲染异常，返回文本消息作为降级
-      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName)
+      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
     }
   }
 
   /**
    * 格式化战绩消息（文本格式，作为降级方案）
+   * @param {string} recordType - 战绩类型
+   * @param {Object} record - 战绩对象
+   * @param {string} frameworkToken - 游戏账号令牌
+   * @param {string} displayName - 显示名称
+   * @param {string} mapName - 地图名称
+   * @param {string} operatorName - 干员名称
+   * @param {boolean} isRecent - 是否为 isRecent 战绩（标题显示"最近的战绩"）
    */
-  formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName) {
+  formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent = false) {
     const modeText = recordType === 'sol' ? '烽火地带' : '全面战场'
-    let msg = `${displayName}-战绩订阅-${modeText}\n`
+    const titlePrefix = isRecent ? '最近的战绩-' : ''
+    let msg = `${titlePrefix}${displayName}-战绩订阅-${modeText}\n`
 
     if (recordType === 'sol') {
       const finalPrice = Number(record.FinalPrice || 0).toLocaleString()

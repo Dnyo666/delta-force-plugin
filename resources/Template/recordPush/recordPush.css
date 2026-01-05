@@ -32,6 +32,15 @@ body {
     background-clip: text;
     margin: 0;
     letter-spacing: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.title .recent-prefix {
+    font-size: 20px;
+    font-weight: 500;
+    opacity: 0.85;
 }
 
 .subtitle {
