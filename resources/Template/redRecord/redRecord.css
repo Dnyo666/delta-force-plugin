@@ -5,48 +5,32 @@
 }
 
 body {
-    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif !important;
-    background: #0b0f13 !important;
-    width: 100% !important;
-    min-height: 100vh !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-    padding: 30px !important;
-    padding-left: 30px !important;
-    padding-right: 30px !important;
-    box-sizing: border-box !important;
-    transform: none !important;
-    transform-origin: unset !important;
-}
-
-/* 覆盖 defaultLayout 中的 container 样式 */
-#container.container {
-    width: 100% !important;
-    padding: 0 !important;
-    background-size: initial !important;
-    display: flex !important;
-    justify-content: center !important;
-    align-items: flex-start !important;
-}
-
-/* 隐藏 defaultLayout 中的外部页脚 */
-.container > .copyright,
-#container > .copyright {
-    display: none;
+    font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
+    background: #0b0f13;
+    width: 100%;
+    min-height: auto;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 20px 15px;
+    box-sizing: border-box;
+    transform: none;
+    transform-origin: unset;
+    overflow: visible;
 }
 
 .red-record-container {
-    width: 560px;
+    width: 750px;
     margin: 0 auto;
     background: #0d1217;
     border: 2px solid #0FF796;
     border-radius: 12px;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
     box-shadow: 0 0 30px rgba(15, 247, 150, 0.1);
     display: flex;
     flex-direction: column;
+    min-height: auto;
 }
 
 .bg-overlay {
@@ -67,109 +51,12 @@ body {
     position: absolute;
     top: 0;
     left: 0;
-    width: 320px;
-    height: 180px;
+    width: 400px;
+    height: 220px;
     background: 
-        radial-gradient(ellipse 350px 220px at top left, rgba(13, 18, 23, 1) 0%, rgba(13, 18, 23, 0.95) 30%, rgba(13, 18, 23, 0.8) 50%, rgba(13, 18, 23, 0.4) 70%, transparent 85%);
+        radial-gradient(ellipse 450px 280px at top left, rgba(13, 18, 23, 1) 0%, rgba(13, 18, 23, 0.95) 30%, rgba(13, 18, 23, 0.8) 50%, rgba(13, 18, 23, 0.4) 70%, transparent 85%);
     z-index: 1;
     pointer-events: none;
-}
-
-/* ========== 用户头部 ========== */
-.user-header {
-    position: relative; 
-    z-index: 1;
-    padding: 24px;
-    background: rgba(15, 247, 150, 0.03);
-    border-bottom: 1px solid rgba(15, 247, 150, 0.2);
-}
-
-.game-meta {
-    display: flex;
-    align-items: center;
-    margin-bottom: 12px;
-}
-
-.game-logo {
-    height: 32px;
-    width: auto;
-    object-fit: contain;
-    display: block;
-}
-
-.user-profile {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    position: relative;
-}
-
-.profile-sidebar {
-    width: 3px;
-    height: 52px;
-    background: linear-gradient(180deg, #0FF796 0%, #00D9FF 100%);
-    border-radius: 2px;
-    flex-shrink: 0;
-    box-shadow: 0 0 8px rgba(15, 247, 150, 0.4);
-}
-
-.avatar-wrapper {
-    position: relative;
-    flex-shrink: 0;
-}
-
-.avatar {
-    width: 52px;
-    height: 52px;
-    border-radius: 8px;
-    border: 2px solid #0FF796;
-    box-shadow: 0 0 8px rgba(15, 247, 150, 0.25);
-    display: block;
-}
-
-.avatar-placeholder {
-    width: 52px;
-    height: 52px;
-    border-radius: 8px;
-    border: 2px solid #0FF796;
-    background: rgba(15, 247, 150, 0.1);
-    box-shadow: 0 0 8px rgba(15, 247, 150, 0.25);
-}
-
-.user-meta {
-    flex: 1;
-    min-width: 0;
-}
-
-.nickname {
-    color: #fff;
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 6px;
-    line-height: 1.2;
-}
-
-.rank-tag {
-    color: #0FF796;
-    font-size: 13px;
-    background: rgba(15, 247, 150, 0.1);
-    padding: 4px 10px;
-    border-radius: 4px;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    line-height: 1;
-}
-
-.rank-text {
-    flex-shrink: 0;
-}
-
-.rank-icon {
-    width: 18px;
-    height: 18px;
-    object-fit: contain;
-    flex-shrink: 0;
 }
 
 /* ========== 物品展示 ========== */
@@ -205,10 +92,10 @@ body {
 }
 
 .item-img-container {
-    width: 240px;
-    height: 240px;
-    min-width: 240px;
-    min-height: 240px;
+    width: 280px;
+    height: 280px;
+    min-width: 280px;
+    min-height: 280px;
     aspect-ratio: 1 / 1;
     background: rgba(0,0,0,0.4);
     border: 1px solid rgba(15, 247, 150, 0.2);
@@ -342,20 +229,3 @@ body {
     opacity: 0.8;
 }
 
-/* ========== 页脚 ========== */
-.template-footer {
-    position: relative;
-    z-index: 2;
-    padding: 20px 28px 24px;
-    background: rgba(15, 247, 150, 0.02);
-    border-top: 1px solid rgba(15, 247, 150, 0.1);
-}
-
-.copyright-text {
-    text-align: center;
-    color: #FFFFFF;
-    font-size: 12px;
-    font-weight: 300;
-    letter-spacing: 1px;
-    opacity: 0.6;
-}

@@ -1,9 +1,7 @@
-{{extend defaultLayout}}
-
+{{extend commonLayout}}
 {{block 'css'}}
 <link rel="stylesheet" type="text/css" href="{{_res_path}}Template/recordPush/recordPush.css"/>
 {{/block}}
-
 {{block 'main'}}
 <div class="container">
     <div class="header">
@@ -72,11 +70,12 @@
             {{/if}}
         </div>
     </div>
-
+    
     <!-- 页脚 -->
     <div class="template-footer">
         <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
     </div>
 </div>
 {{/block}}
+{{block 'footer'}}{{/block}}
 

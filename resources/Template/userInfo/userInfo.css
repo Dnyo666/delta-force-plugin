@@ -1,27 +1,10 @@
-/* userInfo.css - 性能优化版本 */
-
-/* 使用fonts目录中的字体 */
-@font-face {
-  font-family: 'ProjectD';
-  src: url("../../../fonts/p-med.ttf") format('truetype');
-  font-weight: 400;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'ProjectD';
-  src: url("../../../fonts/p-bold.ttf") format('truetype');
-  font-weight: 700;
-  font-display: swap;
-}
-
 body {
     margin: 0;
     padding: 0;
     font-family: 'ProjectD', 'Microsoft YaHei', sans-serif;
     background: white;
-    width: 1365px !important;
-    height: 640px !important;
+    width: 1365px;
+    height: 640px;
     overflow: hidden;
     /* 移除固定缩放，提升性能 */
     /* GPU加速优化 */
@@ -32,12 +15,12 @@ body {
 }
 
 .container { 
-    width: 1365px !important; 
-    height: 640px !important; 
+    width: 1365px;
+    height: 640px;
     position: relative; 
     background: white;
-    padding: 0 !important;
-    margin: 0 !important;
+    padding: 0;
+    margin: 0;
     /* GPU加速 */
     will-change: transform;
 }

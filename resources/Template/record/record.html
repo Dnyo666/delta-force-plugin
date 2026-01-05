@@ -1,9 +1,7 @@
-{{extend defaultLayout}}
-
+{{extend commonLayout}}
 {{block 'css'}}
 <link rel="stylesheet" type="text/css" href="{{_res_path}}Template/record/record.css"/>
 {{/block}}
-
 {{block 'main'}}
 <div class="container">
     <div class="header">
@@ -78,10 +76,11 @@
             <div class="no-data">当前页面无战绩记录</div>
         {{/if}}
     </div>
-
+    
     <!-- 页脚 -->
     <div class="template-footer">
         <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
     </div>
 </div>
 {{/block}}
+{{block 'footer'}}{{/block}}

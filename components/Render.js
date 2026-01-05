@@ -32,6 +32,7 @@ const Render = {
             _res_path: resPath + '/',
             defaultLayout: layoutPath + 'default.html',
             elemLayout: layoutPath + 'elem.html',
+            commonLayout: `${pluginRoot}/resources/Template/common/common.html`,
             sys: {
               scale: scale(1, customScale)
             },

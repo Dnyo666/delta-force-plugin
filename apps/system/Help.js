@@ -314,10 +314,24 @@ export class Help extends plugin {
         
         // 构建绝对路径（Puppeteer 渲染时相对路径的 base URL 不可靠）
         const path = await import('node:path');
+        const fs = await import('node:fs/promises');
         const { pluginRoot } = await import('../../model/path.js');
         
         const bgPath = path.join(pluginRoot, 'resources', 'help', 'imgs', themePath, 'bg.jpg');
         const iconPath = path.join(pluginRoot, 'resources', 'help', 'imgs', themePath, 'icon.png');
+        
+        // 检查图片文件是否存在，不存在则记录警告日志
+        try {
+            await fs.access(bgPath);
+        } catch (error) {
+            logger.warn(`[Delta-Force Help] 背景图片不存在: ${bgPath}`);
+        }
+        
+        try {
+            await fs.access(iconPath);
+        } catch (error) {
+            logger.warn(`[Delta-Force Help] 图标图片不存在: ${iconPath}`);
+        }
         
         const theme = {
             main: bgPath,
