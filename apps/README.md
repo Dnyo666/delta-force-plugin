@@ -13,8 +13,7 @@
 - `Money.js` - 货币信息
 - `Flows.js` - 交易流水
 - `Collection.js` - 藏品查询
-- `RedCollection.js` - 大红收藏
-- `red.js` - 出红记录
+- `red.js` - 出红记录/大红收藏
 - `banhistory.js` - 封号记录
 - `health.js` - 健康状态
 
