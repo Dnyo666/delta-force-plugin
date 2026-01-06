@@ -246,7 +246,7 @@ export class RecordSubscription extends plugin {
         : subscriptionType === 'sol' ? '烽火地带' 
         : '全面战场'
 
-      await this.e.reply(`订阅成功 [${typeText}]\n使用 ^订阅状态 战绩 查看详情`)
+      await this.e.reply(`订阅成功 [${typeText}]\n使用 #三角洲订阅状态 战绩 查看详情`)
 
     } catch (error) {
       logger.error('[战绩订阅] 订阅失败:', error)
@@ -418,7 +418,7 @@ export class RecordSubscription extends plugin {
     // 检查用户是否已订阅
     const subStr = await redis.get(`delta-force:record-sub:${platformID}`)
     if (!subStr) {
-      await this.e.reply('您还未订阅战绩推送\n请先使用 ^订阅 战绩')
+      await this.e.reply('您还未订阅战绩推送\n请先使用 #三角洲订阅 战绩')
       return true
     }
 
@@ -491,7 +491,7 @@ export class RecordSubscription extends plugin {
     // 检查用户是否已订阅
     const subStr = await redis.get(`delta-force:record-sub:${platformID}`)
     if (!subStr) {
-      await this.e.reply('您还未订阅战绩推送\n请先使用 ^订阅 战绩')
+      await this.e.reply('您还未订阅战绩推送\n请先使用 #三角洲订阅 战绩')
       return true
     }
 
