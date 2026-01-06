@@ -761,6 +761,20 @@ export default class Code {
   }
 
   /**
+   * 获取特勤处信息
+   * @param {string} frameworkToken - 用户绑定的token
+   * @param {string} place - 场所类型 (可选): storage, control, workbench, tech, shoot, training, pharmacy, armory
+   * @returns {Promise<object>} - API响应
+   */
+  async getPlaceInfo(frameworkToken, place = '') {
+    const params = { frameworkToken };
+    if (place) {
+      params.place = place;
+    }
+    return this.request('/df/place/info', params, 'GET');
+  }
+
+  /**
    * 获取好友信息
    * @param {string} frameworkToken - 用户绑定的token
    * @param {string} openid - 好友的openid
