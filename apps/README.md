@@ -15,7 +15,10 @@
 - `Collection.js` - 藏品查询
 - `red.js` - 出红记录/大红收藏
 - `banhistory.js` - 封号记录
-- `health.js` - 健康状态
+- `PlaceInfo.js` - 特勤处信息查询（设施升级信息）
+- `OperatorList.js` - 干员列表查询
+- `Operator.js` - 干员信息查询
+- `HealthInfo.js` - 健康状态信息查询
 
 ### report/ - 战报相关
 - `Daily.js` - 日报
