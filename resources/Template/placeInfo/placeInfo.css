@@ -1,0 +1,521 @@
+/* ========== Body 样式 ========== */
+body {
+    background: #0b0f13;
+    color: #F2F2F2;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 2200px;
+    height: auto;
+    min-height: 520px;
+    transform: none;
+    transform-origin: unset;
+    overflow: visible;
+}
+
+/* ========== 容器样式 ========== */
+.container {
+    position: relative;
+    width: 2200px;
+    min-height: 520px;
+    margin: 0 auto;
+    background: transparent;
+    overflow: hidden;
+}
+
+.bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.25;
+    z-index: 0;
+    pointer-events: none;
+    border-radius: 0;
+}
+
+.bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(11, 15, 19, 0.96) 0%, rgba(13, 18, 23, 0.96) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ========== 头部样式 ========== */
+.header {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 18px;
+    padding: 20px;
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #0FF796, transparent) 1;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    position: relative;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+}
+
+.game-logo {
+    height: 50px;
+    width: auto;
+    object-fit: contain;
+    opacity: 0.95;
+    filter: drop-shadow(0 0 8px rgba(15, 247, 150, 0.3));
+    flex-shrink: 0;
+}
+
+.title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, #0FF796, #00D9FF);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    text-shadow: 0 0 10px rgba(15, 247, 150, 0.22);
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar-wrapper {
+    flex-shrink: 0;
+}
+
+.user-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    border: 2px solid #0FF796;
+    box-shadow: 0 0 8px rgba(15, 247, 150, 0.3);
+}
+
+.header-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.user-name {
+    color: #fff;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+.place-type {
+    color: #0FF796;
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+/* ========== 内容区域 ========== */
+.content {
+    position: relative;
+    z-index: 2;
+    padding: 0 20px 22px;
+}
+
+.summary-info {
+    margin-bottom: 24px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(15, 247, 150, 0.2);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.summary-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* ========== 设施类型组样式 ========== */
+.place-type-group {
+    background: linear-gradient(135deg, rgba(44, 44, 50, 0.98), rgba(35, 35, 40, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    margin-bottom: 18px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.place-type-header {
+    padding: 12px 18px;
+    background: linear-gradient(135deg, rgba(15, 247, 150, 0.15), rgba(15, 247, 150, 0.05));
+    border-bottom: 2px solid rgba(15, 247, 150, 0.3);
+}
+
+.place-type-name {
+    color: #FFFFFF;
+    font-size: 18px;
+    font-weight: 700;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+/* ========== 左右布局容器 ========== */
+.place-type-content {
+    display: flex;
+    min-height: 200px;
+}
+
+.place-sidebar {
+    width: 160px;
+    background: linear-gradient(180deg, rgba(15, 247, 150, 0.08), rgba(0, 0, 0, 0.2));
+    border-right: 2px solid rgba(15, 247, 150, 0.3);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.place-sidebar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(15, 247, 150, 0.4), transparent);
+}
+
+.sidebar-place-name {
+    color: #0FF796;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 3px;
+    text-shadow: 0 0 12px rgba(15, 247, 150, 0.6);
+    line-height: 1.3;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(15, 247, 150, 0.2);
+    width: 100%;
+}
+
+.place-levels {
+    flex: 1;
+    padding: 18px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 14px;
+    align-items: flex-start;
+}
+
+/* ========== 等级卡片样式 ========== */
+.level-card {
+    background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(20, 20, 25, 0.4));
+    border: 1px solid rgba(15, 247, 150, 0.25);
+    border-radius: 14px;
+    overflow: hidden;
+    width: 100%;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    transition: all 0.3s ease;
+}
+
+.level-card:hover {
+    border-color: rgba(15, 247, 150, 0.4);
+    box-shadow: 0 4px 12px rgba(15, 247, 150, 0.2);
+    transform: translateY(-2px);
+}
+
+.level-header {
+    padding: 12px 16px;
+    background: linear-gradient(135deg, rgba(15, 247, 150, 0.15), rgba(15, 247, 150, 0.05));
+    border-bottom: 2px solid rgba(15, 247, 150, 0.3);
+    position: relative;
+}
+
+.level-header::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #0FF796, #00D9FF);
+}
+
+.level-badge {
+    color: #0FF796;
+    font-size: 18px;
+    font-weight: 700;
+    display: inline-block;
+    text-shadow: 0 0 8px rgba(15, 247, 150, 0.5);
+    letter-spacing: 1px;
+}
+
+/* ========== 等级卡片内容区 ========== */
+.level-body {
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.15);
+}
+
+/* ========== 信息行样式 ========== */
+.info-row {
+    display: flex;
+    align-items: center;
+    padding: 10px 12px;
+    margin-bottom: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    border-left: 2px solid rgba(15, 247, 150, 0.3);
+}
+
+.info-row:last-of-type {
+    margin-bottom: 0;
+}
+
+.info-label {
+    color: rgba(15, 247, 150, 0.9);
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 85px;
+    flex-shrink: 0;
+    letter-spacing: 0.5px;
+}
+
+.info-value {
+    color: #FFFFFF;
+    font-size: 14px;
+    font-weight: 600;
+    flex: 1;
+    word-break: break-word;
+}
+
+.haf-value {
+    color: #0FF796;
+    font-weight: 700;
+    font-size: 15px;
+    text-shadow: 0 0 6px rgba(15, 247, 150, 0.4);
+}
+
+/* ========== 升级条件样式 ========== */
+.info-section {
+    margin-bottom: 10px;
+}
+
+.info-label-large {
+    color: #0FF796;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.conditions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.condition-item {
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    border-left: 2px solid rgba(15, 247, 150, 0.4);
+    line-height: 1.4;
+}
+
+.condition-single {
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 6px;
+    border-left: 2px solid rgba(15, 247, 150, 0.4);
+    line-height: 1.4;
+}
+
+/* ========== 分隔线 ========== */
+.section-divider {
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(15, 247, 150, 0.4), transparent);
+    margin: 14px 0;
+    border-radius: 1px;
+}
+
+/* ========== 区块标题 ========== */
+.section-header {
+    color: #0FF796;
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    padding: 6px 12px;
+    background: rgba(15, 247, 150, 0.1);
+    border-left: 3px solid #0FF796;
+    border-radius: 4px;
+    text-shadow: 0 0 8px rgba(15, 247, 150, 0.4);
+    letter-spacing: 1px;
+}
+
+/* ========== 物品网格样式 ========== */
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.item-card {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(15, 247, 150, 0.15);
+    border-radius: 8px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.item-card:hover {
+    border-color: rgba(15, 247, 150, 0.4);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.item-image-wrapper {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.item-info {
+    text-align: center;
+    width: 100%;
+}
+
+.item-name {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 2px;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+.item-count {
+    color: #0FF796;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+/* ========== 解锁效果样式 ========== */
+.unlock-effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.effect-badge {
+    background: rgba(15, 247, 150, 0.15);
+    border: 1px solid rgba(15, 247, 150, 0.3);
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #0FF796;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+.props-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.prop-item {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(15, 247, 150, 0.15);
+    border-radius: 6px;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+}
+
+.prop-item:hover {
+    border-color: rgba(15, 247, 150, 0.4);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.prop-image-wrapper {
+    width: 42px;
+    height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.prop-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.prop-name {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+    word-break: break-word;
+}
+
+/* ========== 详情样式 ========== */
+.detail-text {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 12px;
+    line-height: 1.6;
+    font-style: italic;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 6px;
+    border-left: 2px solid rgba(15, 247, 150, 0.3);
+}

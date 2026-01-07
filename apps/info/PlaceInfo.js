@@ -1,5 +1,7 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
+import Render from '../../components/Render.js'
+import { segment } from 'oicq'
 
 export class PlaceInfo extends plugin {
   constructor (e) {
@@ -60,10 +62,6 @@ export class PlaceInfo extends plugin {
       return true
     }
 
-    // 构建转发消息
-    const forwardMsg = []
-    const bot = global.Bot
-
     // 场所类型名称映射
     const typeNameMap = {
       'storage': '仓库',
@@ -78,16 +76,172 @@ export class PlaceInfo extends plugin {
       'diving': '潜水中心'
     }
 
-    // 添加消息头
-    const placeTypeName = placeType ? typeNameMap[placeType] || placeType : '全部'
-    const title = `特勤处信息查询 - ${placeTypeName}\n共 ${places.length} 个设施`;
+    // 获取用户信息
+    let userName = this.e.sender.card || this.e.sender.nickname
+    let userAvatar = ''
+    let qqAvatarUrl = ''
+    try {
+      const personalInfoRes = await this.api.getPersonalInfo(token)
+      if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
+        const { userData } = personalInfoRes.data
+        const { roleInfo } = personalInfoRes
+        userName = decodeURIComponent(userData?.charac_name || roleInfo?.charac_name || userName)
+        let picUrl = decodeURIComponent(userData?.picurl || roleInfo?.picurl || '')
+        if (picUrl && /^[0-9]+$/.test(picUrl)) {
+          userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${picUrl}.webp`
+        } else if (picUrl) {
+          userAvatar = picUrl
+        }
+      }
+    } catch (e) {
+      logger.warn('[特勤处信息] 获取用户信息失败:', e)
+    }
+    
+    // QQ头像
+    qqAvatarUrl = `https://q1.qlogo.cn/g?b=qq&nk=${this.e.user_id}&s=640`
+
+    // 如果指定了类型，直接生成一张图片
+    if (placeType) {
+      const processedPlaces = this.processPlaces(places, typeNameMap, relateMap)
+      // 按设施类型分组（显示名称相同的归为一组）
+      const groupedByDisplayName = {}
+      processedPlaces.forEach(place => {
+        const displayName = place.displayName
+        if (!groupedByDisplayName[displayName]) {
+          groupedByDisplayName[displayName] = []
+        }
+        groupedByDisplayName[displayName].push(place)
+      })
+
+      // 转换为数组并排序
+      const placesByType = Object.keys(groupedByDisplayName).map(displayName => {
+        const typePlaces = groupedByDisplayName[displayName]
+        // 按等级排序
+        typePlaces.sort((a, b) => a.level - b.level)
+        return {
+          typeName: displayName,
+          displayName: displayName, // 添加 displayName 字段，方便模板使用
+          places: typePlaces
+        }
+      })
+
+      const placeTypeName = typeNameMap[placeType] || placeType
+      const templateData = {
+        userName: userName,
+        userAvatar: userAvatar || qqAvatarUrl,
+        qqAvatarUrl: qqAvatarUrl,
+        placeTypeName: placeTypeName,
+        totalCount: processedPlaces.length,
+        placesByType: placesByType
+      }
+
+      return await Render.render('Template/placeInfo/placeInfo', templateData, {
+        e: this.e,
+        retType: 'default'
+      })
+    }
+
+    // 如果没有指定类型，按场所类型分组，每个类型生成一张图片
+    const groupedByType = {}
+    places.forEach(place => {
+      const type = place.placeType || 'unknown'
+      if (!groupedByType[type]) {
+        groupedByType[type] = []
+      }
+      groupedByType[type].push(place)
+    })
+
+    // 定义类型显示顺序
+    const typeOrder = ['storage', 'control', 'workbench', 'tech', 'shoot', 'training', 'pharmacy', 'armory', 'collect', 'diving']
+    const sortedTypes = Object.keys(groupedByType).sort((a, b) => {
+      const indexA = typeOrder.indexOf(a)
+      const indexB = typeOrder.indexOf(b)
+      if (indexA === -1 && indexB === -1) return a.localeCompare(b)
+      if (indexA === -1) return 1
+      if (indexB === -1) return -1
+      return indexA - indexB
+    })
+
+    // 构建合并转发消息数组
+    const forwardMsg = []
+    const bot = global.Bot
+
+    // 添加标题消息
     forwardMsg.push({
-      message: title,
+      message: `特勤处信息查询\n共 ${places.length} 个设施，${sortedTypes.length} 种类型`,
       nickname: bot.nickname,
       user_id: bot.uin
     })
 
-    // 按等级分组展示
+    // 为每个类型生成一张图片
+    for (const type of sortedTypes) {
+      const typePlaces = groupedByType[type]
+      if (typePlaces.length === 0) continue
+
+      const processedPlaces = this.processPlaces(typePlaces, typeNameMap, relateMap)
+      const placeTypeName = typeNameMap[type] || type
+
+      const templateData = {
+        userName: userName,
+        userAvatar: userAvatar || qqAvatarUrl,
+        qqAvatarUrl: qqAvatarUrl,
+        placeTypeName: placeTypeName,
+        totalCount: processedPlaces.length,
+        places: processedPlaces
+      }
+
+      try {
+        // 渲染图片（retType: 'base64' 返回的是 segment.image 对象）
+        const imageSegment = await Render.render('Template/placeInfo/placeInfo', templateData, {
+          e: this.e,
+          retType: 'base64',
+          saveId: `${this.e.user_id}_placeinfo_${type}`
+        })
+
+        if (imageSegment) {
+          // 将类型标题和图片合并到一条消息中
+          forwardMsg.push({
+            message: [
+              `【${placeTypeName}】\n`,
+              imageSegment
+            ],
+            nickname: bot.nickname,
+            user_id: bot.uin
+          })
+        }
+      } catch (error) {
+        logger.error(`[特勤处信息] 渲染 ${placeTypeName} 图片失败:`, error)
+        // 如果渲染失败，添加文本消息作为降级方案
+        forwardMsg.push({
+          message: `【${placeTypeName}】渲染失败，请稍后重试`,
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
+      }
+    }
+
+    // 发送合并转发消息
+    if (forwardMsg.length > 1) {
+      const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+      if (!result) {
+        await this.e.reply('生成转发消息失败，请联系管理员。')
+      }
+    } else {
+      await this.e.reply('未能生成任何图片，请稍后重试。')
+    }
+
+    return true
+  }
+
+  /**
+   * 处理场所数据，格式化供模板使用
+   * @param {Array} places - 场所数组
+   * @param {Object} typeNameMap - 类型名称映射
+   * @param {Object} relateMap - 物品映射表
+   * @returns {Array} - 处理后的场所数组
+   */
+  processPlaces(places, typeNameMap, relateMap) {
+    // 按等级分组并排序
     const groupedByLevel = {}
     places.forEach(place => {
       const level = place.level || 0
@@ -97,109 +251,120 @@ export class PlaceInfo extends plugin {
       groupedByLevel[level].push(place)
     })
 
-    // 按等级排序
     const sortedLevels = Object.keys(groupedByLevel).sort((a, b) => parseInt(a) - parseInt(b))
+    const processedPlaces = []
 
     sortedLevels.forEach(level => {
       const levelPlaces = groupedByLevel[level]
       levelPlaces.forEach(place => {
         // 获取设施显示名称
         const placeName = place.placeName || ''
-        const placeType = place.placeType || ''
+        const placeTypeValue = place.placeType || ''
         let displayName = placeName
         if (!/[\u4e00-\u9fa5]/.test(placeName)) {
-          displayName = typeNameMap[placeType] || placeName || '未知设施'
+          displayName = typeNameMap[placeTypeValue] || placeName || '未知设施'
         }
 
-        let msg = `--- ${displayName} Lv.${place.level || 0} ---\n`
-        
-        // 升级信息
+        const processedPlace = {
+          displayName: displayName,
+          level: place.level || 0,
+          upgradeInfo: null,
+          upgradeRequired: [],
+          unlockInfo: null,
+          detail: place.detail || ''
+        }
+
+        // 处理升级信息
         if (place.upgradeInfo) {
-          msg += `升级条件: ${place.upgradeInfo.condition || '无'}\n`
-          if (place.upgradeInfo.hafCount > 0) {
-            msg += `所需HAF: ${place.upgradeInfo.hafCount.toLocaleString()}\n`
+          // 解析升级条件，按分号分割并过滤空字符串
+          let conditionText = place.upgradeInfo.condition || '无'
+          let conditions = []
+          if (conditionText && conditionText !== '无' && conditionText !== '默认解锁') {
+            // 按分号分割条件
+            conditions = conditionText.split(/[;；]/).map(c => c.trim()).filter(c => c.length > 0)
+          }
+          
+          processedPlace.upgradeInfo = {
+            condition: conditionText,
+            conditions: conditions, // 添加条件数组
+            hafCount: place.upgradeInfo.hafCount || 0,
+            hafCountFormatted: place.upgradeInfo.hafCount > 0 ? place.upgradeInfo.hafCount.toLocaleString() : '0'
           }
         }
 
-        // 升级所需物品
+        // 处理升级所需物品
         if (place.upgradeRequired && place.upgradeRequired.length > 0) {
-          msg += `\n升级所需物品:\n`
-          const upgradeItems = place.upgradeRequired.map(req => {
+          processedPlace.upgradeRequired = place.upgradeRequired.map(req => {
             const itemInfo = relateMap[String(req.objectID)]
             const itemName = itemInfo ? itemInfo.objectName : `物品ID: ${req.objectID}`
-            return `${itemName} x${req.count}`
+            const imageUrl = itemInfo?.pic || (req.objectID ? `https://playerhub.df.qq.com/playerhub/60004/object/${req.objectID}.png` : null)
+            return {
+              objectName: itemName,
+              count: req.count,
+              imageUrl: imageUrl
+            }
           })
-          msg += upgradeItems.join('\n')
-          msg += `\n`
         }
 
-        // 解锁信息
+        // 处理解锁信息
         if (place.unlockInfo) {
-          msg += `\n解锁效果:\n`
-          const unlockResult = []
+          const unlockData = {
+            properties: [],
+            props: []
+          }
+
           const properties = place.unlockInfo.properties?.list || []
-          const props = place.unlockInfo.props || []
-          
           if (properties.length > 0) {
-            unlockResult.push('属性加成:')
-            properties.forEach(prop => {
+            unlockData.properties = properties.map(prop => {
               if (typeof prop === 'string') {
-                unlockResult.push(`  - ${prop}`)
+                return prop
               } else if (prop && typeof prop === 'object') {
-                const propName = prop.name || prop.objectName || prop.desc || JSON.stringify(prop)
-                unlockResult.push(`  - ${propName}`)
+                return prop.name || prop.objectName || prop.desc || JSON.stringify(prop)
               }
+              return String(prop)
             })
           }
-          
+
+          const props = place.unlockInfo.props || []
           if (props.length > 0) {
-            unlockResult.push('道具:')
-            props.forEach(prop => {
+            unlockData.props = props.map(prop => {
               if (typeof prop === 'string') {
-                unlockResult.push(`  - ${prop}`)
+                return { objectName: prop, imageUrl: null, count: null }
               } else if (prop && typeof prop === 'object') {
-                let propName = '未知道具'
+                let objectName = '未知道具'
+                let imageUrl = null
+                
                 if (prop.objectID) {
                   const itemInfo = relateMap[String(prop.objectID)]
-                  propName = itemInfo && itemInfo.objectName ? itemInfo.objectName : `物品ID: ${prop.objectID}`
+                  objectName = itemInfo && itemInfo.objectName ? itemInfo.objectName : `物品ID: ${prop.objectID}`
+                  imageUrl = itemInfo?.pic || `https://playerhub.df.qq.com/playerhub/60004/object/${prop.objectID}.png`
                 } else if (prop.name || prop.objectName) {
-                  propName = prop.name || prop.objectName
+                  objectName = prop.name || prop.objectName
                 } else if (prop.id) {
                   const itemInfo = relateMap[String(prop.id)]
-                  propName = itemInfo && itemInfo.objectName ? itemInfo.objectName : `物品ID: ${prop.id}`
+                  objectName = itemInfo && itemInfo.objectName ? itemInfo.objectName : `物品ID: ${prop.id}`
+                  imageUrl = itemInfo?.pic || `https://playerhub.df.qq.com/playerhub/60004/object/${prop.id}.png`
                 }
-                if (prop.count !== undefined) {
-                  propName += ` x${prop.count}`
+                
+                return {
+                  objectName: objectName,
+                  imageUrl: imageUrl,
+                  count: prop.count
                 }
-                unlockResult.push(`  - ${propName}`)
               }
+              return { objectName: String(prop), imageUrl: null, count: null }
             })
           }
-          
-          msg += unlockResult.length > 0 ? unlockResult.join('\n') : '无'
-          msg += `\n`
+
+          if (unlockData.properties.length > 0 || unlockData.props.length > 0) {
+            processedPlace.unlockInfo = unlockData
+          }
         }
 
-        // 详细信息
-        if (place.detail) {
-          msg += `\n详情: ${place.detail}\n`
-        }
-
-        forwardMsg.push({
-          message: msg.trim(),
-          nickname: bot.nickname,
-          user_id: bot.uin
-        })
+        processedPlaces.push(processedPlace)
       })
     })
 
-    // 创建合并转发消息
-    const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
-
-    if (!result) {
-      await this.e.reply('生成转发消息失败，请联系管理员。')
-    }
-
-    return true
+    return processedPlaces
   }
 }
