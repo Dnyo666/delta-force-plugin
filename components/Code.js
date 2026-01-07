@@ -719,6 +719,22 @@ export default class Code {
     return await this.request('/df/object/operator2', {}, 'get');
   }
 
+  /**
+   * 获取所有干员信息
+   * @returns {Promise<object>} - API响应
+   */
+  async getOperator() {
+    return await this.request('/df/object/operator', {}, 'GET')
+  }
+
+  /**
+   * 获取健康状态信息
+   * @returns {Promise<object>} - API响应
+   */
+  async getHealth() {
+    return await this.request('/df/object/health', {}, 'GET')
+  }
+
   async getTags() {
     return await this.request('/df/tools/Room/tags', {}, 'get');
   }

@@ -1,0 +1,474 @@
+/* ========== 字体定义 ========== */
+@font-face {
+  font-family: 'ProjectD';
+  src: url("../../fonts/p-med.ttf") format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ProjectD';
+  src: url("../../fonts/p-bold.ttf") format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ========== 基础重置样式 ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ========== Body 样式 ========== */
+body {
+    background: #0b0f13;
+    color: #F2F2F2;
+    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+    margin: 0;
+    padding: 0;
+    width: 2200px;
+    height: auto;
+    min-height: 520px;
+    transform: none;
+    transform-origin: unset;
+    overflow: visible;
+}
+
+/* ========== 容器样式 ========== */
+.container {
+    position: relative;
+    width: 2200px;
+    min-height: 520px;
+    margin: 0 auto;
+    background: transparent;
+    overflow: hidden;
+}
+
+.bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.4;
+    z-index: 0;
+}
+
+/* ========== 头部样式 ========== */
+.header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 30px 20px;
+    background: transparent;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.game-logo {
+    height: 35px;
+    width: auto;
+}
+
+.header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.title {
+    color: #FFFFFF;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* ========== 内容区域 ========== */
+.content {
+    position: relative;
+    z-index: 2;
+    padding: 0 20px 22px;
+}
+
+.summary-info {
+    margin-bottom: 24px;
+    padding: 10px 16px;
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(15, 247, 150, 0.2);
+    border-radius: 10px;
+    text-align: center;
+}
+
+.summary-text {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* ========== 设施类型组样式 ========== */
+.place-type-group {
+    background: linear-gradient(135deg, rgba(44, 44, 50, 0.98), rgba(35, 35, 40, 0.98));
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    margin-bottom: 18px;
+    overflow: hidden;
+}
+
+.place-type-header {
+    padding: 12px 18px;
+    background: linear-gradient(135deg, rgba(15, 247, 150, 0.15), rgba(15, 247, 150, 0.05));
+    border-bottom: 2px solid rgba(15, 247, 150, 0.3);
+}
+
+.place-type-name {
+    color: #FFFFFF;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* ========== 左右布局容器 ========== */
+.place-type-content {
+    display: flex;
+    min-height: 200px;
+}
+
+.place-sidebar {
+    width: 160px;
+    background: linear-gradient(180deg, rgba(15, 247, 150, 0.08), rgba(0, 0, 0, 0.2));
+    border-right: 2px solid rgba(15, 247, 150, 0.3);
+    padding: 20px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.place-sidebar::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(15, 247, 150, 0.4), transparent);
+}
+
+.sidebar-place-name {
+    color: #0FF796;
+    font-size: 28px;
+    font-weight: 700;
+    text-align: center;
+    letter-spacing: 3px;
+    line-height: 1.3;
+    margin-bottom: 12px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(15, 247, 150, 0.2);
+    width: 100%;
+}
+
+.place-levels {
+    flex: 1;
+    padding: 16px;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    align-items: stretch;
+    overflow-x: auto;
+}
+
+/* ========== 等级卡片样式 ========== */
+.level-card {
+    background: rgba(20, 25, 30, 0.95);
+    border: 1px solid rgba(15, 247, 150, 0.3);
+    border-radius: 0;
+    overflow: hidden;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+}
+
+.level-header {
+    padding: 12px 16px;
+    background: rgba(15, 247, 150, 0.1);
+    border-bottom: 1px solid rgba(15, 247, 150, 0.2);
+    position: relative;
+    border-left: 4px solid #0FF796;
+}
+
+.level-badge {
+    color: #0FF796;
+    font-size: 18px;
+    font-weight: 700;
+    display: inline-block;
+    letter-spacing: 1px;
+}
+
+/* ========== 等级卡片内容区 ========== */
+.level-body {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ========== 信息行样式 ========== */
+.info-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 0;
+    border-left: 3px solid #0FF796;
+    flex-shrink: 0;
+}
+
+.info-row:last-of-type {
+    margin-bottom: 0;
+}
+
+.info-label {
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 14px;
+    font-weight: 600;
+    min-width: 100px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #FFFFFF;
+    font-size: 15px;
+    font-weight: 600;
+    flex: 1;
+    word-break: break-word;
+}
+
+.haf-row {
+    background: rgba(15, 247, 150, 0.08);
+    border-left: 3px solid #0FF796;
+}
+
+.haf-value {
+    color: #0FF796;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+/* ========== 升级条件样式 ========== */
+.info-section {
+    margin-bottom: 8px;
+    flex-shrink: 0;
+}
+
+.info-label-large {
+    color: #0FF796;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    letter-spacing: 0.5px;
+}
+
+.conditions-list {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.condition-item {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 500;
+    padding: 5px 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 0;
+    border-left: 2px solid #0FF796;
+    line-height: 1.5;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.condition-item:last-child {
+    margin-bottom: 0;
+}
+
+.condition-inline {
+    background: rgba(0, 0, 0, 0.3);
+    border-left: 2px solid #0FF796;
+}
+
+.condition-inline .info-value {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 13px;
+    font-weight: 500;
+}
+
+/* ========== 分隔线 ========== */
+.section-divider {
+    height: 1px;
+    background: rgba(80, 85, 90, 0.5);
+    margin: 10px 0;
+    flex-shrink: 0;
+}
+
+/* ========== 区块标题 ========== */
+.section-header {
+    color: #0FF796;
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 8px;
+    padding: 4px 0;
+    border-left: 3px solid #0FF796;
+    padding-left: 10px;
+    letter-spacing: 0.5px;
+    flex-shrink: 0;
+}
+
+/* ========== 物品网格样式 ========== */
+.items-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.item-card {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(15, 247, 150, 0.2);
+    border-radius: 0;
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+.item-image-wrapper {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 0;
+    overflow: hidden;
+    border: 1px solid rgba(15, 247, 150, 0.2);
+}
+
+.item-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.item-info {
+    text-align: center;
+    width: 100%;
+}
+
+.item-name {
+    color: rgba(255, 255, 255, 0.95);
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 3px;
+    line-height: 1.4;
+    word-break: break-word;
+    text-align: center;
+}
+
+.item-count {
+    color: #0FF796;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* ========== 解锁效果样式 ========== */
+.unlock-effects {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.effect-badge {
+    background: rgba(0, 217, 255, 0.2);
+    border: 1px solid rgba(0, 217, 255, 0.4);
+    border-radius: 0;
+    padding: 6px 12px;
+    color: #00D9FF;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.props-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.prop-item {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(15, 247, 150, 0.2);
+    border-radius: 0;
+    padding: 8px 6px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+}
+
+.prop-image-wrapper {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 0;
+    overflow: hidden;
+    border: 1px solid rgba(15, 247, 150, 0.2);
+}
+
+.prop-image {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.prop-name {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+/* ========== 详情样式 ========== */
+.detail-text {
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 13px;
+    line-height: 1.7;
+    font-style: italic;
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 0;
+    border-left: 3px solid #0FF796;
+}

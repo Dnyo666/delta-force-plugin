@@ -1,0 +1,269 @@
+/* ========== Body 样式 ========== */
+body {
+    background: #0b0f13;
+    color: #F2F2F2;
+    margin: 0;
+    padding: 0;
+    width: 1000px;
+    height: auto;
+    min-height: 400px;
+    transform: none;
+    transform-origin: unset;
+    overflow: visible;
+}
+
+/* ========== 容器样式 ========== */
+.container {
+    position: relative;
+    width: 1000px;
+    min-height: 400px;
+    margin: 0 auto;
+    background: transparent;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+}
+
+.bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.4;
+    z-index: 0;
+}
+
+/* ========== 头部样式 ========== */
+.header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 25px 30px 20px;
+    background: transparent;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.game-logo {
+    height: 35px;
+    width: auto;
+}
+
+.header-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.title {
+    color: #FFFFFF;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+/* ========== 内容区域 ========== */
+.content {
+    position: relative;
+    z-index: 2;
+    padding: 0 20px 22px;
+}
+
+/* ========== 上下布局容器 ========== */
+.content-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.left-section,
+.right-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.left-section {
+    border-bottom: 1px solid rgba(80, 85, 90, 0.2);
+    padding-bottom: 20px;
+}
+
+.right-section {
+    padding-top: 0;
+}
+
+/* ========== 区块组样式 ========== */
+.section-content {
+    flex: 1;
+    overflow: visible;
+}
+
+.section-title {
+    font-size: 20px;
+    font-weight: 700;
+    margin-bottom: 16px;
+    padding: 10px 16px;
+    letter-spacing: 1px;
+    flex-shrink: 0;
+}
+
+.debuff-title {
+    color: #FF6B6B;
+    background: rgba(255, 107, 107, 0.08);
+}
+
+.buff-title {
+    color: #0FF796;
+    background: rgba(15, 247, 150, 0.08);
+}
+
+/* ========== 状态列表样式 ========== */
+.status-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    grid-auto-flow: row;
+}
+
+/* ========== 部位标签样式 ========== */
+.area-badge {
+    color: #FFFFFF;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 6px 12px;
+    margin-bottom: 10px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0;
+    display: inline-block;
+    width: fit-content;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* ========== 状态卡片样式 ========== */
+.status-card {
+    background: rgba(20, 25, 30, 0.95);
+    border: 1px solid;
+    border-radius: 0;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: all 0.2s ease;
+}
+
+/* ========== 合并卡片样式 ========== */
+.merged-card {
+    grid-column: 1 / -1;
+}
+
+.merged-status-container {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+}
+
+.merged-status-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.merged-divider {
+    width: 1px;
+    background: rgba(80, 85, 90, 0.3);
+    flex-shrink: 0;
+}
+
+.debuff-card {
+    border-color: rgba(255, 107, 107, 0.2);
+}
+
+.buff-card {
+    border-color: rgba(15, 247, 150, 0.2);
+}
+
+/* ========== 状态头部样式 ========== */
+.status-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 4px;
+}
+
+.status-icon-wrapper {
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 0;
+    overflow: hidden;
+    border: 1px solid rgba(80, 85, 90, 0.5);
+    flex-shrink: 0;
+}
+
+.debuff-card .status-icon-wrapper {
+    border-color: rgba(255, 107, 107, 0.25);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.buff-card .status-icon-wrapper {
+    border-color: rgba(15, 247, 150, 0.25);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.status-icon {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.status-name {
+    color: #FFFFFF;
+    font-size: 16px;
+    font-weight: 700;
+    flex: 1;
+    line-height: 1.4;
+}
+
+.debuff-card .status-name {
+    color: #FF6B6B;
+}
+
+.buff-card .status-name {
+    color: #0FF796;
+}
+
+/* ========== 状态信息样式 ========== */
+.status-info {
+    display: flex;
+    align-items: flex-start;
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 6px 0;
+}
+
+.info-label {
+    color: rgba(255, 255, 255, 0.75);
+    font-weight: 600;
+    min-width: 55px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: rgba(255, 255, 255, 0.9);
+    flex: 1;
+    word-break: break-word;
+}
