@@ -187,7 +187,12 @@ export class PlaceInfo extends plugin {
         qqAvatarUrl: qqAvatarUrl,
         placeTypeName: placeTypeName,
         totalCount: processedPlaces.length,
-        places: processedPlaces
+        // 模板要求使用 placesByType 结构进行渲染
+        placesByType: [{
+          typeName: placeTypeName,
+          displayName: processedPlaces[0]?.displayName || placeTypeName,
+          places: processedPlaces
+        }]
       }
 
       try {

@@ -1,5 +1,6 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
+import Render from '../../components/Render.js'
 
 export class Operator extends plugin {
   constructor (e) {
@@ -68,38 +69,37 @@ export class Operator extends plugin {
       await this.e.reply(`找到多个匹配的干员：${names}，将显示第一个匹配结果。`)
     }
 
-    // 构建消息
-    let msg = `【${operator.operator || operator.fullName || '未知干员'}】\n`
-    
-    if (operator.fullName) {
-      msg += `全名：${operator.fullName}\n`
-    }
-    
-    if (operator.armyType) {
-      msg += `兵种：${operator.armyType}\n`
-    }
-    
-    if (operator.armyTypeDesc) {
-      msg += `兵种描述：${operator.armyTypeDesc}\n`
+    // 提取英文名（从 fullName 中提取，如果有的话）
+    let englishName = ''
+    const fullName = operator.fullName || ''
+    // 尝试提取英文部分（通常在括号或逗号后）
+    const englishMatch = fullName.match(/[A-Za-z\s·]+/)
+    if (englishMatch) {
+      englishName = englishMatch[0].trim().toUpperCase()
     }
 
-    if (operator.abilitiesList && operator.abilitiesList.length > 0) {
-      msg += `\n【技能列表】\n`
-      operator.abilitiesList.forEach((ability, index) => {
-        msg += `${index + 1}. ${ability.abilityName || '未知技能'}\n`
-        msg += `   类型：${ability.abilityTypeCN || ability.abilityType || '未知'}\n`
-        msg += `   位置：${ability.positionCN || ability.position || '未知'}\n`
-        if (ability.abilityDesc) {
-          msg += `   描述：${ability.abilityDesc}\n`
-        }
-        // 最后一个技能后不加换行
-        if (index < operator.abilitiesList.length - 1) {
-          msg += '\n'
-        }
-      })
+    // 准备模板数据
+    const templateData = {
+      operatorName: operator.operator || '未知干员',
+      fullName: fullName,
+      englishName: englishName,
+      operatorPic: operator.pic || '',
+      background: '', // 如果有背景描述字段可以添加
+      armyType: operator.armyType || '',
+      armyTypeDesc: operator.armyTypeDesc || '',
+      abilitiesList: (operator.abilitiesList || []).map(ability => ({
+        abilityName: ability.abilityName || '未知技能',
+        abilityType: ability.abilityType || '',
+        abilityTypeCN: ability.abilityTypeCN || ability.abilityType || '',
+        abilityDesc: ability.abilityDesc || '',
+        abilityPic: ability.abilityPic || ''
+      }))
     }
 
-    await this.e.reply(msg)
-    return true
+    // 使用模板渲染图片
+    return await Render.render('Template/operator/operator', templateData, {
+      e: this.e,
+      retType: 'default'
+    })
   }
 }

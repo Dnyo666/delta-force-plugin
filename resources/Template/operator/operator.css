@@ -1,0 +1,253 @@
+/* ========== 字体定义 ========== */
+@font-face {
+  font-family: 'ProjectD';
+  src: url("../../fonts/p-med.ttf") format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'ProjectD';
+  src: url("../../fonts/p-bold.ttf") format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ========== 基础重置样式 ========== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* ========== Body 样式 ========== */
+body {
+  background: #0b0f13;
+  color: #F2F2F2;
+  font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+  margin: 0;
+  padding: 0;
+  width: 1200px;
+  height: auto;
+  min-height: 700px;
+  transform: none;
+  transform-origin: unset;
+  overflow: visible;
+}
+
+/* ========== 容器样式 ========== */
+.container {
+  position: relative;
+  width: 1200px;
+  min-height: 700px;
+  margin: 0 auto;
+  background: #0b0f13;
+  overflow: hidden;
+}
+
+/* ========== 背景图片样式 ========== */
+.bg-image {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  opacity: 0.4;
+  z-index: 0;
+}
+
+.bg-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, rgba(11, 15, 19, 0.7) 0%, rgba(0, 0, 0, 0.75) 100%);
+  z-index: 1;
+}
+
+/* ========== 头部样式 ========== */
+.header {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 25px 30px 20px;
+  background: transparent;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.game-logo {
+  height: 35px;
+  width: auto;
+}
+
+.game-name {
+  color: #FFFFFF;
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.title {
+  color: #FFFFFF;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+
+/* ========== 内容区域 ========== */
+.content {
+  position: relative;
+  z-index: 2;
+  padding: 40px 50px;
+}
+
+/* ========== 干员基本信息 ========== */
+.operator-info-section {
+  margin-bottom: 25px;
+}
+
+.operator-name-row {
+  display: flex;
+  align-items: baseline;
+  gap: 15px;
+}
+
+.operator-name-main {
+  color: #0FF796;
+  font-size: 42px;
+  font-weight: 700;
+  text-shadow: none;
+  line-height: 1.2;
+}
+
+.operator-name-en {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 20px;
+  font-weight: 500;
+  margin-left: 5px;
+}
+
+/* ========== 兵种信息 ========== */
+.army-type-section {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 35px;
+  padding: 12px 0;
+}
+
+.army-type-label {
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.army-type-value {
+  color: #0FF796;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.army-type-desc {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 16px;
+  margin-left: 10px;
+}
+
+/* ========== 区块标题 ========== */
+.section-title {
+  color: #0FF796;
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: 1px;
+}
+
+/* ========== 技能列表 ========== */
+.abilities-section {
+  margin-bottom: 20px;
+}
+
+.abilities-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
+.ability-card {
+  background: rgba(40, 45, 50, 0.6);
+  border: 1px solid rgba(80, 85, 90, 0.5);
+  border-radius: 0;
+  padding: 18px;
+  display: flex;
+  gap: 15px;
+  min-height: 140px;
+}
+
+.ability-icon-wrapper {
+  flex-shrink: 0;
+  width: 70px;
+  height: 70px;
+  background: rgba(30, 35, 40, 0.8);
+  border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(80, 85, 90, 0.5);
+  padding: 8px;
+}
+
+.ability-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+}
+
+.ability-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ability-name {
+  color: #FFFFFF;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.ability-type {
+  color: rgba(0, 217, 255, 0.9);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.ability-desc {
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 13px;
+  line-height: 1.6;
+  margin-top: 5px;
+}

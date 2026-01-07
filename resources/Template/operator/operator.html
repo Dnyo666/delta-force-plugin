@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>干员介绍</title>
+    <link rel="stylesheet" type="text/css" href="{{_res_path}}Template/operator/operator.css"/>
+</head>
+<body>
+    <div class="container">
+        <!-- 背景图片 -->
+        <img class="bg-image" src="{{operatorPic}}" alt="" />
+        
+        <!-- 头部区域 -->
+        <div class="header">
+            <div class="header-left">
+                <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
+            </div>
+            <div class="header-center">
+                <div class="title">干员介绍</div>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- 干员基本信息 -->
+            <div class="operator-info-section">
+                <div class="operator-name-row">
+                    <div class="operator-name-main">{{operatorName}}</div>
+                    {{if fullName}}
+                    <div class="operator-name-en">{{fullName}}</div>
+                    {{/if}}
+                </div>
+            </div>
+
+            <!-- 兵种信息 -->
+            {{if armyType}}
+            <div class="army-type-section">
+                <span class="army-type-label">兵种:</span>
+                <span class="army-type-value">{{armyType}}</span>
+                {{if armyTypeDesc}}
+                <span class="army-type-desc">{{armyTypeDesc}}</span>
+                {{/if}}
+            </div>
+            {{/if}}
+
+            <!-- 技能列表 -->
+            {{if abilitiesList && abilitiesList.length > 0}}
+            <div class="abilities-section">
+                <div class="section-title">技能列表</div>
+                <div class="abilities-grid">
+                    {{each abilitiesList ability}}
+                    <div class="ability-card">
+                        <div class="ability-icon-wrapper">
+                            {{if ability.abilityPic}}
+                            <img class="ability-icon" src="{{ability.abilityPic}}" alt="{{ability.abilityName}}" onerror="this.style.display='none';" />
+                            {{/if}}
+                        </div>
+                        <div class="ability-info">
+                            <div class="ability-name">{{ability.abilityName}}</div>
+                            <div class="ability-type">{{ability.abilityTypeCN || ability.abilityType}}</div>
+                            {{if ability.abilityDesc}}
+                            <div class="ability-desc">{{ability.abilityDesc}}</div>
+                            {{/if}}
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+</body>
+</html>
