@@ -1,5 +1,6 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
+import Render from '../../components/Render.js'
 
 export class HealthInfo extends plugin {
   constructor (e) {
@@ -40,87 +41,36 @@ export class HealthInfo extends plugin {
 
     const { deBuffList, buffList } = healthData.healthyDetail
 
-    const bot = global.Bot
-    const forwardMsg = []
-
-    // 负面状态列表
+    // 处理负面状态：合并同一部位的状态到同一卡片
+    const processedDeBuffList = []
     if (deBuffList && deBuffList.length > 0) {
-      let debuffMsg = `【负面状态】\n\n`
-      
-      deBuffList.forEach((areaGroup, areaIndex) => {
+      deBuffList.forEach(areaGroup => {
         const area = areaGroup.area || '未知部位'
-        debuffMsg += `【${area}】\n`
+        const statuses = areaGroup.list || []
         
-        if (areaGroup.list && areaGroup.list.length > 0) {
-          areaGroup.list.forEach((debuff, debuffIndex) => {
-            debuffMsg += `• ${debuff.title || debuff.status || '未知状态'}\n`
-            if (debuff.trigger) {
-              debuffMsg += `  触发：${debuff.trigger}\n`
-            }
-            if (debuff.effect) {
-              debuffMsg += `  效果：${debuff.effect}\n`
-            }
-            // 最后一个负面状态且是最后一个部位，且没有增益状态时才不加换行
-            const isLastDebuff = areaIndex === deBuffList.length - 1 && 
-                                 debuffIndex === areaGroup.list.length - 1 && 
-                                 (!buffList || buffList.length === 0)
-            if (!isLastDebuff) {
-              debuffMsg += '\n'
-            }
-          })
-        }
-        
-        // 不是最后一个部位时添加换行
-        if (areaIndex < deBuffList.length - 1) {
-          debuffMsg += '\n'
-        }
-      })
-      
-      forwardMsg.push({
-        message: debuffMsg,
-        nickname: bot.nickname,
-        user_id: bot.uin
-      })
-    }
-
-    // 增益状态列表
-    if (buffList && buffList.length > 0) {
-      let buffMsg = `【增益状态】\n\n`
-      
-      buffList.forEach((buffGroup, groupIndex) => {
-        if (buffGroup.list && buffGroup.list.length > 0) {
-          buffGroup.list.forEach((buff, buffIndex) => {
-            buffMsg += `• ${buff.title || '未知增益'}\n`
-            if (buff.effect) {
-              buffMsg += `  效果：${buff.effect}\n`
-            }
-            // 最后一个增益状态时才不加换行
-            const isLastBuff = groupIndex === buffList.length - 1 && 
-                               buffIndex === buffGroup.list.length - 1
-            if (!isLastBuff) {
-              buffMsg += '\n'
-            }
+        // 如果该部位有多个状态，需要检查是否可以合并
+        // 这里我们按每2个状态合并成一个卡片组
+        for (let i = 0; i < statuses.length; i += 2) {
+          const groupStatuses = statuses.slice(i, i + 2)
+          processedDeBuffList.push({
+            area: area,
+            list: groupStatuses,
+            isMerged: groupStatuses.length === 2 && groupStatuses[0] && groupStatuses[1]
           })
         }
       })
-      
-      forwardMsg.push({
-        message: buffMsg,
-        nickname: bot.nickname,
-        user_id: bot.uin
-      })
     }
 
-    // 发送合并转发消息
-    if (forwardMsg.length > 0) {
-      const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
-      if (!result) {
-        await this.e.reply('生成转发消息失败，请联系管理员。')
-      }
-    } else {
-      await this.e.reply('未能生成任何健康状态信息，请稍后重试。')
+    // 准备模板数据
+    const templateData = {
+      deBuffList: processedDeBuffList,
+      buffList: buffList || []
     }
 
-    return true
+    // 使用模板渲染图片
+    return await Render.render('Template/healthInfo/healthInfo', templateData, {
+      e: this.e,
+      retType: 'default'
+    })
   }
 }
