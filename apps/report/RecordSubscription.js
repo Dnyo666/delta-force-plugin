@@ -10,13 +10,27 @@ import { segment } from 'oicq'
 import fs from 'fs'
 import common from '../../../../lib/common/common.js'
 
+// 状态映射常量
+const ESCAPE_REASONS = {
+  '1': '撤离成功',
+  '2': '被玩家击杀',
+  '3': '被人机击杀',
+  '10': '撤离失败'
+}
+
+const MP_RESULTS = {
+  '1': '胜利',
+  '2': '失败',
+  '3': '中途退出'
+}
+
 /**
  * 战绩订阅插件
  * 提供战绩订阅管理和实时推送功能
  */
 export class RecordSubscription extends plugin {
   static _listenerRegistered = false
-  static _nicknameCache = new Map() // 缓存 frameworkToken -> 昵称的映射
+  static _nicknameCache = new Map() // 缓存 platformID -> 昵称的映射
   static _recentRecordCache = new Map() // 缓存 isRecent 战绩，用于批量合并转发
   static _recentRecordTimers = new Map() // 缓存定时器，用于延迟批量发送
 
@@ -530,8 +544,7 @@ export class RecordSubscription extends plugin {
    */
   async handleRecordPush(data) {
     const { platformId, frameworkToken, recordType, record, isNew, isRecent } = data
-    const platformID = platformId  // 兼容性：转换为内部使用的变量名
-    const maskedToken = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知'
+    const platformID = platformId
     const modeText = recordType === 'sol' ? '烽火地带' : recordType === 'mp' ? '全面战场' : `未知(${recordType})`
 
     // 兼容处理：如果 isNew 不存在，使用 isRecent 来判断
@@ -675,7 +688,20 @@ export class RecordSubscription extends plugin {
       const armedForceId = record.ArmedForceId
       const mapName = DataManager.getMapName(mapId)
       const operatorName = DataManager.getOperatorName(armedForceId)
-      const displayName = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家'
+      // 尝试从 platformID 获取昵称
+      let displayName = '未知玩家'
+      try {
+        const nickname = await this.getNickname(platformID)
+        if (nickname) {
+          displayName = nickname
+        } else if (frameworkToken) {
+          displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
+        }
+      } catch (error) {
+        if (frameworkToken) {
+          displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
+        }
+      }
       return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
     }
   }
@@ -857,54 +883,42 @@ export class RecordSubscription extends plugin {
   }
 
   /**
-   * URL解码函数
-   * @param {string} str - 待解码字符串
-   * @returns {string} 解码后的字符串
-   */
-  decode(str) {
-    try {
-      return decodeURIComponent(str || '')
-    } catch (e) {
-      return str || ''
-    }
-  }
-
-  /**
    * 获取玩家昵称（带缓存）
-   * @param {string} frameworkToken - 游戏账号令牌
+   * @param {string} platformID - 用户ID
    * @returns {Promise<string|null>} 玩家昵称或 null
    */
-  async getNickname(frameworkToken) {
-    if (!frameworkToken) return null
+  async getNickname(platformID) {
+    if (!platformID) return null
     
-    // 检查缓存
-    if (RecordSubscription._nicknameCache.has(frameworkToken)) {
-      return RecordSubscription._nicknameCache.get(frameworkToken)
+    if (RecordSubscription._nicknameCache.has(platformID)) {
+      return RecordSubscription._nicknameCache.get(platformID)
     }
     
     try {
-      const api = new Code()
-      const res = await api.getPersonalInfo(frameworkToken)
+      const token = await utils.getAccount(platformID)
+      if (!token) return null
       
-      if (res && res.data && res.roleInfo) {
+      const api = new Code()
+      const res = await api.getPersonalInfo(token)
+      
+      if (res?.data && res?.roleInfo) {
         const { userData } = res.data
         const { roleInfo } = res
-        
-        // 参考 Info.js 的实现方式
-        const nickname = this.decode(userData?.charac_name || roleInfo.charac_name) || null
+        let nickname = null
+        try {
+          nickname = decodeURIComponent(userData?.charac_name || roleInfo.charac_name || '') || null
+        } catch (e) {
+          nickname = (userData?.charac_name || roleInfo.charac_name) || null
+        }
         
         if (nickname) {
-          // 缓存昵称（1小时后过期）
-          RecordSubscription._nicknameCache.set(frameworkToken, nickname)
-          setTimeout(() => {
-            RecordSubscription._nicknameCache.delete(frameworkToken)
-          }, 3600000)
-          
+          RecordSubscription._nicknameCache.set(platformID, nickname)
+          setTimeout(() => RecordSubscription._nicknameCache.delete(platformID), 3600000)
           return nickname
         }
       }
     } catch (error) {
-      logger.debug(`[战绩订阅] 获取昵称失败: ${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`, error)
+      logger.debug(`[战绩订阅] 获取昵称失败: platformID=${platformID}`, error)
     }
     
     return null
@@ -932,6 +946,24 @@ export class RecordSubscription extends plugin {
   }
 
   /**
+   * 格式化时长
+   * @param {number} seconds - 秒数
+   * @returns {string} 格式化后的时长
+   */
+  formatDuration(seconds) {
+    if (!seconds && seconds !== 0) return '未知'
+    if (seconds === 0) return '0秒'
+    
+    const hours = Math.floor(seconds / 3600)
+    const minutes = Math.floor((seconds % 3600) / 60)
+    const secs = seconds % 60
+    
+    if (hours > 0) return `${hours}小时${minutes}分${secs}秒`
+    if (minutes > 0) return `${minutes}分${secs}秒`
+    return `${secs}秒`
+  }
+
+  /**
    * 格式化战绩消息（使用图片渲染）
    * @param {string} recordType - 战绩类型 (sol/mp)
    * @param {Object} record - 战绩对象
@@ -946,18 +978,19 @@ export class RecordSubscription extends plugin {
     const armedForceId = record.ArmedForceId
     const mapName = DataManager.getMapName(mapId)
     const operatorName = DataManager.getOperatorName(armedForceId)
-    let displayName = frameworkToken ? `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}` : '未知玩家'
+    let displayName = '未知玩家'
 
-    // 获取昵称
-    if (frameworkToken) {
-      try {
-        const nickname = await this.getNickname(frameworkToken)
-        if (nickname) {
-          displayName = nickname
-        }
-      } catch (error) {
-        logger.warn(`[战绩订阅] 获取昵称失败: ${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`, error)
-        // 继续执行，使用默认显示名称
+    try {
+      const nickname = await this.getNickname(platformID)
+      if (nickname) {
+        displayName = nickname
+      } else if (frameworkToken) {
+        displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
+      }
+    } catch (error) {
+      logger.warn(`[战绩订阅] 获取昵称失败: platformID=${platformID}`, error)
+      if (frameworkToken) {
+        displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
       }
     }
 
@@ -1048,46 +1081,18 @@ export class RecordSubscription extends plugin {
     }
 
     if (recordType === 'sol') {
-      // 烽火地带战绩
       const finalPrice = Number(record.FinalPrice || 0).toLocaleString()
       const income = (record.flowCalGainedPrice != null && record.flowCalGainedPrice !== '') 
         ? Number(record.flowCalGainedPrice).toLocaleString() 
         : '未知'
       
-      // 处理存活时间
-      const durationS = Number(record.DurationS || 0)
-      let duration = '未知'
-      if (durationS > 0) {
-        const hours = Math.floor(durationS / 3600)
-        const minutes = Math.floor((durationS % 3600) / 60)
-        const seconds = durationS % 60
-        if (hours > 0) {
-          duration = `${hours}小时${minutes}分${seconds}秒`
-        } else if (minutes > 0) {
-          duration = `${minutes}分${seconds}秒`
-        } else {
-          duration = `${seconds}秒`
-        }
-      } else if (durationS === 0 && record.DurationS !== undefined && record.DurationS !== null) {
-        // 如果 DurationS 明确为 0，显示 0秒
-        duration = '0秒'
-      }
+      const duration = this.formatDuration(Number(record.DurationS))
+      const escapeStatus = ESCAPE_REASONS[String(record.EscapeFailReason)] || '撤离失败'
       
-      // 撤离状态
-      const escapeReasons = {
-        '1': '撤离成功',
-        '2': '被玩家击杀',
-        '3': '被人机击杀',
-        '10': '撤离失败'
-      }
-      const escapeStatus = escapeReasons[String(record.EscapeFailReason)] || '撤离失败'
-      
-      // 确定状态样式类
       let statusClass = 'fail'
       if (record.EscapeFailReason === 1 || record.EscapeFailReason === '1') statusClass = 'success'
       else if (record.EscapeFailReason === 3 || record.EscapeFailReason === '3') statusClass = 'exit'
 
-      // 击杀数据
       const killCount = record.KillCount ?? 0
       const killAI = record.KillAICount ?? 0
       const killPlayerAI = record.KillPlayerAICount ?? 0
@@ -1103,34 +1108,9 @@ export class RecordSubscription extends plugin {
         templateData.rescue = record.Rescue
       }
     } else {
-      // 全面战场战绩
-      const gameTimeS = Number(record.gametime || 0)
-      const hours = Math.floor(gameTimeS / 3600)
-      const minutes = Math.floor((gameTimeS % 3600) / 60)
-      const seconds = gameTimeS % 60
-      let duration = '未知'
-      if (gameTimeS > 0) {
-        if (hours > 0) {
-          duration = `${hours}小时${minutes}分${seconds}秒`
-        } else if (minutes > 0) {
-          duration = `${minutes}分${seconds}秒`
-        } else {
-          duration = `${seconds}秒`
-        }
-      } else if (gameTimeS === 0 && record.gametime !== undefined && record.gametime !== null) {
-        // 如果 gametime 明确为 0，显示 0秒
-        duration = '0秒'
-      }
+      const duration = this.formatDuration(Number(record.gametime))
+      const result = MP_RESULTS[String(record.MatchResult)] || '未知结果'
       
-      // 对局结果
-      const mpResults = {
-        '1': '胜利',
-        '2': '失败',
-        '3': '中途退出'
-      }
-      const result = mpResults[String(record.MatchResult)] || '未知结果'
-      
-      // 确定状态样式类
       let statusClass = 'fail'
       if (record.MatchResult === 1 || record.MatchResult === '1') statusClass = 'success'
       else if (record.MatchResult === 3 || record.MatchResult === '3') statusClass = 'exit'
@@ -1187,29 +1167,8 @@ export class RecordSubscription extends plugin {
       const income = (record.flowCalGainedPrice != null && record.flowCalGainedPrice !== '') 
         ? Number(record.flowCalGainedPrice).toLocaleString() 
         : '未知'
-      
-      const durationS = Number(record.DurationS || 0)
-      let duration = '未知'
-      if (durationS > 0) {
-        const hours = Math.floor(durationS / 3600)
-        const minutes = Math.floor((durationS % 3600) / 60)
-        const seconds = durationS % 60
-        if (hours > 0) {
-          duration = `${hours}小时${minutes}分${seconds}秒`
-        } else if (minutes > 0) {
-          duration = `${minutes}分${seconds}秒`
-        } else {
-          duration = `${seconds}秒`
-        }
-      }
-      
-      const escapeReasons = {
-        '1': '撤离成功',
-        '2': '被玩家击杀',
-        '3': '被人机击杀',
-        '10': '撤离失败'
-      }
-      const escapeStatus = escapeReasons[String(record.EscapeFailReason)] || '撤离失败'
+      const duration = this.formatDuration(Number(record.DurationS))
+      const escapeStatus = ESCAPE_REASONS[String(record.EscapeFailReason)] || '撤离失败'
 
       msg += `地图：${mapName}\n`
       msg += `干员：${operatorName}\n`
@@ -1228,27 +1187,8 @@ export class RecordSubscription extends plugin {
         msg += `\n救援：${record.Rescue}次`
       }
     } else {
-      const gameTimeS = Number(record.gametime || 0)
-      const hours = Math.floor(gameTimeS / 3600)
-      const minutes = Math.floor((gameTimeS % 3600) / 60)
-      const seconds = gameTimeS % 60
-      let duration = '未知'
-      if (gameTimeS > 0) {
-        if (hours > 0) {
-          duration = `${hours}小时${minutes}分${seconds}秒`
-        } else if (minutes > 0) {
-          duration = `${minutes}分${seconds}秒`
-        } else {
-          duration = `${seconds}秒`
-        }
-      }
-      
-      const mpResults = {
-        '1': '胜利',
-        '2': '失败',
-        '3': '中途退出'
-      }
-      const result = mpResults[String(record.MatchResult)] || '未知结果'
+      const duration = this.formatDuration(Number(record.gametime))
+      const result = MP_RESULTS[String(record.MatchResult)] || '未知结果'
 
       msg += `地图：${mapName}\n`
       msg += `干员：${operatorName}\n`
