@@ -1,104 +1,9 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import { exec } from 'child_process'
 import { pluginName, pluginRoot } from "../../model/path.js"
 import { update as UpdatePlugin } from '../../../other/update.js'
 import Render from '../../components/Render.js'
-import Config from '../../components/Config.js'
-import config from '../../../../lib/config/config.js'
 
-const mdLogLineToHTML = (line) => {
-  line = line.replace(/(^\s*\*|\r)/g, '')
-  line = line.replace(/\s*`([^`]+`)/g, '<span class="cmd">$1')
-  line = line.replace(/`\s*/g, '</span>')
-  line = line.replace(/\s*\*\*([^\*]+\*\*)/g, '<span class="strong">$1')
-  line = line.replace(/\*\*\s*/g, '</span>')
-  return line.trim()
-}
-
-let BaseUpdate = null
-try {
-  BaseUpdate = (await import('../../../other/update.js').catch(e => null))?.update
-  BaseUpdate ||= (await import('../../../system/apps/update.ts').catch(e => null))?.update
-} catch (e) {
-  logger.error(`[${pluginName}]未获取到更新js ${logger.yellow('更新功能')} 将无法使用`)
-}
-
-let DeltaForceUpdate = null
-
-if (BaseUpdate) {
-  DeltaForceUpdate = class DeltaForceUpdate extends BaseUpdate {
-    exec(cmd, plugin, opts = {}) {
-      if (plugin) opts.cwd = `plugins/${plugin}`
-      return new Promise(resolve => {
-        exec(cmd, { windowsHide: true, ...opts }, (error, stdout, stderr) => {
-          resolve({ error, stdout: stdout.trim(), stderr })
-        })
-      })
-    }
-
-    async handleLog(remote = false) {
-      if (remote) {
-        await this.exec('git fetch origin main', pluginName)
-      }
-      const cmdStr = remote
-        ? 'git log -100 --pretty="%h||%cd||%s" --date=format:"%Y-%m-%d %H:%M:%S" origin/main'
-        : 'git log -100 --pretty="%h||%cd||%s" --date=format:"%Y-%m-%d %H:%M:%S"'
-      const cm = await this.exec(cmdStr, pluginName)
-      if (cm.error) {
-        throw new Error(cm.error.message)
-      }
-
-      const logAll = cm.stdout.split('\n').filter(str => str.trim())
-      if (!logAll.length) {
-        throw new Error('未获取到更新日志')
-      }
-
-      const log = []
-      let current = true
-      for (let str of logAll) {
-        const parts = str.split('||')
-        if (parts[0] === this.oldCommitId) break
-        if (parts[2]?.includes('Merge')) continue
-        const commit = {
-          commit: parts[0],
-          date: parts[1],
-          msg: mdLogLineToHTML(parts[2] || ''),
-          local: !remote,
-          current: !remote && current && (current = false)
-        }
-        log.push(commit)
-      }
-      return log
-    }
-
-    async getDeltaForceAllLog() {
-      const localLog = await this.handleLog(false)
-      let remoteLog = []
-      try {
-        remoteLog = await this.handleLog(true)
-      } catch (error) {
-        logger.warn(`[${pluginName}] 获取远程日志失败:`, error.message)
-      }
-      const logs = [...localLog, ...remoteLog].filter((log, index, self) =>
-        index === self.findIndex(l => l.commit === log.commit)
-      )
-      logs.sort((a, b) => new Date(b.date) - new Date(a.date))
-      return logs
-    }
-
-    async hasUpdate() {
-      const logs = await this.getDeltaForceAllLog()
-      const newLogs = logs.filter(log => !log.local)
-      return {
-        hasUpdate: newLogs.length > 0,
-        logs: newLogs
-      }
-    }
-  }
-}
-
-const updateInfo = { lastCheckCommit: '' }
 
 export class Update extends plugin {
   constructor() {
@@ -115,115 +20,18 @@ export class Update extends plugin {
         {
           reg: '^(#三角洲|\\^)((插件)?更新日志|update_log)$',
           fnc: 'update_log'
-        },
-        {
-          reg: '^(#三角洲|\\^)(开启|关闭)更新推送$',
-          fnc: 'toggleUpdatePush'
-        },
-        {
-          reg: '^(#三角洲|\\^)检查更新$',
-          fnc: 'checkUpdate'
         }
       ]
     })
-    
-    const updateConfig = Config.get('delta_force', 'update') || {}
-    this.task = {
-      name: 'DELTA-FORCE-PLUGIN自动检测更新',
-      cron: updateConfig.cron || '0 0/10 * * * ?',
-      fnc: () => this.checkUpdateTask()
-    }
   }
 
   async update(e = this.e) {
     if (e.at && !e.atme) return
-    if (!e.isMaster || !DeltaForceUpdate) return false
+    if (!e.isMaster || !UpdatePlugin) return false
     e.msg = `#${e.msg.includes('强制') ? '强制' : ''}更新${pluginName}`
-    const up = new DeltaForceUpdate(e)
+    const up = new UpdatePlugin()
     up.e = e
     return up.update()
-  }
-
-  async checkUpdateTask() {
-    const updateConfig = Config.get('delta_force', 'update') || {}
-    if (!updateConfig.autoCheck || !DeltaForceUpdate) return
-    
-    try {
-      const up = new DeltaForceUpdate()
-      const result = await up.hasUpdate()
-      if (!result.hasUpdate) return
-      if (result.logs.length === 0) return
-      if (result.logs[0].commit === updateInfo.lastCheckCommit) return
-      
-      const bot = global.Bot
-      const botInfo = { nickname: 'DELTA-FORCE-PLUGIN更新', user_id: bot.uin }
-      const msgs = [
-        { message: [`[${pluginName}]有${result.logs.length || 1}个更新`], ...botInfo }
-      ]
-      for (const log of result.logs) {
-        msgs.push({
-          message: [`[${log.commit}|${log.date}]${log.msg}`],
-          ...botInfo
-        })
-      }
-      const msg = Bot.makeForwardMsg(msgs)
-      try {
-        ForMsg.data = ForMsg.data
-          .replace(/\n/g, '')
-          .replace(/<title color="#777777" size="26">(.+?)<\/title>/g, '___')
-          .replace(/___+/, `<title color="#777777" size="26">${pluginName}更新</title>`)
-      } catch (err) {}
-      
-      for (const master of config.masterQQ) {
-        if (master.toString() == 'stdin' || master.toString().length > 11) continue
-        await Bot.pickFriend(master).sendMsg(msg)
-        break
-      }
-      
-      updateInfo.lastCheckCommit = result.logs[0].commit
-    } catch (error) {
-      logger.error(`[${pluginName}] 自动检查更新失败:`, error)
-    }
-  }
-
-  async toggleUpdatePush(e) {
-    if (!e.isMaster) return false
-    
-    const configData = Config.getConfig()
-    if (!configData.delta_force) configData.delta_force = {}
-    if (!configData.delta_force.update) configData.delta_force.update = {}
-    configData.delta_force.update.autoCheck = e.msg.includes('开启')
-    
-    if (Config.setConfig(configData)) {
-      await e.reply(`更新推送已${configData.delta_force.update.autoCheck ? '开启' : '关闭'}`)
-    } else {
-      await e.reply('配置更新失败')
-    }
-    return true
-  }
-
-  async checkUpdate(e) {
-    if (!e.isMaster || !DeltaForceUpdate) return false
-    
-    try {
-      await e.reply('正在检查更新...')
-      const up = new DeltaForceUpdate()
-      const result = await up.hasUpdate()
-      
-      if (!result.hasUpdate || result.logs.length === 0) {
-        return await e.reply(`${pluginName} 已是最新版本`)
-      }
-      
-      const msgs = [`${pluginName} 有 ${result.logs.length} 个更新：\n`]
-      for (const log of result.logs) {
-        msgs.push(`[${log.commit}|${log.date}] ${log.msg}`)
-      }
-      
-      return await e.reply(msgs.join('\n'))
-    } catch (error) {
-      logger.error(`[${pluginName}] 检查更新失败:`, error)
-      return await e.reply(`检查更新失败: ${error.message || '未知错误'}`)
-    }
   }
 
   parseChangelog() {
