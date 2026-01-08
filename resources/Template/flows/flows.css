@@ -1,0 +1,364 @@
+/* ========== Body 样式 ========== */
+body {
+    background: #0b0f13;
+    color: #F2F2F2;
+    width: 2200px;
+    height: auto;
+    min-height: 400px;
+    transform: none;
+    transform-origin: unset;
+    overflow: visible;
+}
+
+/* ========== 容器样式 ========== */
+.container {
+    position: relative;
+    width: 2200px;
+    min-height: 400px;
+    margin: 0 auto;
+    background: transparent;
+    overflow: visible;
+    display: flex;
+    flex-direction: column;
+}
+
+.bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    opacity: 0.3;
+    z-index: 0;
+}
+
+/* ========== 头部样式 ========== */
+.header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 25px 30px 20px;
+    background: transparent;
+    border-bottom: 1px solid rgba(15, 247, 150, 0.2);
+}
+
+.header-left {
+    position: absolute;
+    left: 30px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-center {
+    text-align: center;
+}
+
+.title {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0FF796;
+    margin-bottom: 5px;
+    text-align: center;
+}
+
+.subtitle {
+    font-size: 16px;
+    color: #888;
+    text-align: center;
+}
+
+/* ========== 内容区域 ========== */
+.content {
+    position: relative;
+    z-index: 2;
+    padding: 25px 30px;
+    flex: 1;
+}
+
+/* ========== 玩家信息 ========== */
+.player-info {
+    background: rgba(30, 35, 40, 0.8);
+    border: 1px solid rgba(80, 85, 90, 0.5);
+    border-radius: 0;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.info-row {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    font-size: 16px;
+}
+
+.info-row:last-child {
+    margin-bottom: 0;
+}
+
+/* 个人信息主行：一行显示 */
+.info-row-main {
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.info-item {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.info-label {
+    color: #888;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+.info-value {
+    color: #F2F2F2;
+    font-weight: 600;
+}
+
+/* ========== 统计标签 ========== */
+.stat-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1;
+}
+
+.stat-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(20, 25, 30, 0.6);
+    border: 1px solid rgba(80, 85, 90, 0.3);
+    border-radius: 0;
+    font-size: 13px;
+}
+
+.stat-tag-name {
+    color: #F2F2F2;
+    white-space: nowrap;
+}
+
+.stat-tag-count {
+    color: #0FF796;
+    font-weight: 600;
+    flex-shrink: 0;
+}
+
+
+/* ========== 流水列表 ========== */
+.flow-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 五列网格布局：设备、道具和货币流水（行排序） */
+.flow-list-five-column {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.flow-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.flow-item {
+    background: rgba(30, 35, 40, 0.8);
+    border: 1px solid rgba(80, 85, 90, 0.5);
+    border-radius: 0;
+    padding: 18px 20px;
+    transition: all 0.2s ease;
+}
+
+.flow-header {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 15px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(80, 85, 90, 0.3);
+}
+
+.flow-index {
+    color: #0FF796;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.flow-time {
+    color: #F2F2F2;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.flow-details {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.detail-row {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 15px;
+}
+
+.detail-label {
+    color: #888;
+    min-width: 70px;
+}
+
+.detail-value {
+    color: #F2F2F2;
+    flex: 1;
+}
+
+.detail-change {
+    font-weight: 700;
+    margin-left: 10px;
+}
+
+.detail-change.positive {
+    color: #0FF796;
+}
+
+.detail-change.negative {
+    color: #FF6B6B;
+}
+
+/* ========== 空消息 ========== */
+.empty-message {
+    text-align: center;
+    color: #888;
+    font-size: 18px;
+    padding: 40px 20px;
+    background: rgba(30, 35, 40, 0.6);
+    border: 1px solid rgba(80, 85, 90, 0.3);
+    border-radius: 0;
+}
+
+/* ========== 货币流水折线图 ========== */
+.money-trend-chart {
+    background: rgba(30, 35, 40, 0.8);
+    border: 1px solid rgba(80, 85, 90, 0.5);
+    border-radius: 0;
+    padding: 20px;
+    margin-bottom: 25px;
+}
+
+.chart-title {
+    font-size: 18px;
+    font-weight: 700;
+    color: #0FF796;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.chart-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+/* 折线图容器 */
+.line-chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 180px;
+    margin: 0;
+    overflow: visible;
+    padding: 0;
+}
+
+.line-chart-svg {
+    width: 100%;
+    height: 140px;
+    display: block;
+    overflow: visible;
+}
+
+/* 折线路径 */
+.line-chart-path {
+    stroke: #0FF796;
+    stroke-width: 2.5;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    filter: drop-shadow(0 0 2px rgba(15, 247, 150, 0.5));
+}
+
+/* 数据点 */
+.line-chart-point {
+    fill: #0FF796;
+    stroke: #0a0a0a;
+    stroke-width: 1.5;
+}
+
+/* 标签文本 */
+.line-chart-value-text {
+    pointer-events: none;
+    user-select: none;
+    white-space: nowrap;
+    dominant-baseline: middle;
+    text-anchor: middle;
+    letter-spacing: 0.3px;
+    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+}
+
+/* 时间标签容器 */
+.line-chart-labels {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 30px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0;
+    align-items: center;
+}
+
+.line-chart-label-item {
+    position: absolute;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.line-chart-label {
+    font-size: 10px;
+    color: #999;
+    font-weight: 500;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.chart-summary {
+    text-align: center;
+    padding-top: 8px;
+    border-top: 1px solid rgba(15, 247, 150, 0.2);
+}
+
+.chart-summary-text {
+    color: #0FF796;
+    font-weight: 700;
+    font-size: 14px;
+}
