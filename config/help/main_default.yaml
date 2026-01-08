@@ -54,6 +54,12 @@ helpList:
         - icon: 92
           title: "^(强制)更新"
           desc: "更新三角洲插件"
+        - icon: 78
+          title: "^检查更新"
+          desc: "检查是否有更新（不执行更新）"
+        - icon: 86
+          title: "^开启/关闭更新推送"
+          desc: "开启/关闭自动检查更新推送"
   
   left:
     - order: 1
@@ -117,8 +123,8 @@ helpList:
           title: "^战绩 [模式] [页码]"
           desc: "查询战绩（全面/烽火）"
         - icon: 53
-          title: "^流水 [类型] [页码]"
-          desc: "查询交易流水（设备/道具/货币）"
+          title: "^流水 [类型/all] [页码/all]"
+          desc: "查询交易流水（设备/道具/货币/all）"
         - icon: 79
           title: "^出红记录 [物品名]"
           desc: "查询藏品解锁记录（可指定物品）"
@@ -268,6 +274,15 @@ helpList:
         - icon: 40
           title: "^文章列表 | ^文章详情 [ID]"
           desc: "查看文章列表/详情"
+        - icon: 71
+          title: "^健康状态"
+          desc: "查询游戏健康状态信息"
+        - icon: 78
+          title: "^干员 [名称]"
+          desc: "查询干员详细信息"
+        - icon: 78
+          title: "^干员列表"
+          desc: "查询所有干员列表（按兵种分组）"
     - order: 4
       group: "计算工具"
       list:

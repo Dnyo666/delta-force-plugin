@@ -73,10 +73,13 @@ if (BaseUpdate) {
     }
 
     async getDeltaForceAllLog() {
-      const [localLog, remoteLog] = await Promise.all([
-        this.handleLog(false),
-        this.handleLog(true).catch(() => [])
-      ])
+      const localLog = await this.handleLog(false)
+      let remoteLog = []
+      try {
+        remoteLog = await this.handleLog(true)
+      } catch (error) {
+        logger.warn(`[${pluginName}] 获取远程日志失败:`, error.message)
+      }
       const logs = [...localLog, ...remoteLog].filter((log, index, self) =>
         index === self.findIndex(l => l.commit === log.commit)
       )
@@ -116,6 +119,10 @@ export class Update extends plugin {
         {
           reg: '^(#三角洲|\\^)(开启|关闭)更新推送$',
           fnc: 'toggleUpdatePush'
+        },
+        {
+          reg: '^(#三角洲|\\^)检查更新$',
+          fnc: 'checkUpdate'
         }
       ]
     })
@@ -144,18 +151,22 @@ export class Update extends plugin {
     try {
       const up = new DeltaForceUpdate()
       const result = await up.hasUpdate()
-      if (!result.hasUpdate || result.logs[0].commit === updateInfo.lastCheckCommit) return
+      if (!result.hasUpdate) return
+      if (result.logs.length === 0) return
+      if (result.logs[0].commit === updateInfo.lastCheckCommit) return
       
       const bot = global.Bot
       const botInfo = { nickname: 'DELTA-FORCE-PLUGIN更新', user_id: bot.uin }
       const msgs = [
-        { message: [`[${pluginName}]有${result.logs.length || 1}个更新`], ...botInfo },
-        ...result.logs.map(log => ({
+        { message: [`[${pluginName}]有${result.logs.length || 1}个更新`], ...botInfo }
+      ]
+      for (const log of result.logs) {
+        msgs.push({
           message: [`[${log.commit}|${log.date}]${log.msg}`],
           ...botInfo
-        }))
-      ]
-      const msg = await bot.makeForwardMsg(msgs)
+        })
+      }
+      const msg = Bot.makeForwardMsg(msgs)
       try {
         ForMsg.data = ForMsg.data
           .replace(/\n/g, '')
@@ -189,6 +200,30 @@ export class Update extends plugin {
       await e.reply('配置更新失败')
     }
     return true
+  }
+
+  async checkUpdate(e) {
+    if (!e.isMaster || !DeltaForceUpdate) return false
+    
+    try {
+      await e.reply('正在检查更新...')
+      const up = new DeltaForceUpdate()
+      const result = await up.hasUpdate()
+      
+      if (!result.hasUpdate || result.logs.length === 0) {
+        return await e.reply(`${pluginName} 已是最新版本`)
+      }
+      
+      const msgs = [`${pluginName} 有 ${result.logs.length} 个更新：\n`]
+      for (const log of result.logs) {
+        msgs.push(`[${log.commit}|${log.date}] ${log.msg}`)
+      }
+      
+      return await e.reply(msgs.join('\n'))
+    } catch (error) {
+      logger.error(`[${pluginName}] 检查更新失败:`, error)
+      return await e.reply(`检查更新失败: ${error.message || '未知错误'}`)
+    }
   }
 
   parseChangelog() {
