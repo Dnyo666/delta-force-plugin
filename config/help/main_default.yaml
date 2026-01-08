@@ -54,12 +54,6 @@ helpList:
         - icon: 92
           title: "^(强制)更新"
           desc: "更新三角洲插件"
-        - icon: 78
-          title: "^检查更新"
-          desc: "检查是否有更新（不执行更新）"
-        - icon: 86
-          title: "^开启/关闭更新推送"
-          desc: "开启/关闭自动检查更新推送"
   
   left:
     - order: 1
