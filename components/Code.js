@@ -391,11 +391,24 @@ export default class Code {
   /**
    * 获取AI战绩锐评（流式）
    * @param {string} frameworkToken - 用户token
-   * @param {string} type - 模式 (e.g., 'sol')
+   * @param {string} type - 模式 (e.g., 'sol', 'mp')
+   * @param {string} preset - 评价预设代码（可选，默认使用配置的默认预设）
    * @returns {Promise<object|boolean>}
    */
-  async getAiCommentary(frameworkToken, type) {
-    return this.request('/df/person/ai', { frameworkToken, type }, 'POST');
+  async getAiCommentary(frameworkToken, type, preset = '') {
+    const params = { frameworkToken, type };
+    if (preset) {
+      params.preset = preset;
+    }
+    return this.request('/df/person/ai', params, 'POST');
+  }
+
+  /**
+   * 获取AI评价预设列表
+   * @returns {Promise<object|boolean>}
+   */
+  async getAiPresets() {
+    return this.request('/df/person/ai/presets', {}, 'GET');
   }
 
   /**

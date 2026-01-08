@@ -249,7 +249,10 @@ helpList:
       list:
         - icon: 61
           title: "^ai锐评 [模式]"
-          desc: "使用AI锐评烽火地带和全面战场"
+          desc: "使用AI锐评烽火地带和全面战场数据"
+        - icon: 61
+          title: "^ai评价 [模式] [预设]"
+          desc: "使用其他AI预设来评价烽火地带和全面战场数据"
         - icon: 41
           title: "^违规记录"
           desc: "登录QQ安全中心后可查询历史违规"

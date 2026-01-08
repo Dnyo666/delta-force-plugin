@@ -4,13 +4,11 @@
 
 Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统，提供物品信息、价格历史、制造场所利润分析等功能。
 
-> **⚠️ 重要声明**  
-> 该接口由浅巷墨黎、Admilk、mapleleaf开发，任何数据请以三角洲行动官方为准，版权归属腾讯有限公司，该接口仅供技术学习使用。
+**该接口由浅巷墨黎、Admilk、mapleleaf开发，任何数据请以三角洲行动官方为准，版权归属腾讯有限公司，该接口仅供技术学习使用**
 
-> **📚 相关文档**  
-> 对于接口任何返回数据中不懂的部分，请参考 [Delta Force API 文档](https://delta-force.apifox.cn)，该接口文档由浅巷墨黎整理。
+**对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：** `v2.1.6`
+**版本号：v2.2.0**
 
 ## WebSocket 服务
 
@@ -3630,8 +3628,9 @@ GET /df/person/weeklyRecord?frameworkToken=xxxx&type=sol&isShowNullFriend=false&
 ```
 **参数说明**
 - `type`：游戏模式（sol和mp分别为烽火地带和全面战场）（可选，默认查全部）
-- `isShowNullFriend`：是否展示空值队友（true和false）（可选，默认为true）
 - `日期`:周末日期（格式：20250622、20250706）（可选，默认最新周）
+
+**注意**：本次周报直接更新在原接口上，新增和移除了一些字段，请自行请求后查看，队友数据在friends字段里，高光对局数据在highlights字段里
 
 ### 个人信息
 ```http
@@ -3647,6 +3646,36 @@ GET /df/person/PersonalData?frameworkToken=xxxx&type=sol&seasonid=5
 **参数说明**
 - `type`：游戏模式（sol和mp分别为烽火地带和全面战场）（可选，默认查全部）
 - `seasonid`：赛季ID（可选，默认全部赛季合计，仅支持单赛季）
+
+### 地图数据统计
+```http
+GET /df/person/mapStats?frameworkToken=xxxx&type=sol&serial=all
+```
+**参数说明**
+- `type`：游戏模式（sol-烽火地带，mp-全面战场）（必选）
+- `serial`/`seasonid`：赛季ID（必选），支持以下格式：
+  - 单赛季：`5`
+  - 多赛季：`4,5,6`（逗号分隔，数据会合并）
+  - 全部赛季：`all`（查询1-7赛季并合并数据）
+- `mapId`：指定地图ID（可选，多个用逗号分隔，默认查询该模式所有地图）
+
+**响应字段说明**
+
+烽火地带（sol）：
+- `a1`：净收益
+- `cs`/`zdj`：总对局
+- `isescapednum`：撤离数
+- `killnum`：击杀数
+- `nums`：撤离失败数
+
+全面战场（mp）：
+- `winnum`：胜利局数
+- `zdjnum`：总对局数
+- `score`：总得分
+- `gametime`：游戏时长（秒）
+- `killnum`：总击杀数
+- `assist`：总助攻数
+- `death`：总死亡数
 
 ### 流水查询
 ```http
@@ -3755,21 +3784,22 @@ GET /df/person/redone?frameworkToken=xxxxx&objectid=15080050058
 }
 ```
 
-### AI锐评
+### AI评价（支持多预设）
 ```http
 POST /df/person/ai
 ```
 
-**功能说明**：使用Dify AI对玩家战绩进行智能分析和点评，支持烽火地带和全面战场两种游戏模式，每种模式使用独立的AI应用。
+**功能说明**：使用Dify AI对玩家战绩进行智能分析和点评，支持烽火地带和全面战场两种游戏模式，每种模式使用独立的AI应用。现已支持多种评价预设（如锐评、雌小鬼等），每个预设使用不同的AI应用。
 
 **参数 (body/json)**：
 - `frameworkToken`：框架Token（必填）
 - `type`：游戏模式（必填）
   - `sol`：烽火地带（使用烽火地带专用AI应用）
   - `mp`：全面战场（使用全面战场专用AI应用）
+- `preset`：评价预设代码（可选，默认使用配置的默认预设）
 - `conversation_id`：对话ID（可选，用于继续对话）
 
-**请求示例（烽火地带）**：
+**请求示例（使用默认预设）**：
 ```json
 {
   "frameworkToken": "xxxxx-xxxxx-xxxxx-xxxxx",
@@ -3777,11 +3807,22 @@ POST /df/person/ai
 }
 ```
 
-**请求示例（全面战场）**：
+**请求示例（指定预设）**：
 ```json
 {
   "frameworkToken": "xxxxx-xxxxx-xxxxx-xxxxx",
-  "type": "mp"
+  "type": "mp",
+  "preset": "cxg"
+}
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": { ... },
+  "preset": "rp",
+  "presetName": "锐评"
 }
 ```
 
@@ -3791,6 +3832,25 @@ POST /df/person/ai
 2. **日报数据**：最近一天的战绩表现
 3. **周报数据**：最近一周的战绩趋势
 4. **最近战绩**：最近5场对局的详细数据
+5. **地图统计**：所有赛季的地图数据统计
+
+### 获取AI评价预设列表
+```http
+GET /df/person/ai/presets
+```
+
+**功能说明**：获取所有可用的AI评价预设列表。
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    { "code": "rp", "name": "锐评", "isDefault": true },
+    { "code": "cxg", "name": "雌小鬼", "isDefault": false }
+  ]
+}
+```
 
 ## 音频语音接口
 

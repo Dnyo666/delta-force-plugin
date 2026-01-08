@@ -11,6 +11,7 @@ let rankScoreData = null;
 let audioTagsData = null;  // 音频标签数据
 let audioCharactersData = null;  // 音频角色数据
 let audioCategoriesData = null;  // 音频分类数据
+let aiPresetsData = null;  // AI评价预设数据
 
 // 新增JSON数据缓存变量
 let weaponsData = null;
@@ -41,6 +42,7 @@ const localMapsFile = path.join(pluginRoot, 'config', 'maps.yaml');
 const localOperatorsFile = path.join(pluginRoot, 'config', 'operators.yaml');
 const localRankScoreFile = path.join(pluginRoot, 'config', 'rankscore.yaml');
 const localAudioDataFile = path.join(pluginRoot, 'config', 'audio_data.yaml');  // 统一的音频数据文件
+const localAiPresetsFile = path.join(pluginRoot, 'config', 'ai_presets.yaml');  // AI评价预设数据文件
 
 // JSON数据文件路径
 const jsonDataFiles = {
@@ -452,6 +454,36 @@ async function fetchAndCache(dataType) {
                     }
                 }
             }
+        } else if (dataType === 'aipresets') {
+            try {
+                const res = await api.getAiPresets();
+                if (res && res.success && Array.isArray(res.data)) {
+                    aiPresetsData = res.data;
+                    // 缓存成功后保存到本地
+                    saveRankScoreData(aiPresetsData, localAiPresetsFile);
+                    logger.debug(`[Delta-Force 数据管理器] AI预设数据同步成功，共 ${res.data.length} 个预设`);
+                } else {
+                    throw new Error('API返回失败状态');
+                }
+            } catch (apiError) {
+                logger.warn('[Delta-Force 数据管理器] 获取AI预设数据失败，使用本地缓存:', apiError.message);
+                // API失败时从本地加载
+                if (!aiPresetsData) {
+                    const localData = loadRankScoreData(localAiPresetsFile, true);
+                    if (localData && Array.isArray(localData) && localData.length > 0) {
+                        aiPresetsData = localData;
+                        logger.debug('[Delta-Force 数据管理器] 已从本地加载AI预设数据（降级）');
+                    } else {
+                        // 检查 API Key 是否配置
+                        const apiKey = Config.get('delta_force', 'api_key');
+                        if (!apiKey || apiKey === 'sk-xxxxxxx') {
+                            showApiKeyWarning();
+                        } else {
+                            logger.warn('[Delta-Force 数据管理器] AI预设本地数据文件不存在，将在 API 成功时自动生成');
+                        }
+                    }
+                }
+            }
         }
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 缓存 ${dataType} 数据失败:`, error);
@@ -497,6 +529,14 @@ async function fetchAndCache(dataType) {
                     audioCategoriesData = localData.categories;
                 }
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载音频数据');
+            } else if (!isApiKeyConfigured) {
+                showApiKeyWarning();
+            }
+        } else if (dataType === 'aipresets') {
+            const localData = loadRankScoreData(localAiPresetsFile, true);
+            if (localData && Array.isArray(localData) && localData.length > 0) {
+                aiPresetsData = localData;
+                logger.debug('[Delta-Force 数据管理器] 已从本地加载AI预设数据');
             } else if (!isApiKeyConfigured) {
                 showApiKeyWarning();
             }
@@ -570,11 +610,12 @@ export default {
                 fetchAndCache('maps'),
                 fetchAndCache('operators'),
                 fetchAndCache('rankscore'),
-                fetchAndCache('audiodata')  // 统一获取音频数据
+                fetchAndCache('audiodata'),  // 统一获取音频数据
+                fetchAndCache('aipresets')   // AI评价预设数据
             ]);
             
             // 检查每个结果，记录失败的任务
-            const taskNames = ['地图', '干员', '排位分数', '音频数据'];
+            const taskNames = ['地图', '干员', '排位分数', '音频数据', 'AI预设'];
             const failedTasks = [];
             results.forEach((result, index) => {
                 if (result.status === 'rejected') {
@@ -1246,6 +1287,88 @@ export default {
         // 根据模式选择扩展名
         const extension = mode === 'sol' ? '.png' : '.jpg';
         return `imgs/map/${prefix}${cleanName}${extension}`;
+    },
+
+    /**
+     * 获取AI评价预设列表
+     * @returns {Array|null} - 预设列表数组，如果未就绪返回null
+     */
+    getAiPresets() {
+        // 如果aiPresetsData为空，尝试立即从本地加载
+        if (!aiPresetsData) {
+            const localData = loadRankScoreData(localAiPresetsFile, true);
+            if (localData && Array.isArray(localData) && localData.length > 0) {
+                aiPresetsData = localData;
+                logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载AI预设数据 (${localData.length}个预设)`);
+            } else {
+                logger.warn('[Delta-Force 数据管理器] AI预设数据未就绪');
+                return null;
+            }
+        }
+        return aiPresetsData;
+    },
+
+    /**
+     * 根据预设代码获取预设名称
+     * @param {string} code - 预设代码（如 'rp', 'cxg'）
+     * @returns {string|null} - 预设名称，如果不存在返回null
+     */
+    getAiPresetName(code) {
+        const presets = this.getAiPresets();
+        if (!presets) return null;
+        
+        const preset = presets.find(p => p.code === code);
+        return preset ? preset.name : null;
+    },
+
+    /**
+     * 根据预设名称、代码或缩写查找预设
+     * 支持：代码(rp)、中文名(锐评)、部分匹配(雌小鬼->cxg)
+     * @param {string} keyword - 预设关键词（代码或名称）
+     * @returns {Object|null} - 预设对象 { code, name, isDefault }，如果不存在返回null
+     */
+    findAiPreset(keyword) {
+        const presets = this.getAiPresets();
+        if (!presets || !keyword) return null;
+        
+        const normalizedKeyword = keyword.trim().toLowerCase();
+        
+        // 1. 精确匹配代码
+        let preset = presets.find(p => p.code.toLowerCase() === normalizedKeyword);
+        if (preset) return preset;
+        
+        // 2. 精确匹配名称
+        preset = presets.find(p => p.name === keyword.trim());
+        if (preset) return preset;
+        
+        // 3. 名称包含关键词（模糊匹配）
+        preset = presets.find(p => p.name.includes(keyword.trim()));
+        if (preset) return preset;
+        
+        // 4. 关键词包含名称
+        preset = presets.find(p => keyword.trim().includes(p.name));
+        if (preset) return preset;
+        
+        return null;
+    },
+
+    /**
+     * 验证预设代码是否有效
+     * @param {string} code - 预设代码
+     * @returns {boolean} - 是否有效
+     */
+    isValidAiPreset(code) {
+        const presets = this.getAiPresets();
+        if (!presets) return false;
+        
+        return presets.some(p => p.code === code);
+    },
+
+    /**
+     * 刷新AI预设数据（从API获取最新数据）
+     */
+    async refreshAiPresets() {
+        await fetchAndCache('aipresets');
     }
     
-}; 
+};

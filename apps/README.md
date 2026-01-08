@@ -41,7 +41,7 @@
 - `Tools.js` - 实用工具（每日密码、文章等）
 - `SolutionV2.js` - 改枪码
 - `Room.js` - 房间管理
-- `ai.js` - AI功能（AI锐评等）
+- `AIEvaluation.js` - AI评价（支持选择预设）
 
 ### entertainment/ - 娱乐功能
 - `Voice.js` - 语音功能
