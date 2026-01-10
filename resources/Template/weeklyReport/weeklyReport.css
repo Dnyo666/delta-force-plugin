@@ -694,6 +694,11 @@ body {
     border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, 0.1);
     overflow: hidden;
+    width: auto;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .operator-item-image {
@@ -702,6 +707,44 @@ body {
     object-fit: contain;
     display: block;
     border-radius: 8px;
+}
+
+.operator-image-placeholder {
+    width: auto;
+    height: 80px;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 0 12px;
+}
+
+.operator-image-placeholder .placeholder-text {
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 12px;
+    font-weight: 400;
+    text-align: center;
+}
+
+.sol-card-item-operator .operator-image-placeholder,
+.mp-card-item .operator-image-placeholder {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: auto;
+    height: auto;
+    background: transparent;
+    z-index: 5;
+}
+
+.sol-card-item-operator .operator-image-placeholder .placeholder-text,
+.mp-card-item .operator-image-placeholder .placeholder-text {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .operator-count-card {

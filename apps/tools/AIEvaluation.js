@@ -121,7 +121,16 @@ export class Ai extends plugin {
       if (fullAnswer.trim()) {
         // 成功，将CD延长至1小时
         await redis.expire(cdKey, 3600);
-        await e.reply([segment.at(e.user_id), `\n【${gameMode.name}模式 AI锐评】\n`, fullAnswer])
+        
+        // 使用合并转发消息发送
+        const bot = Bot.pickUser(e.user_id)
+        const forwardMsg = [{
+          message: [`【${gameMode.name}模式 AI锐评】\n`, fullAnswer],
+          nickname: bot.nickname,
+          user_id: bot.uin
+        }]
+        
+        await e.reply(await Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);
@@ -230,7 +239,16 @@ export class Ai extends plugin {
       if (fullAnswer.trim()) {
         // 成功，将CD延长至1小时
         await redis.expire(cdKey, 3600);
-        await e.reply([segment.at(e.user_id), `\n【${gameMode.name}模式 AI${presetName}】\n`, fullAnswer])
+        
+        // 使用合并转发消息发送
+        const bot = Bot.pickUser(e.user_id)
+        const forwardMsg = [{
+          message: [`【${gameMode.name}模式 AI${presetName}】\n`, fullAnswer],
+          nickname: bot.nickname,
+          user_id: bot.uin
+        }]
+        
+        await e.reply(await Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);

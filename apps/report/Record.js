@@ -57,7 +57,7 @@ export class Record extends plugin {
    * @param {string} mode - 模式 ('sol' | 'mp')
    * @param {number} page - 页码
    * @param {string} token - 账号令牌
-   * @returns {Promise<boolean>} 是否成功发送
+   * @returns {Promise<Object|null>} 返回 { modeName, image } 或 null（失败时）
    */
   async queryAndRenderMode(mode, page, token) {
     const modeName = mode === 'sol' ? '烽火地带' : '全面战场';
@@ -65,17 +65,17 @@ export class Record extends plugin {
     const recordsPerPage = 10;
 
     const res = await this.api.getRecord(token, typeId, page);
-    if (await utils.handleApiError(res, this.e)) return false;
+    if (await utils.handleApiError(res, this.e)) return null;
 
     if (!res.data || !Array.isArray(res.data)) {
       await this.e.reply(`查询失败: ${modeName} API 返回的数据格式不正确。`);
-      return false;
+      return null;
     }
 
     const records = res.data
     if (records.length === 0) {
       await this.e.reply(`您在 ${modeName} (第${page}页) 没有更多战绩记录。`)
-      return false
+      return null
     }
 
     const pageRecords = records.slice(0, recordsPerPage)
@@ -173,16 +173,27 @@ export class Record extends plugin {
       templateRecords.push(recordData)
     }
 
-    await Render.render('Template/record/record', {
-      modeName,
-      page,
-      records: templateRecords
-    }, {
-      e: this.e,
-      scale: 1.2
-    })
+    try {
+      const image = await Render.render('Template/record/record', {
+        modeName,
+        page,
+        records: templateRecords
+      }, {
+        e: this.e,
+        retType: 'base64',
+        saveId: `${this.e.user_id}_record_${mode}_${page}_${Date.now()}`,
+        scale: 1.2
+      })
 
-    return true
+      if (image) {
+        return { modeName, image, mode }
+      }
+      return null
+    } catch (error) {
+      logger.error(`[战绩] 渲染${modeName}图片失败:`, error)
+      await this.e.reply(`${modeName}战绩图片渲染失败，请稍后重试。`)
+      return null
+    }
   }
 
   async getRecord(e) {
@@ -210,15 +221,59 @@ export class Record extends plugin {
     }
 
     if (specifiedMode) {
+      // 只查询一个模式，直接发送图片
       const modeName = specifiedMode === 'sol' ? '烽火地带' : '全面战场'
       await e.reply(`正在查询 ${modeName} 的战绩 (第${page}页)，请稍候...`)
-      await this.queryAndRenderMode(specifiedMode, page, token)
+      const result = await this.queryAndRenderMode(specifiedMode, page, token)
+      
+      if (result && result.image) {
+        await e.reply(result.image)
+      }
       return true
     }
 
+    // 查询两个模式，收集图片后决定发送方式
     await e.reply(`正在查询战绩 (第${page}页)，请稍候...`)
-    await this.queryAndRenderMode('sol', page, token)
-    await this.queryAndRenderMode('mp', page, token)
+    
+    const results = []
+    const solResult = await this.queryAndRenderMode('sol', page, token)
+    if (solResult) results.push(solResult)
+    
+    const mpResult = await this.queryAndRenderMode('mp', page, token)
+    if (mpResult) results.push(mpResult)
+
+    if (results.length === 0) {
+      // 两个模式都没有数据，已经在前面的方法中回复了
+      return true
+    }
+
+    if (results.length === 1) {
+      // 只有一个模式的图片，直接发送
+      await e.reply(results[0].image)
+      return true
+    }
+
+    // 有两个模式的图片，使用合并转发消息发送
+    const bot = Bot.pickUser(e.user_id)
+    const forwardMsg = []
+
+    // 添加标题消息
+    forwardMsg.push({
+      message: `【战绩查询】\n第${page}页\n${results.map(r => r.modeName).join(' + ')}`,
+      nickname: bot.nickname,
+      user_id: bot.uin
+    })
+
+    // 添加两个模式的图片
+    for (const result of results) {
+      forwardMsg.push({
+        message: [`【${result.modeName}】\n`, result.image],
+        nickname: bot.nickname,
+        user_id: bot.uin
+      })
+    }
+
+    await e.reply(await Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
     
     return true
   }

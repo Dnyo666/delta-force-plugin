@@ -12,6 +12,7 @@ config/maps.yaml
 config/operators.yaml
 config/rankscore.yaml
 config/audio_data.yaml
+config/ai_presets.yaml
 
 # 帮助配置文件（默认配置文件需要提交，用户自定义的忽略）
 # 默认配置文件：*_default.yaml 需要提交
@@ -19,28 +20,5 @@ config/audio_data.yaml
 config/help/*_custom.yaml
 config/help.yaml
 
-# 自定义别名
-resources/Alias/custom/*.yaml
-
 # 运行时数据
 resources/data/*.json
-
-# IDE 配置
-.idea/
-.vscode/
-*.swp
-*.swo
-
-# 系统文件
-.DS_Store
-Thumbs.db
-
-# 日志和临时文件
-*.log
-*.tmp
-*.bak
-temp/
-
-# 开发/测试目录
-/参考/*
-/UI-TEST/*

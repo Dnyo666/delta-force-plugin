@@ -18,7 +18,9 @@
 - `PlaceInfo.js` - 特勤处信息查询（设施升级信息）
 - `OperatorList.js` - 干员列表查询
 - `Operator.js` - 干员信息查询
-- `HealthInfo.js` - 健康状态信息查询
+- `HealthInfo.js` - 健康状态信息查询（游戏内健康状态）
+- `health.js` - 服务器状态查询（API服务器运行状态）
+- `MapStats.js` - 地图统计查询（支持烽火地带和全面战场）
 
 ### report/ - 战报相关
 - `Daily.js` - 日报

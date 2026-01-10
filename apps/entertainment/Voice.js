@@ -169,7 +169,12 @@ export class Voice extends plugin {
         result.actionType = actionMap[firstArg] || actionMap[firstArg.toLowerCase()]
         hint = firstArg
       }
-      // 5. 默认当作角色参数（后端会自动识别以下格式）
+      // 5. 检查是否是有效角色名（使用DataManager验证）
+      else if (DataManager.isValidAudioCharacter(firstArg)) {
+        result.character = firstArg
+        hint = firstArg
+      }
+      // 6. 默认当作角色参数（后端会自动识别以下格式）
       //    - 干员全局ID：20003, 10007, 40005
       //    - Voice ID：Voice_101, Voice_301, Voice_201
       //    - 皮肤ID：Voice_301_SkinA, Voice_301_skinA（大小写不敏感）

@@ -1,0 +1,146 @@
+{{extend commonLayout}}
+{{block 'css'}}
+<link rel="stylesheet" type="text/css" href="{{_res_path}}Template/mapStats/mapStats.css"/>
+{{/block}}
+{{block 'main'}}
+<div class="container">
+    <!-- 背景图片 -->
+    <img class="bg-image" src="{{_res_path}}{{backgroundImage}}" alt="" />
+    <div class="bg-overlay"></div>
+    
+    <!-- 头部区域：参考 weeklyReport 样式 -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
+            </div>
+            <div class="header-right">
+                <div class="user-avatar-wrapper">
+                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';this.parentElement.style.display='none';}" />
+                </div>
+                <div class="header-meta">
+                    {{if userName}}
+                    <span class="user-name">{{userName}}</span>
+                    {{/if}}
+                    <span class="report-date">{{currentDate}}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="content">
+        <!-- 模式信息 -->
+        <div class="mode-info">
+            <div class="mode-badge {{if type === 'sol'}}sol-badge{{else}}mp-badge{{/if}}">
+                {{typeName}}
+            </div>
+            <div class="season-info">{{seasonid}}</div>
+            <div class="total-maps">共 {{totalMaps}} 张地图</div>
+        </div>
+
+        <!-- 地图统计列表 -->
+        <div class="map-stats-list">
+            {{each mapStatsList mapStat index}}
+            <div class="map-stat-card" {{if mapStat.mapImage}}style="background-image: url('{{_res_path}}{{mapStat.mapImage}}');"{{else}}style="background: rgba(11, 15, 19, 0.6);"{{/if}}>
+                <div class="map-card-overlay"></div>
+                
+                <!-- 左侧图片区域 - 显示地图名称 -->
+                <div class="map-image-section">
+                    {{if mapStat.mapImage}}
+                    <div class="map-name-overlay">{{mapStat.mapName}}</div>
+                    {{else}}
+                    <div class="map-image-placeholder">
+                        <div class="map-name-overlay">{{mapStat.mapName}}</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: rgba(242, 242, 242, 0.5);">无地图图片</div>
+                    </div>
+                    {{/if}}
+                </div>
+                
+                <!-- 数据区域 - 右侧主要内容 -->
+                <div class="map-data-section">
+                    {{if type === 'sol'}}
+                    <!-- 烽火地带数据 -->
+                    {{if mapStat.sol}}
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            <span class="stat-label">净收益</span>
+                            <span class="stat-value {{if mapStat.sol.profit && mapStat.sol.profit.startsWith('+')}}positive{{else if mapStat.sol.profit && mapStat.sol.profit.startsWith('-')}}negative{{/if}}">{{mapStat.sol.profit}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">总对局</span>
+                            <span class="stat-value">{{mapStat.sol.totalGames}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">撤离数</span>
+                            <span class="stat-value highlight">{{mapStat.sol.escaped}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">撤离率</span>
+                            <span class="stat-value">{{mapStat.sol.escapeRate}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">击杀数</span>
+                            <span class="stat-value">{{mapStat.sol.kill}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">撤离失败</span>
+                            <span class="stat-value">{{mapStat.sol.failed}}</span>
+                        </div>
+                    </div>
+                    {{/if}}
+                    {{else}}
+                    <!-- 全面战场数据 -->
+                    {{if mapStat.mp}}
+                    <div class="stats-grid stats-grid-mp">
+                        <div class="stat-item">
+                            <span class="stat-label">胜利</span>
+                            <span class="stat-value highlight">{{mapStat.mp.win}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">总对局</span>
+                            <span class="stat-value">{{mapStat.mp.totalGames}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">胜率</span>
+                            <span class="stat-value highlight">{{mapStat.mp.winRate}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">总得分</span>
+                            <span class="stat-value highlight">{{mapStat.mp.score}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">游戏时长</span>
+                            <span class="stat-value">{{mapStat.mp.gameTime}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">KDA</span>
+                            <span class="stat-value highlight">{{mapStat.mp.kda}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">击杀</span>
+                            <span class="stat-value">{{mapStat.mp.kill}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">助攻</span>
+                            <span class="stat-value">{{mapStat.mp.assist}}</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">死亡</span>
+                            <span class="stat-value">{{mapStat.mp.death}}</span>
+                        </div>
+                    </div>
+                    {{/if}}
+                    {{/if}}
+                </div>
+            </div>
+            {{/each}}
+        </div>
+    </div>
+    
+    <!-- 页脚 -->
+    <div class="template-footer">
+        <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
+    </div>
+</div>
+{{/block}}
+{{block 'footer'}}{{/block}}
