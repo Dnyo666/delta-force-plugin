@@ -1,0 +1,354 @@
+body {
+    background: #0b0f13;
+    color: #F2F2F2;
+    width: 600px;
+    height: auto;
+    min-height: 600px;
+}
+
+.container {
+    position: relative;
+    width: 600px;
+    min-height: 600px;
+    margin: 0 auto;
+    background: transparent;
+    overflow: hidden;
+}
+
+/* 背景图片 */
+.bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.25;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.bg-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(180deg, rgba(11, 15, 19, 0.8) 0%, rgba(11, 15, 19, 0.95) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+.header {
+    position: relative;
+    z-index: 2;
+    margin-bottom: 0;
+    padding: 20px;
+    border-bottom: 3px solid;
+    border-image: linear-gradient(90deg, transparent, #0FF796, transparent) 1;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    position: relative;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.game-logo {
+    height: 35px;
+    width: auto;
+    opacity: 0.95;
+    filter: drop-shadow(0 0 8px rgba(15, 247, 150, 0.3));
+    flex-shrink: 0;
+}
+
+.title {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    font-weight: bold;
+    background: linear-gradient(135deg, #0FF796, #00d4aa);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin: 0;
+    letter-spacing: 2px;
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-shrink: 0;
+}
+
+.user-avatar-wrapper {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid rgba(15, 247, 150, 0.5);
+    box-shadow: 0 0 12px rgba(15, 247, 150, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
+}
+
+.user-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.user-name {
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 16px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    letter-spacing: 0.5px;
+}
+
+.report-date {
+    color: rgba(15, 247, 150, 1);
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-shadow: 0 0 8px rgba(15, 247, 150, 0.5);
+}
+
+/* 内容区域 */
+.content {
+    position: relative;
+    z-index: 2;
+    padding: 15px 20px 20px 20px;
+}
+
+/* 模式信息 - 简化样式 */
+.mode-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+    padding: 0;
+}
+
+.mode-badge {
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: bold;
+    color: #FFFFFF;
+}
+
+.sol-badge {
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a6f 100%);
+}
+
+.mp-badge {
+    background: linear-gradient(135deg, #4ecdc4 0%, #44a08d 100%);
+}
+
+.season-info {
+    font-size: 13px;
+    color: rgba(242, 242, 242, 0.7);
+    padding: 0;
+}
+
+.total-maps {
+    margin-left: auto;
+    font-size: 13px;
+    color: rgba(242, 242, 242, 0.6);
+}
+
+/* 地图统计列表 */
+.map-stats-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.map-stat-card {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 160px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    isolation: isolate;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+}
+
+/* 渐变遮罩层 - 从左到右：左侧透明显示图片，右侧深色遮罩显示数据 */
+.map-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(to right, 
+        rgba(11, 15, 19, 0.15) 0%,
+        rgba(11, 15, 19, 0.25) 30%,
+        rgba(11, 15, 19, 0.5) 45%,
+        rgba(11, 15, 19, 0.8) 60%,
+        rgba(11, 15, 19, 0.92) 75%,
+        rgba(11, 15, 19, 0.96) 100%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* 左侧图片区域 - 显示地图名称 */
+.map-image-section {
+    position: relative;
+    z-index: 2;
+    width: 180px;
+    min-width: 180px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 15px 12px;
+    text-align: center;
+}
+
+.map-image-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: rgba(242, 242, 242, 0.7);
+    font-size: 14px;
+    padding: 10px;
+    text-align: center;
+    width: 100%;
+}
+
+.map-name-overlay {
+    font-size: 18px;
+    font-weight: bold;
+    color: #FFFFFF;
+    margin-bottom: 8px;
+    line-height: 1.4;
+    word-break: break-word;
+    letter-spacing: 0.5px;
+    text-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.8),
+        0 2px 6px rgba(0, 0, 0, 0.6),
+        0 0 10px rgba(0, 0, 0, 0.4);
+}
+
+.map-id-overlay {
+    font-size: 12px;
+    color: #FFFFFF;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-weight: 500;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: inline-block;
+}
+
+/* 数据区域 - 右侧主要内容 */
+.map-data-section {
+    position: relative;
+    z-index: 2;
+    padding: 12px 15px;
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* 地图标题样式已移除 - 左侧已显示地图名称 */
+
+/* 统计数据网格 - 两列布局（烽火地带） */
+.stats-grid {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 15px;
+}
+
+/* 全面战场 - 三列布局 */
+.stats-grid-mp {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px 12px;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+    align-items: center;
+}
+
+.stat-item .stat-label {
+    font-size: 12px;
+    color: #FFFFFF;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 6px;
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    display: inline-block;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+.stat-item .stat-value {
+    font-size: 15px;
+    font-weight: 600;
+    color: #F2F2F2;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.stat-item .stat-value.highlight {
+    color: #4ecdc4;
+}
+
+.stat-item .stat-value.positive {
+    color: #51cf66;
+}
+
+.stat-item .stat-value.negative {
+    color: #ff6b6b;
+}
+
+/* 页脚样式已在 common.css 中定义，此处仅覆盖特定样式 */
+.template-footer {
+    padding: 15px 20px;
+}

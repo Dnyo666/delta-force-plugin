@@ -25,6 +25,15 @@
   - 显示增益状态列表
   - 每个状态显示触发条件、效果等信息
   - 使用图片渲染模板展示，视觉效果更佳
+- 新增地图统计查询功能
+  - 支持查询各地图的详细统计数据
+  - 命令：`^地图统计` 或 `#三角洲地图统计`
+  - 支持按模式筛选（烽火地带/全面战场）
+  - 支持按赛季筛选（全部赛季/指定赛季）
+  - 支持按地图名称搜索
+  - 支持合并显示所有基础地图数据（烽火+全面）
+  - 烽火地带显示：净收益、总对局、撤离数、撤离率、击杀数、撤离失败
+  - 全面战场显示：胜利、总对局、胜率、总得分、游戏时长、KDA、击杀、助攻、死亡
 
 ### style（样式）
 - 新增特勤处信息渲染模板
@@ -49,6 +58,17 @@
   - 显示资产余额变化趋势，包括起始余额、结束余额、最高余额、最低余额、总计变化
 - 新增流水渲染模板（`flows.html` 和 `flows.css`）
 - 新增货币流水折线图模板（`moneyTrendChart.html` 和 `moneyTrendChart.css`）
+- 新增地图统计渲染模板（`mapStats.html` 和 `mapStats.css`）
+
+### refactor（重构）
+- 优化数据管理器（`utils/Data.js`）
+  - 合并重复的数据加载函数：`loadLocalData` 和 `loadRankScoreData` 合并为统一的 `loadYamlData`
+  - 合并重复的数据保存函数：`saveLocalData` 和 `saveRankScoreData` 合并为统一的 `saveYamlData`
+  - 合并武器查询函数：`getWeaponByMode` 合并到 `getWeaponByName`，通过 `mode` 参数支持按模式查询
+  - 移除未使用的函数：`getWeaponsByCaliber`、`getWeaponCategories`、`getWeaponsByCategory`
+- 优化语音功能（`apps/entertainment/Voice.js`）
+  - 使用 `isValidAudioCharacter` 验证角色名，优先识别已知角色
+- 更新文档
 
 ## [1.4.0-0] - 历史版本
 

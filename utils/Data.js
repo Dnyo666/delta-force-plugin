@@ -56,11 +56,13 @@ const jsonDataFiles = {
 };
 
 /**
- * 加载本地YAML数据
+ * 加载本地YAML数据（统一函数）
  * @param {string} filePath - YAML文件路径
- * @returns {Map|null} - 加载的数据Map或null
+ * @param {boolean} silent - 是否静默模式
+ * @param {boolean} asMap - 是否返回Map格式（默认false，返回Object）
+ * @returns {Map|Object|null} - 加载的数据
  */
-function loadLocalData(filePath, silent = false) {
+function loadYamlData(filePath, silent = false, asMap = false) {
     try {
         if (fs.existsSync(filePath)) {
             const fileContent = fs.readFileSync(filePath, 'utf8');
@@ -70,7 +72,7 @@ function loadLocalData(filePath, silent = false) {
                 if (!silent) {
                     logger.debug(`[Delta-Force 数据管理器] 成功加载本地数据: ${filePath}`);
                 }
-                return new Map(Object.entries(data));
+                return asMap ? new Map(Object.entries(data)) : data;
             }
         } else {
             if (!silent) {
@@ -86,6 +88,7 @@ function loadLocalData(filePath, silent = false) {
 /**
  * 加载JSON数据文件
  * @param {string} filePath - JSON文件路径
+ * @param {boolean} silent - 是否静默模式
  * @returns {Object|null} - 加载的数据对象或null
  */
 function loadJsonData(filePath, silent = false) {
@@ -112,16 +115,16 @@ function loadJsonData(filePath, silent = false) {
 }
 
 /**
- * 保存数据到本地YAML文件
- * @param {Map} dataMap - 要保存的Map数据
+ * 保存数据到本地YAML文件（统一函数）
+ * @param {Map|Object} data - 要保存的数据（Map或Object）
  * @param {string} filePath - 保存的文件路径
  */
-function saveLocalData(dataMap, filePath) {
+function saveYamlData(data, filePath) {
     try {
-        if (!dataMap) return;
+        if (!data) return;
         
-        // 将Map转换为普通对象
-        const dataObj = Object.fromEntries(dataMap);
+        // 将Map转换为普通对象（如果是Map）
+        const dataObj = data instanceof Map ? Object.fromEntries(data) : data;
         
         // 确保目录存在
         const dir = path.dirname(filePath);
@@ -137,56 +140,11 @@ function saveLocalData(dataMap, filePath) {
     }
 }
 
-/**
- * 加载排位分数数据
- * @param {string} filePath - YAML文件路径
- * @returns {Object|null} - 加载的数据对象或null
- */
-function loadRankScoreData(filePath, silent = false) {
-    try {
-        if (fs.existsSync(filePath)) {
-            const fileContent = fs.readFileSync(filePath, 'utf8');
-            const data = YAML.parse(fileContent);
-            
-            if (data && typeof data === 'object') {
-                if (!silent) {
-                    logger.debug(`[Delta-Force 数据管理器] 成功加载排位分数数据: ${filePath}`);
-                }
-                return data;
-            }
-        } else {
-            if (!silent) {
-                logger.warn(`[Delta-Force 数据管理器] 排位分数数据文件不存在: ${filePath}`);
-            }
-        }
-    } catch (error) {
-        logger.error(`[Delta-Force 数据管理器] 加载排位分数数据失败 (${filePath}):`, error);
-    }
-    return null;
-}
-
-/**
- * 保存排位分数数据到本地YAML文件
- * @param {Object} dataObj - 要保存的数据对象
- * @param {string} filePath - 保存的文件路径
- */
-function saveRankScoreData(dataObj, filePath) {
-    try {
-        if (!dataObj) return;
-        
-        // 确保目录存在
-        const dir = path.dirname(filePath);
-        if (!fs.existsSync(dir)) {
-            fs.mkdirSync(dir, { recursive: true });
-        }
-        
-        // 写入YAML文件
-        fs.writeFileSync(filePath, YAML.stringify(dataObj), 'utf8');
-        logger.debug(`[Delta-Force 数据管理器] 排位分数数据已保存到 ${filePath}`);
-    } catch (error) {
-        logger.error(`[Delta-Force 数据管理器] 保存排位分数数据失败 (${filePath}):`, error);
-    }
-}
+// 兼容旧函数名
+const loadLocalData = (filePath, silent) => loadYamlData(filePath, silent, true);
+const loadRankScoreData = (filePath, silent) => loadYamlData(filePath, silent, false);
+const saveLocalData = saveYamlData;
+const saveRankScoreData = saveYamlData;
 
 async function fetchAndCache(dataType) {
     const api = new Code();
@@ -197,7 +155,7 @@ async function fetchAndCache(dataType) {
                 if (res && (res.success || res.code === 0)) {
                     mapData = new Map(res.data.map(item => [String(item.id), item.name]));
                     // 缓存成功后保存到本地
-                    saveLocalData(mapData, localMapsFile);
+                    saveYamlData(mapData, localMapsFile);
                     logger.debug('[Delta-Force 数据管理器] 地图数据同步成功');
                 } else {
                     throw new Error('API返回失败状态');
@@ -227,7 +185,7 @@ async function fetchAndCache(dataType) {
                 if (res && (res.success || res.code === 0)) {
                     operatorData = new Map(res.data.map(item => [String(item.id), item.name]));
                     // 缓存成功后保存到本地
-                    saveLocalData(operatorData, localOperatorsFile);
+                    saveYamlData(operatorData, localOperatorsFile);
                     logger.debug('[Delta-Force 数据管理器] 干员数据同步成功');
                 } else {
                     throw new Error('API返回失败状态');
@@ -267,7 +225,7 @@ async function fetchAndCache(dataType) {
                     }
                     rankScoreData = processedData;
                     // 缓存成功后保存到本地
-                    saveRankScoreData(rankScoreData, localRankScoreFile);
+                    saveYamlData(rankScoreData, localRankScoreFile);
                     logger.debug('[Delta-Force 数据管理器] 排位分数数据同步成功');
                 } else {
                     throw new Error('API返回失败状态');
@@ -411,7 +369,7 @@ async function fetchAndCache(dataType) {
 
                 // 只有成功获取到至少一项数据时才保存
                 if (hasAnyData) {
-                    saveRankScoreData(audioData, localAudioDataFile);
+                    saveYamlData(audioData, localAudioDataFile);
                     // 更新内存中的数据（如果API返回了数据就用新的，否则保留旧的）
                     if (Object.keys(audioData.tags).length > 0 || Object.keys(audioData.keywords).length > 0) {
                         audioTagsData = { _tags: audioData.tags, _keywords: audioData.keywords };
@@ -460,7 +418,7 @@ async function fetchAndCache(dataType) {
                 if (res && res.success && Array.isArray(res.data)) {
                     aiPresetsData = res.data;
                     // 缓存成功后保存到本地
-                    saveRankScoreData(aiPresetsData, localAiPresetsFile);
+                    saveYamlData(aiPresetsData, localAiPresetsFile);
                     logger.debug(`[Delta-Force 数据管理器] AI预设数据同步成功，共 ${res.data.length} 个预设`);
                 } else {
                     throw new Error('API返回失败状态');
@@ -492,7 +450,7 @@ async function fetchAndCache(dataType) {
         const isApiKeyConfigured = apiKey && apiKey !== 'sk-xxxxxxx';
         
         if (dataType === 'maps') {
-            const localData = loadLocalData(localMapsFile);
+            const localData = loadYamlData(localMapsFile, false, true);
             if (localData && localData.size > 0) {
                 mapData = localData;
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载地图数据');
@@ -500,7 +458,7 @@ async function fetchAndCache(dataType) {
                 showApiKeyWarning();
             }
         } else if (dataType === 'operators') {
-            const localData = loadLocalData(localOperatorsFile);
+            const localData = loadYamlData(localOperatorsFile, false, true);
             if (localData && localData.size > 0) {
                 operatorData = localData;
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载干员数据');
@@ -508,7 +466,7 @@ async function fetchAndCache(dataType) {
                 showApiKeyWarning();
             }
         } else if (dataType === 'rankscore') {
-            const localData = loadRankScoreData(localRankScoreFile);
+            const localData = loadYamlData(localRankScoreFile, false, false);
             if (localData && Object.keys(localData).length > 0) {
                 rankScoreData = localData;
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载排位分数数据');
@@ -516,7 +474,7 @@ async function fetchAndCache(dataType) {
                 showApiKeyWarning();
             }
         } else if (dataType === 'audiodata') {
-            const localData = loadRankScoreData(localAudioDataFile);
+            const localData = loadYamlData(localAudioDataFile, false, false);
             if (localData && Object.keys(localData).length > 0) {
                 // 从统一文件中加载音频数据
                 if (localData.tags && localData.keywords) {
@@ -533,7 +491,7 @@ async function fetchAndCache(dataType) {
                 showApiKeyWarning();
             }
         } else if (dataType === 'aipresets') {
-            const localData = loadRankScoreData(localAiPresetsFile, true);
+            const localData = loadYamlData(localAiPresetsFile, true, false);
             if (localData && Array.isArray(localData) && localData.length > 0) {
                 aiPresetsData = localData;
                 logger.debug('[Delta-Force 数据管理器] 已从本地加载AI预设数据');
@@ -549,23 +507,12 @@ export default {
         logger.info('[Delta-Force 数据管理器] 正在初始化数据缓存...');
         
         // 先尝试加载本地数据作为初始数据
-        const localMaps = loadLocalData(localMapsFile, true);
-        if (localMaps && localMaps.size > 0) {
-            mapData = localMaps;
-        }
-        
-        const localOperators = loadLocalData(localOperatorsFile, true);
-        if (localOperators && localOperators.size > 0) {
-            operatorData = localOperators;
-        }
-        
-        const localRankScore = loadRankScoreData(localRankScoreFile, true);
-        if (localRankScore && Object.keys(localRankScore).length > 0) {
-            rankScoreData = localRankScore;
-        }
+        mapData = loadYamlData(localMapsFile, true, true);
+        operatorData = loadYamlData(localOperatorsFile, true, true);
+        rankScoreData = loadYamlData(localRankScoreFile, true, false);
         
         // 加载音频相关数据（统一文件）
-        const localAudioData = loadRankScoreData(localAudioDataFile, true);
+        const localAudioData = loadYamlData(localAudioDataFile, true, false);
         if (localAudioData && Object.keys(localAudioData).length > 0) {
             if (localAudioData.tags && localAudioData.keywords) {
                 audioTagsData = { _tags: localAudioData.tags, _keywords: localAudioData.keywords };
@@ -639,7 +586,7 @@ export default {
     getMapName(id) {
         // 如果mapData为空，尝试立即从本地加载
         if (!mapData) {
-            mapData = loadLocalData(localMapsFile, true);
+            mapData = loadYamlData(localMapsFile, true, true);
             if (mapData && mapData.size > 0) {
                 logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载地图数据 (${mapData.size}条记录)`);
             } else {
@@ -653,7 +600,7 @@ export default {
     getOperatorName(id) {
         // 如果operatorData为空，尝试立即从本地加载
         if (!operatorData) {
-            operatorData = loadLocalData(localOperatorsFile, true);
+            operatorData = loadYamlData(localOperatorsFile, true, true);
             if (operatorData && operatorData.size > 0) {
                 logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载干员数据 (${operatorData.size}条记录)`);
             } else {
@@ -673,7 +620,7 @@ export default {
     getRankByScore(score, mode = 'sol') {
         // 如果rankScoreData为空，尝试立即从本地加载
         if (!rankScoreData) {
-            rankScoreData = loadRankScoreData(localRankScoreFile, true);
+            rankScoreData = loadYamlData(localRankScoreFile, true, false);
             if (rankScoreData && Object.keys(rankScoreData).length > 0) {
                 logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载排位分数数据 (${Object.keys(rankScoreData).length}个模式)`);
             } else {
@@ -825,25 +772,28 @@ export default {
      * 根据名称获取武器数据 - 兼容繁星攻略组数据格式
      * @param {string} weaponName - 武器名称
      * @param {string} category - 武器类别（可选）
+     * @param {string} mode - 游戏模式（可选，'sol'烽火地带 或 'mp'全面战场）
      * @returns {Object|null} - 武器数据对象
      */
-    getWeaponByName(weaponName, category = null) {
-        if (!weaponsData) {
-            weaponsData = loadJsonData(jsonDataFiles.weaponsSol);
-        }
+    getWeaponByName(weaponName, category = null, mode = 'sol') {
+        // 根据模式选择数据文件
+        const dataFile = (mode === 'mp' || mode === 'battlefield') 
+            ? jsonDataFiles.weaponsMp 
+            : jsonDataFiles.weaponsSol;
         
-        if (!weaponsData?.weapons) return null;
+        const weaponData = loadJsonData(dataFile);
+        if (!weaponData?.weapons) return null;
         
         let weapon = null;
         if (category) {
-            const categoryData = weaponsData.weapons[category];
+            const categoryData = weaponData.weapons[category];
             if (categoryData && Array.isArray(categoryData)) {
                 weapon = categoryData.find(w => w.name === weaponName);
             }
         } else {
             // 在所有类别中搜索
-            for (const categoryKey in weaponsData.weapons) {
-                const categoryWeapons = weaponsData.weapons[categoryKey];
+            for (const categoryKey in weaponData.weapons) {
+                const categoryWeapons = weaponData.weapons[categoryKey];
                 if (Array.isArray(categoryWeapons)) {
                     weapon = categoryWeapons.find(w => w.name === weaponName);
                     if (weapon) {
@@ -864,51 +814,6 @@ export default {
         return weapon;
     },
 
-    /**
-     * 根据口径获取武器列表
-     * @param {string} caliber - 口径
-     * @returns {Array} - 武器列表
-     */
-    getWeaponsByCaliber(caliber) {
-        if (!weaponsData) {
-            weaponsData = loadJsonData(jsonDataFiles.weaponsSol);
-        }
-        
-        const results = [];
-        for (const categoryKey in weaponsData?.weapons) {
-            const categoryWeapons = weaponsData.weapons[categoryKey];
-            const matched = categoryWeapons.filter(w => w.caliber === caliber);
-            results.push(...matched);
-        }
-        
-        return results;
-    },
-
-    /**
-     * 获取所有武器类别
-     * @returns {Array} - 武器类别列表
-     */
-    getWeaponCategories() {
-        if (!weaponsData) {
-            weaponsData = loadJsonData(jsonDataFiles.weaponsSol);
-        }
-        
-        return Object.keys(weaponsData?.weapons || {});
-    },
-
-    /**
-     * 获取指定类别的所有武器
-     * @param {string} category - 武器类别
-     * @returns {Array} - 武器列表
-     */
-    getWeaponsByCategory(category) {
-        if (!weaponsData) {
-            weaponsData = loadJsonData(jsonDataFiles.weaponsSol);
-        }
-        
-        const weapons = weaponsData?.weapons?.[category] || [];
-        return weapons;
-    },
 
     /**
      * 根据防护等级获取护甲列表
@@ -1011,46 +916,6 @@ export default {
         return battlefieldWeaponsData || {};
     },
 
-    /**
-     * 根据游戏模式获取武器数据
-     * @param {string} mode - 游戏模式 ('sol'烽火地带 或 'mp'全面战场)
-     * @param {string} weaponName - 武器名称
-     * @param {string} category - 武器类别（可选）
-     * @returns {Object|null} - 武器数据对象
-     */
-    getWeaponByMode(mode, weaponName, category = null) {
-        let dataFile = null;
-        
-        if (mode === 'mp' || mode === 'battlefield') {
-            // 全面战场模式
-            dataFile = jsonDataFiles.weaponsMp;
-        } else {
-            // 默认使用烽火地带模式数据 (sol)
-            dataFile = jsonDataFiles.weaponsSol;
-        }
-        
-        const weaponData = loadJsonData(dataFile);
-        if (!weaponData?.weapons) return null;
-        
-        let weapon = null;
-        if (category) {
-            const categoryData = weaponData.weapons[category];
-            if (categoryData && Array.isArray(categoryData)) {
-                weapon = categoryData.find(w => w.name === weaponName);
-            }
-        } else {
-            // 在所有类别中搜索
-            for (const categoryKey in weaponData.weapons) {
-                const categoryWeapons = weaponData.weapons[categoryKey];
-                if (Array.isArray(categoryWeapons)) {
-                    weapon = categoryWeapons.find(w => w.name === weaponName);
-                    if (weapon) break;
-                }
-            }
-        }
-        
-        return weapon;
-    },
 
     /**
      * 获取近战武器数据
@@ -1109,7 +974,7 @@ export default {
     getAudioTag(keyword) {
         if (!audioTagsData) {
             // 从统一的音频数据文件加载
-            const localData = loadRankScoreData(localAudioDataFile, true);
+            const localData = loadYamlData(localAudioDataFile, true, false);
             if (localData && localData.tags && localData.keywords) {
                 audioTagsData = { _tags: localData.tags, _keywords: localData.keywords };
                 logger.debug('[Delta-Force 数据管理器] 已临时从本地加载音频标签数据');
@@ -1177,7 +1042,7 @@ export default {
     getAudioCharacter(keyword) {
         if (!audioCharactersData) {
             // 从统一的音频数据文件加载
-            const localData = loadRankScoreData(localAudioDataFile, true);
+            const localData = loadYamlData(localAudioDataFile, true, false);
             if (localData && localData.characters) {
                 audioCharactersData = localData.characters;
                 logger.debug('[Delta-Force 数据管理器] 已临时从本地加载音频角色数据');
@@ -1199,7 +1064,7 @@ export default {
     getAudioCategory(keyword) {
         if (!audioCategoriesData) {
             // 从统一的音频数据文件加载
-            const localData = loadRankScoreData(localAudioDataFile, true);
+            const localData = loadYamlData(localAudioDataFile, true, false);
             if (localData && localData.categories) {
                 audioCategoriesData = localData.categories;
                 logger.debug('[Delta-Force 数据管理器] 已临时从本地加载音频分类数据');
@@ -1268,25 +1133,51 @@ export default {
             if (cleanName.includes('-')) {
                 cleanName = cleanName.split('-')[0].trim();
             }
+            const extension = '.jpg';
+            return `imgs/map/${prefix}${cleanName}${extension}`;
         }
         
-        // 烽火地带的地图名称可能需要特殊处理（包含难度等级）
+        // 烽火地带模式：优先匹配地图名称中的具体难度，然后按优先级查找
         if (mode === 'sol') {
-            // 尝试匹配常见的地图名称格式
-            // 例如：零号大坝-常规、长弓溪谷-机密等
-            // 如果cleanName不包含"-"，可能需要添加默认难度
-            if (!cleanName.includes('-')) {
-                // 对于烽火地带，如果没有指定难度，尝试使用"常规"作为默认
-                // 但首先尝试直接匹配
-                const directPath = `imgs/map/${prefix}${cleanName}.png`;
-                // 这里不检查文件是否存在，让HTML的onerror处理
-                return directPath;
+            const mapDir = path.join(pluginRoot, 'resources', 'imgs', 'map');
+            let baseName = cleanName;
+            let difficulty = '';
+            
+            // 提取基础地图名称和难度
+            if (cleanName.includes('-')) {
+                const parts = cleanName.split('-');
+                baseName = parts[0].trim();
+                difficulty = parts.slice(1).join('-').trim(); // 支持"适应"等难度
             }
+            
+            // 如果地图名称中包含难度信息，优先匹配对应难度的图片
+            if (difficulty) {
+                const specificPath = path.join(mapDir, `${prefix}${baseName}-${difficulty}.png`);
+                if (fs.existsSync(specificPath)) {
+                    return `imgs/map/${prefix}${baseName}-${difficulty}.png`;
+                }
+            }
+            
+            // 如果没有找到具体难度的图片，按优先级尝试：常规 -> 机密 -> 绝密
+            const difficulties = ['常规', '机密', '绝密'];
+            for (const diff of difficulties) {
+                const imagePath = path.join(mapDir, `${prefix}${baseName}-${diff}.png`);
+                if (fs.existsSync(imagePath)) {
+                    return `imgs/map/${prefix}${baseName}-${diff}.png`;
+                }
+            }
+            
+            // 如果都没有找到，尝试直接使用基础名称
+            const directPath = path.join(mapDir, `${prefix}${baseName}.png`);
+            if (fs.existsSync(directPath)) {
+                return `imgs/map/${prefix}${baseName}.png`;
+            }
+            
+            // 最后尝试返回常规路径（即使文件不存在，让HTML的onerror处理）
+            return `imgs/map/${prefix}${baseName}-常规.png`;
         }
         
-        // 根据模式选择扩展名
-        const extension = mode === 'sol' ? '.png' : '.jpg';
-        return `imgs/map/${prefix}${cleanName}${extension}`;
+        return null;
     },
 
     /**
@@ -1296,7 +1187,7 @@ export default {
     getAiPresets() {
         // 如果aiPresetsData为空，尝试立即从本地加载
         if (!aiPresetsData) {
-            const localData = loadRankScoreData(localAiPresetsFile, true);
+            const localData = loadYamlData(localAiPresetsFile, true, false);
             if (localData && Array.isArray(localData) && localData.length > 0) {
                 aiPresetsData = localData;
                 logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载AI预设数据 (${localData.length}个预设)`);

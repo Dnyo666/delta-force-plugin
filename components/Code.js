@@ -532,6 +532,21 @@ export default class Code {
   }
 
   /**
+   * 获取地图数据统计
+   * @param {string} frameworkToken - 用户绑定的token（必选）
+   * @param {string} seasonid - 赛季ID（必选，支持 all/单个/多个逗号分隔）
+   * @param {string} type - 游戏模式（必选，sol/mp）
+   * @param {string} mapId - 地图ID（可选，多个用逗号分隔）
+   */
+  async getMapStats (frameworkToken, seasonid, type, mapId = '') {
+    const params = { frameworkToken, seasonid, type }
+    if (mapId && mapId.trim() !== '') {
+      params.mapId = mapId
+    }
+    return this.request('/df/person/mapStats', params, 'GET')
+  }
+
+  /**
    * 获取货币信息
    * @param {string} frameworkToken - 用户绑定的token
    */
