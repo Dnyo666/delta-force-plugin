@@ -361,7 +361,9 @@ export class Weekly extends plugin {
                     mostUsedMap: solData.mostUsedMap || '无',
                     mostUsedMapImagePath: solData.mostUsedMap ? DataManager.getMapImagePath(solData.mostUsedMap, 'sol') : null,
                     mostUsedOperator: solData.mostUsedOperator || '无',
-                    mostUsedOperatorImagePath: solData.mostUsedOperator ? DataManager.getOperatorImagePath(solData.mostUsedOperator) : null
+                    mostUsedOperatorImagePath: solData.mostUsedOperator && solData.mostUsedOperator !== '无' 
+                        ? DataManager.getOperatorImagePath(solData.mostUsedOperator) 
+                        : null
                 };
 
                 // 解析所有使用的干员
@@ -373,14 +375,18 @@ export class Weekly extends plugin {
                         const correctedJSON = s.replace(/'/g, '"').replace(/([a-zA-Z0-9_]+):/g, '"$1":');
                         try {
                             const parsed = JSON.parse(correctedJSON);
-                            const operatorName = DataManager.getOperatorName(parsed.ArmedForceId);
+                            const operatorId = parsed.ArmedForceId;
+                            const operatorName = DataManager.getOperatorName(operatorId);
+                            const imagePath = DataManager.getOperatorImagePath(operatorName);
+                            
                             return {
-                                id: parsed.ArmedForceId,
+                                id: operatorId,
                                 count: parsed.inum,
                                 name: operatorName,
-                                imagePath: DataManager.getOperatorImagePath(operatorName)
+                                imagePath: imagePath
                             };
                         } catch (err) {
+                            logger.error(`[Weekly] 烽火地带干员数据解析失败:`, err, `原始数据: ${s}`);
                             return null;
                         }
                     }).filter(Boolean).sort((a, b) => b.count - a.count);
@@ -530,7 +536,9 @@ export class Weekly extends plugin {
                         mostUsedMap: mpData.mostUsedMap || '无',
                         mostUsedMapImagePath: mpData.mostUsedMap ? DataManager.getMapImagePath(mpData.mostUsedMap, 'mp') : null,
                         mostUsedOperator: mpData.mostUsedOperator || '无',
-                        mostUsedOperatorImagePath: mpData.mostUsedOperator ? DataManager.getOperatorImagePath(mpData.mostUsedOperator) : null
+                        mostUsedOperatorImagePath: mpData.mostUsedOperator && mpData.mostUsedOperator !== '无' 
+                            ? DataManager.getOperatorImagePath(mpData.mostUsedOperator) 
+                            : null
                     };
 
                     // 解析地图使用详情
@@ -566,9 +574,11 @@ export class Weekly extends plugin {
                     if (mpData.max_inum_DeployArmedForceType && mpData.total_num > 0) {
                         const operatorId = mpData.max_inum_DeployArmedForceType;
                         const operatorName = DataManager.getOperatorName(operatorId);
+                        const imagePath = DataManager.getOperatorImagePath(operatorName);
+                        
                         templateData.mpData.operatorStats = {
                             name: operatorName || '未知干员',
-                            imagePath: DataManager.getOperatorImagePath(operatorName),
+                            imagePath: imagePath,
                             games: mpData.DeployArmedForceType_inum || 0,
                             kills: mpData.DeployArmedForceType_KillNum || 0,
                             gameTime: `${Math.floor((mpData.DeployArmedForceType_gametime || 0) / 3600)}小时${Math.floor(((mpData.DeployArmedForceType_gametime || 0) % 3600) / 60)}分钟`

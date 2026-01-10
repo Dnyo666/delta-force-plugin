@@ -168,6 +168,11 @@
                         <div class="stat-item stat-item-card">
                             <div class="sol-card-item-operator" {{if solData.mostUsedOperatorImagePath}}style="background-image: url('{{_res_path}}{{solData.mostUsedOperatorImagePath}}');"{{/if}}>
                                 <span class="stat-label-overlay">常玩干员</span>
+                                {{if !solData.mostUsedOperatorImagePath}}
+                                <div class="operator-image-placeholder">
+                                    <span class="placeholder-text">暂无图片</span>
+                                </div>
+                                {{/if}}
                             </div>
                         </div>
                     </div>
@@ -178,11 +183,18 @@
                         <div class="items-grid operator-grid">
                             {{each solData.operators op}}
                             <div class="operator-item-wrapper">
-                                {{if op.imagePath}}
                                 <div class="operator-image-card">
-                                    <img class="operator-item-image" src="{{_res_path}}{{op.imagePath}}" alt="{{op.name}}" onerror="this.style.display='none';" />
+                                    {{if op.imagePath}}
+                                    <img class="operator-item-image" src="{{_res_path}}{{op.imagePath}}" alt="{{op.name}}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" />
+                                    <div class="operator-image-placeholder" style="display: none;">
+                                        <span class="placeholder-text">暂无图片</span>
+                                    </div>
+                                    {{else}}
+                                    <div class="operator-image-placeholder">
+                                        <span class="placeholder-text">暂无图片</span>
+                                    </div>
+                                    {{/if}}
                                 </div>
-                                {{/if}}
                                 <div class="operator-count-card">
                                     <span class="operator-item-count">{{op.count}}场</span>
                                 </div>
@@ -325,6 +337,11 @@
                         <div class="stat-item stat-item-card">
                             <div class="mp-card-item" {{if mpData.mostUsedOperatorImagePath}}style="background-image: url('{{_res_path}}{{mpData.mostUsedOperatorImagePath}}');"{{/if}}>
                                 <span class="stat-label-overlay">常玩干员</span>
+                                {{if !mpData.mostUsedOperatorImagePath}}
+                                <div class="operator-image-placeholder">
+                                    <span class="placeholder-text">暂无图片</span>
+                                </div>
+                                {{/if}}
                             </div>
                         </div>
                     </div>

@@ -1097,18 +1097,35 @@ export default {
     },
 
     /**
-     * 根据干员名称获取干员图片路径
+     * 根据干员名称获取干员图片路径（仅PNG格式）
      * @param {string} operatorName - 干员名称
+     * @param {boolean} checkExists - 是否检查文件存在性（默认false，避免频繁IO）
      * @returns {string|null} - 干员图片路径，如果不存在返回null
      */
-    getOperatorImagePath(operatorName) {
+    getOperatorImagePath(operatorName, checkExists = false) {
         if (!operatorName || operatorName.includes('未知') || operatorName.includes('无')) {
             return null;
         }
         // 清理干员名称，移除可能的括号内容
         const cleanName = operatorName.replace(/\s*\([^)]*\)/, '').trim();
-        // 优先使用PNG格式，如果不存在则使用JPG
-        return `imgs/operator/${cleanName}.png`;
+        if (!cleanName) {
+            return null;
+        }
+        
+        // 仅使用PNG格式
+        const pngPath = `imgs/operator/${cleanName}.png`;
+        
+        if (checkExists) {
+            const pngFullPath = path.join(pluginRoot, 'resources', pngPath);
+            if (fs.existsSync(pngFullPath)) {
+                return pngPath;
+            } else {
+                return null;
+            }
+        }
+        
+        // 默认返回PNG路径（不检查存在性，由模板的onerror处理）
+        return pngPath;
     },
 
     /**

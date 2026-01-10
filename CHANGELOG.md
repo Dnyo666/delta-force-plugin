@@ -70,6 +70,10 @@
   - 使用 `isValidAudioCharacter` 验证角色名，优先识别已知角色
 - 更新文档
 
+### style（样式）
+- 优化周报模板（`weeklyReport.html` 和 `weeklyReport.css`）
+  - 新增干员图片占位符功能：当干员图片不存在或加载失败时显示"暂无图片"文字
+
 ## [1.4.0-0] - 历史版本
 
 ### feat（新功能）
