@@ -408,59 +408,106 @@ export class MapStats extends plugin {
 
     const seasonText = seasonid === 'all' ? '全部赛季' : `第${seasonid}赛季`
     const typeName = type === 'sol' ? '烽火地带' : '全面战场'
+    const bot = global.Bot
+    const forwardMsg = []
 
-    // 先发送文本信息
-    await this.e.reply(`【地图统计数据】\n查询时间：${currentDate}\n模式：${typeName}\n赛季：${seasonText}\n${type === 'sol' ? `烽火地带：${solMaps.length} 张地图` : `全面战场：${mpMaps.length} 张地图`}`)
+    // 添加文本信息
+    forwardMsg.push({
+      message: `【地图统计数据】\n查询时间：${currentDate}\n模式：${typeName}\n赛季：${seasonText}\n${type === 'sol' ? `烽火地带：${solMaps.length} 张地图` : `全面战场：${mpMaps.length} 张地图`}`,
+      nickname: bot.nickname,
+      user_id: bot.uin
+    })
 
-    // 直接发送图片
+    // 添加图片到合并转发消息
     if (type === 'sol' && solMaps.length > 0) {
       const image = await this.renderMapStatsImage(solMaps, 'sol', '烽火地带', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
       if (image) {
         const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【烽火地带】\n', imageSegment])
+        forwardMsg.push({
+          message: ['【烽火地带】\n', imageSegment],
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       } else {
-        return await this.e.reply('渲染烽火地带图片失败，请稍后重试。')
+        forwardMsg.push({
+          message: '【烽火地带】渲染失败，请稍后重试。',
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       }
     } else if (type === 'mp' && mpMaps.length > 0) {
       const image = await this.renderMapStatsImage(mpMaps, 'mp', '全面战场', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
       if (image) {
         const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【全面战场】\n', imageSegment])
+        forwardMsg.push({
+          message: ['【全面战场】\n', imageSegment],
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       } else {
-        return await this.e.reply('渲染全面战场图片失败，请稍后重试。')
+        forwardMsg.push({
+          message: '【全面战场】渲染失败，请稍后重试。',
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       }
     }
 
-    return true
+    const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+    return result || await this.e.reply('未能获取地图统计数据。')
   }
 
   async sendForwardMessages(solMaps, mpMaps, userName, userAvatar, qqAvatarUrl, currentDate, seasonText) {
-    // 先发送文本信息
-    await this.e.reply(`【地图统计数据】\n查询时间：${currentDate}\n赛季：${seasonText}\n烽火地带：${solMaps.length} 张地图\n全面战场：${mpMaps.length} 张地图`)
+    const bot = global.Bot
+    const forwardMsg = []
 
-    // 直接发送烽火地带图片
+    // 添加文本信息
+    forwardMsg.push({
+      message: `【地图统计数据】\n查询时间：${currentDate}\n赛季：${seasonText}\n烽火地带：${solMaps.length} 张地图\n全面战场：${mpMaps.length} 张地图`,
+      nickname: bot.nickname,
+      user_id: bot.uin
+    })
+
+    // 添加烽火地带图片到合并转发消息
     if (solMaps.length > 0) {
       const image = await this.renderMapStatsImage(solMaps, 'sol', '烽火地带', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
       if (image) {
         const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【烽火地带】\n', imageSegment])
+        forwardMsg.push({
+          message: ['【烽火地带】\n', imageSegment],
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       } else {
-        await this.e.reply('渲染烽火地带图片失败，请稍后重试。')
+        forwardMsg.push({
+          message: '【烽火地带】渲染失败，请稍后重试。',
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       }
     }
 
-    // 直接发送全面战场图片
+    // 添加全面战场图片到合并转发消息
     if (mpMaps.length > 0) {
       const image = await this.renderMapStatsImage(mpMaps, 'mp', '全面战场', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
       if (image) {
         const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【全面战场】\n', imageSegment])
+        forwardMsg.push({
+          message: ['【全面战场】\n', imageSegment],
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       } else {
-        await this.e.reply('渲染全面战场图片失败，请稍后重试。')
+        forwardMsg.push({
+          message: '【全面战场】渲染失败，请稍后重试。',
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       }
     }
 
-    return true
+    const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+    return result || await this.e.reply('未能获取地图统计数据。')
   }
 
   // 格式化图片段，确保返回正确的 segment.image 对象

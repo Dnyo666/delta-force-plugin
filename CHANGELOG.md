@@ -73,6 +73,8 @@
 ### style（样式）
 - 优化周报模板（`weeklyReport.html` 和 `weeklyReport.css`）
   - 新增干员图片占位符功能：当干员图片不存在或加载失败时显示"暂无图片"文字
+- 优化战绩模板（`record.html` 和 `record.css`）
+- 优化战绩推送模板（`recordPush.html` 和 `recordPush.css`）
 
 ## [1.4.0-0] - 历史版本
 

@@ -4,72 +4,105 @@
 {{/block}}
 {{block 'main'}}
 <div class="container">
+    <!-- 头部区域 -->
     <div class="header">
-        <div class="title">
-            {{if isRecent}}<span class="recent-prefix">最近的战绩-</span>{{/if}}{{displayName}}-战绩订阅-{{modeName}}
+        <div class="header-content">
+            <div class="header-left">
+                <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
+            </div>
+            <div class="header-right">
+                {{if isRecent}}<span class="recent-badge">最近的战绩</span>{{/if}}
+                <div class="header-info">
+                    <span class="player-name">{{displayName}}</span>
+                    <span class="mode-name">{{modeName}}</span>
+                </div>
+                <span class="time-stamp">{{time}}</span>
+            </div>
         </div>
-        <div class="subtitle">{{time}}</div>
     </div>
 
-    <div class="record-card" style="{{if mapBg}}--map-bg-url: url({{mapBg}});{{/if}}{{if operatorImg}}--operator-img-url: url({{operatorImg}});{{/if}}">
-        <div class="card-header">
-            <span class="record-status {{statusClass}}">{{status}}</span>
-        </div>
-        <div class="card-body">
-            <div class="stat-item">
-                <strong>地图:</strong>
-                <span>{{map}}</span>
+    <div class="content">
+        <!-- 主卡片区域：使用地图作为背景 -->
+        <div class="record-card" style="{{if mapBg}}background-image: url('{{_res_path}}{{mapBg}}');{{/if}}">
+            <!-- 数据区域（占据整个宽度） -->
+            <div class="data-section">
+                <!-- 状态标签和地图名称（同一行） -->
+                <div class="card-status">
+                    <div class="title-info">
+                        <span class="map-name-display">{{map}}</span>
+                        <span class="title-separator">·</span>
+                        <span class="operator-name-display">{{operator}}</span>
+                    </div>
+                    <span class="status-badge {{statusClass}}">{{status}}</span>
+                </div>
+
+                <!-- 数据内容区域 -->
+                <div class="data-content">
+                    <!-- 第1行：主要数据 -->
+                    <div class="data-row-main">
+                        <!-- 烽火地带：带出价值 -->
+                        {{if value}}
+                        <div class="data-item-main">
+                            <div class="data-label">带出价值</div>
+                            <div class="data-value highlight-value">{{value}}</div>
+                        </div>
+                        {{/if}}
+
+                        <!-- 烽火地带：净收益 -->
+                        {{if income}}
+                        <div class="data-item-main">
+                            <div class="data-label">净收益</div>
+                            <div class="data-value highlight-income {{incomeClass}}">{{income}}</div>
+                        </div>
+                        {{/if}}
+
+                        <!-- 全面战场：得分 -->
+                        {{if score}}
+                        <div class="data-item-main">
+                            <div class="data-label">得分</div>
+                            <div class="data-value highlight-score">{{score}}</div>
+                        </div>
+                        {{/if}}
+
+                        <!-- 全面战场：KDA -->
+                        {{if kda}}
+                        <div class="data-item-main">
+                            <div class="data-label">KDA</div>
+                            <div class="data-value highlight-kda">{{kda}}</div>
+                        </div>
+                        {{/if}}
+
+                        <!-- 时长（两种模式都有） -->
+                        {{if duration}}
+                        <div class="data-item-main">
+                            <div class="data-label">时长</div>
+                            <div class="data-value">{{duration}}</div>
+                        </div>
+                        {{/if}}
+                    </div>
+
+                    <!-- 第2行：击杀统计和救援 -->
+                    <div class="data-row-secondary">
+                        <!-- 烽火地带：击杀统计 -->
+                        {{if killsHtml}}
+                        <div class="kills-section">
+                            <div class="kills-label">击杀统计</div>
+                            <div class="kills-content">
+                                {{@killsHtml}}
+                            </div>
+                        </div>
+                        {{/if}}
+
+                        <!-- 救援次数（两种模式都有） -->
+                        {{if rescue}}
+                        <div class="rescue-section">
+                            <div class="rescue-label">救援</div>
+                            <div class="rescue-value">{{rescue}}次</div>
+                        </div>
+                        {{/if}}
+                    </div>
+                </div>
             </div>
-            <div class="stat-item">
-                <strong>干员:</strong>
-                <span>{{operator}}</span>
-            </div>
-            <div class="stat-item">
-                <strong>时间:</strong>
-                <span>{{time}}</span>
-            </div>
-            {{if duration}}
-            <div class="stat-item">
-                <strong>时长:</strong>
-                <span>{{duration}}</span>
-            </div>
-            {{/if}}
-            {{if kda}}
-            <div class="stat-item">
-                <strong>KDA:</strong>
-                <span class="kda">{{kda}}</span>
-            </div>
-            {{/if}}
-            {{if value}}
-            <div class="stat-item">
-                <strong>带出价值:</strong>
-                <span>{{value}}</span>
-            </div>
-            {{/if}}
-            {{if income}}
-            <div class="stat-item">
-                <strong>净收益:</strong>
-                <span>{{income}}</span>
-            </div>
-            {{/if}}
-            {{if score}}
-            <div class="stat-item">
-                <strong>得分:</strong>
-                <span>{{score}}</span>
-            </div>
-            {{/if}}
-            {{if killsHtml}}
-            <div class="stat-item kills-stat">
-                <strong>击杀:</strong>
-                <span>{{@killsHtml}}</span>
-            </div>
-            {{/if}}
-            {{if rescue}}
-            <div class="stat-item">
-                <strong>救援:</strong>
-                <span>{{rescue}}次</span>
-            </div>
-            {{/if}}
         </div>
     </div>
     
@@ -80,4 +113,3 @@
 </div>
 {{/block}}
 {{block 'footer'}}{{/block}}
-

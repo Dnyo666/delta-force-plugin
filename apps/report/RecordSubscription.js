@@ -543,8 +543,7 @@ export class RecordSubscription extends plugin {
    * @param {Object} data - 战绩推送数据
    */
   async handleRecordPush(data) {
-    const { platformId, frameworkToken, recordType, record, isNew, isRecent } = data
-    const platformID = platformId
+    const { platformId: platformID, frameworkToken, recordType, record, isNew, isRecent } = data
     const modeText = recordType === 'sol' ? '烽火地带' : recordType === 'mp' ? '全面战场' : `未知(${recordType})`
 
     // 兼容处理：如果 isNew 不存在，使用 isRecent 来判断
@@ -563,24 +562,12 @@ export class RecordSubscription extends plugin {
       return
     }
 
-    // 判断是否为 isRecent 战绩（非 isNew）
     const isRecentRecord = (isNew === undefined || isNew === false) && isRecent === true
     
-    // 生成战绩唯一标识，防止重复推送
-    // 使用关键字段生成唯一ID，确保同一场对局不会重复推送
     const mapId = record.MapID || record.MapId
     const armedForceId = record.ArmedForceId
     const dtEventTime = record.dtEventTime || ''
-    
-    // 对于烽火地带，添加 FinalPrice 作为额外标识
-    // 对于全面战场，添加 TotalScore 作为额外标识
-    let extraId = ''
-    if (recordType === 'sol') {
-      extraId = record.FinalPrice || '0'
-    } else {
-      extraId = record.TotalScore || '0'
-    }
-    
+    const extraId = recordType === 'sol' ? (record.FinalPrice || '0') : (record.TotalScore || '0')
     const recordId = `${platformID}:${frameworkToken}:${recordType}:${mapId}:${armedForceId}:${dtEventTime}:${extraId}`
     const recordKey = `delta-force:record-pushed:${recordId}`
     
@@ -592,13 +579,11 @@ export class RecordSubscription extends plugin {
       return
     }
 
-    // 标记为已推送，保存到 Redis，24小时后过期（防止重启后重复推送）
     await redis.set(recordKey, Date.now().toString(), { EX: 24 * 60 * 60 })
     
     logger.info(`[战绩订阅] 处理新战绩: platformID=${platformID} | 模式: ${modeText} | isRecent=${isRecentRecord}`)
 
     try {
-      // 1. 检查用户是否启用了战绩订阅
       const subStr = await redis.get(`delta-force:record-sub:${platformID}`)
       if (!subStr) {
         logger.debug(`[战绩订阅] 用户未订阅: ${platformID}`)
@@ -611,39 +596,33 @@ export class RecordSubscription extends plugin {
         return
       }
 
-      // 2. 获取推送配置
       const pushConfig = this.subConfig.getUserPushConfig(platformID)
-
       if (!pushConfig.private && (!pushConfig.groups || pushConfig.groups.length === 0)) {
         logger.warn(`[战绩订阅] 没有推送目标: ${platformID} | 模式: ${modeText}`)
         return
       }
 
-      // 3. 如果是 isRecent 战绩，使用批量合并转发
       if (isRecentRecord) {
         await this.addToRecentRecordCache(platformID, recordType, record, frameworkToken, pushConfig)
         return
       }
 
-      // 4. 格式化战绩消息（使用图片渲染）- 新战绩立即发送
       const message = await this.formatRecordMessageWithFallback(recordType, record, frameworkToken, platformID, false)
 
-      // 5. 推送到私聊
       if (pushConfig.private) {
         const shouldPush = !pushConfig.filters || pushConfig.filters.length === 0 || 
                           this.checkFilters(recordType, record, pushConfig.filters)
         if (shouldPush) {
           try {
             await Bot.pickUser(platformID).sendMsg(message)
-          } catch (error) {
-            logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 模式: ${modeText}`, error)
+          } catch (err) {
+            logger.error(`[战绩订阅] 私信推送失败: ${platformID} | 模式: ${modeText}`, err)
           }
         } else {
           logger.debug(`[战绩订阅] 战绩不符合私信筛选条件: ${platformID} | 模式: ${modeText}`)
         }
       }
 
-      // 6. 推送到符合筛选条件的群
       if (pushConfig.groups && pushConfig.groups.length > 0) {
         for (const groupConfig of pushConfig.groups) {
           const shouldPush = !groupConfig.filters || groupConfig.filters.length === 0 || 
@@ -651,8 +630,8 @@ export class RecordSubscription extends plugin {
           if (shouldPush) {
             try {
               await Bot.pickGroup(groupConfig.groupId).sendMsg(message)
-            } catch (error) {
-              logger.error(`[战绩订阅] 推送失败到群${groupConfig.groupId} | 模式: ${modeText}`, error)
+            } catch (err) {
+              logger.error(`[战绩订阅] 推送失败到群${groupConfig.groupId} | 模式: ${modeText}`, err)
             }
           } else {
             logger.debug(`[战绩订阅] 战绩不符合筛选条件，跳过推送到群${groupConfig.groupId} | 模式: ${modeText}`)
@@ -660,8 +639,8 @@ export class RecordSubscription extends plugin {
         }
       }
 
-    } catch (error) {
-      logger.error(`[战绩订阅] 处理推送失败: ${platformID} | 模式: ${modeText}`, error)
+    } catch (err) {
+      logger.error(`[战绩订阅] 处理推送失败: ${platformID} | 模式: ${modeText}`, err)
     }
   }
 
@@ -697,7 +676,7 @@ export class RecordSubscription extends plugin {
         } else if (frameworkToken) {
           displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
         }
-      } catch (error) {
+      } catch (err) {
         if (frameworkToken) {
           displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
         }
@@ -710,17 +689,10 @@ export class RecordSubscription extends plugin {
 
   /**
    * 添加 isRecent 战绩到缓存，用于批量合并转发
-   * @param {string} platformID - 用户ID
-   * @param {string} recordType - 战绩类型
-   * @param {Object} record - 战绩对象
-   * @param {string} frameworkToken - 游戏账号令牌
-   * @param {Object} pushConfig - 推送配置
    */
   async addToRecentRecordCache(platformID, recordType, record, frameworkToken, pushConfig) {
-    // 为每个推送目标创建缓存键
     const cacheKeys = []
     
-    // 私信推送
     if (pushConfig.private) {
       const shouldPush = !pushConfig.filters || pushConfig.filters.length === 0 || 
                         this.checkFilters(recordType, record, pushConfig.filters)
@@ -729,7 +701,6 @@ export class RecordSubscription extends plugin {
       }
     }
     
-    // 群推送
     if (pushConfig.groups && pushConfig.groups.length > 0) {
       for (const groupConfig of pushConfig.groups) {
         const shouldPush = !groupConfig.filters || groupConfig.filters.length === 0 || 
@@ -740,26 +711,22 @@ export class RecordSubscription extends plugin {
       }
     }
 
-    // 为每个推送目标添加战绩到缓存
     for (const cacheKey of cacheKeys) {
       if (!RecordSubscription._recentRecordCache.has(cacheKey)) {
         RecordSubscription._recentRecordCache.set(cacheKey, [])
       }
       
-      const cache = RecordSubscription._recentRecordCache.get(cacheKey)
-      cache.push({
+      RecordSubscription._recentRecordCache.get(cacheKey).push({
         platformID,
         recordType,
         record,
         frameworkToken
       })
 
-      // 清除之前的定时器
       if (RecordSubscription._recentRecordTimers.has(cacheKey)) {
         clearTimeout(RecordSubscription._recentRecordTimers.get(cacheKey))
       }
 
-      // 设置新的定时器，500ms 后批量发送
       const timer = setTimeout(async () => {
         await this.sendRecentRecordsBatch(cacheKey)
       }, 500)
@@ -770,7 +737,6 @@ export class RecordSubscription extends plugin {
 
   /**
    * 批量发送 isRecent 战绩（合并转发）
-   * @param {string} cacheKey - 缓存键
    */
   async sendRecentRecordsBatch(cacheKey) {
     const cache = RecordSubscription._recentRecordCache.get(cacheKey)
@@ -778,7 +744,6 @@ export class RecordSubscription extends plugin {
       return
     }
 
-    // 清空缓存
     RecordSubscription._recentRecordCache.delete(cacheKey)
     RecordSubscription._recentRecordTimers.delete(cacheKey)
 
@@ -786,7 +751,6 @@ export class RecordSubscription extends plugin {
     const platformID = rest[rest.length - 1]
     
     try {
-      // 格式化所有战绩消息
       const messages = []
       for (const item of cache) {
         const message = await this.formatRecordMessageWithFallback(
@@ -794,9 +758,8 @@ export class RecordSubscription extends plugin {
           item.record,
           item.frameworkToken,
           item.platformID,
-          true // isRecent = true
+          true
         )
-        // 如果返回的是 base64 图片，使用 segment.image 包装
         if (typeof message === 'string' && (message.startsWith('base64://') || message.startsWith('data:image'))) {
           messages.push([segment.image(message)])
         } else {
@@ -808,14 +771,12 @@ export class RecordSubscription extends plugin {
         return
       }
 
-      // 创建伪事件对象用于合并转发
       const fakeE = this.createFakeEvent(platformID)
       if (!fakeE) {
         logger.error(`[战绩订阅] 创建伪事件对象失败，无法发送合并转发: ${platformID}`)
         return
       }
 
-      // 使用合并转发发送
       const forwardMsg = common.makeForwardMsg(fakeE, messages, '最近的战绩')
       const targetId = targetType === 'private' ? platformID : rest[0]
       
@@ -826,51 +787,43 @@ export class RecordSubscription extends plugin {
           await Bot.pickGroup(targetId).sendMsg(forwardMsg)
         }
         logger.info(`[战绩订阅] 已批量发送 ${messages.length} 条 isRecent 战绩到${targetType === 'private' ? '私信' : `群${targetId}`}: ${platformID}`)
-      } catch (error) {
+      } catch (err) {
         const targetName = targetType === 'private' ? '私信' : `群${targetId}`
-        logger.error(`[战绩订阅] ${targetName}批量推送失败: ${platformID}`, error)
+        logger.error(`[战绩订阅] ${targetName}批量推送失败: ${platformID}`, err)
       }
-    } catch (error) {
-      logger.error(`[战绩订阅] 批量发送 isRecent 战绩失败: ${cacheKey}`, error)
+    } catch (err) {
+      logger.error(`[战绩订阅] 批量发送 isRecent 战绩失败: ${cacheKey}`, err)
     }
   }
 
   /**
    * 检查战绩是否符合筛选条件
-   * @param {string} recordType - sol 或 mp
-   * @param {Object} record - 战绩对象
-   * @param {Array<string>} filters - 筛选条件数组
-   * @returns {boolean}
    */
   checkFilters(recordType, record, filters) {
+    if (filters.length === 0) return true
+    
     for (const filter of filters) {
       switch (filter) {
         case '百万撤离':
-          // 烽火地带：带出价值 >= 100w
           if (recordType === 'sol' && Number(record.FinalPrice) >= 1000000) {
             return true
           }
           break
         
         case '百万战损':
-          // 烽火地带：战损 >= 100w
-          // 战损 = 利润 - 总带出 = 局内损失（负数）
           if (recordType === 'sol') {
             const profit = Number(record.flowCalGainedPrice) || 0
             const carryOut = Number(record.FinalPrice) || 0
-            const loss = profit - carryOut  // 局内损失
-            if (loss <= -1000000) {
+            if (profit - carryOut <= -1000000) {
               return true
             }
           }
           break
         
         case '天才少年':
-          // 烽火地带：击杀 >= 12
           if (recordType === 'sol' && Number(record.KillCount) >= 12) {
             return true
           }
-          // 全面战场：击杀 >= 140
           if (recordType === 'mp' && Number(record.KillNum) >= 140) {
             return true
           }
@@ -878,8 +831,7 @@ export class RecordSubscription extends plugin {
       }
     }
     
-    // 如果有筛选条件但都不满足，返回 false
-    return filters.length === 0
+    return false
   }
 
   /**
@@ -917,8 +869,8 @@ export class RecordSubscription extends plugin {
           return nickname
         }
       }
-    } catch (error) {
-      logger.debug(`[战绩订阅] 获取昵称失败: platformID=${platformID}`, error)
+    } catch (err) {
+      logger.debug(`[战绩订阅] 获取昵称失败: platformID=${platformID}`, err)
     }
     
     return null
@@ -937,9 +889,8 @@ export class RecordSubscription extends plugin {
     }
     try {
       fakeE.runtime = new Runtime(fakeE)
-    } catch (error) {
-      logger.error('[战绩订阅] 创建 Runtime 失败:', error)
-      // 如果创建失败，返回 null，后续会降级为文本消息
+    } catch (err) {
+      logger.error('[战绩订阅] 创建 Runtime 失败:', err)
       return null
     }
     return fakeE
@@ -987,67 +938,51 @@ export class RecordSubscription extends plugin {
       } else if (frameworkToken) {
         displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
       }
-    } catch (error) {
-      logger.warn(`[战绩订阅] 获取昵称失败: platformID=${platformID}`, error)
+    } catch (err) {
+      logger.warn(`[战绩订阅] 获取昵称失败: platformID=${platformID}`, err)
       if (frameworkToken) {
         displayName = `${frameworkToken.substring(0, 4)}****${frameworkToken.slice(-4)}`
       }
     }
 
-    // 构建地图背景图路径的辅助函数（使用新的统一路径，支持降级匹配）
     const getMapBgPath = (mapName, gameMode) => {
       const modePrefix = gameMode === 'sol' ? '烽火' : '全面'
       const baseDir = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map`.replace(/\\/g, '/')
       
-      // 处理地图名称：尝试精确匹配和降级匹配
-      const parts = mapName.split('-')
-      let finalPath = null
-      
-      if (parts.length >= 2) {
-        // 有难度级别的情况：尝试精确匹配，如果不存在则降级到常规
+      if (gameMode === 'mp') {
+        const parts = mapName.split('-')
         const baseMapName = parts[0]
-        const difficulty = parts.slice(1).join('-')
-        
-        // 优先级1: 精确匹配
-        const exactPath = `${baseDir}/${modePrefix}-${baseMapName}-${difficulty}.png`
-        if (fs.existsSync(exactPath)) {
-          finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
-        } else {
-          // 优先级2: 降级到常规版本
+        const jpgPath = `${baseDir}/${modePrefix}-${baseMapName}.jpg`
+        if (fs.existsSync(jpgPath)) {
+          return `imgs/map/${modePrefix}-${baseMapName}.jpg`
+        }
+        const fullMapName = mapName.replace(/-.*$/, '')
+        const fullJpgPath = `${baseDir}/${modePrefix}-${fullMapName}.jpg`
+        if (fs.existsSync(fullJpgPath)) {
+          return `imgs/map/${modePrefix}-${fullMapName}.jpg`
+        }
+        return `imgs/map/${modePrefix}-${baseMapName}.jpg`
+      } else {
+        const parts = mapName.split('-')
+        if (parts.length >= 2) {
+          const baseMapName = parts[0]
+          const difficulty = parts.slice(1).join('-')
+          const exactPath = `${baseDir}/${modePrefix}-${baseMapName}-${difficulty}.png`
+          if (fs.existsSync(exactPath)) {
+            return `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
+          }
           const regularPath = `${baseDir}/${modePrefix}-${baseMapName}-常规.png`
           if (fs.existsSync(regularPath)) {
-            finalPath = `imgs/map/${modePrefix}-${baseMapName}-常规.png`
-          } else {
-            // 优先级3: 尝试基础地图名称
-            const basePath = `${baseDir}/${modePrefix}-${baseMapName}.jpg`
-            if (fs.existsSync(basePath)) {
-              finalPath = `imgs/map/${modePrefix}-${baseMapName}.jpg`
-            } else {
-              // 如果都不存在，返回精确匹配路径（让浏览器处理错误）
-              finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
-            }
+            return `imgs/map/${modePrefix}-${baseMapName}-常规.png`
           }
-        }
-      } else {
-        // 只有基础地图名称的情况
-        const cleanMapName = parts[0]
-        const jpgPath = `${baseDir}/${modePrefix}-${cleanMapName}.jpg`
-        const pngPath = `${baseDir}/${modePrefix}-${cleanMapName}.png`
-        
-        if (fs.existsSync(jpgPath)) {
-          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`
-        } else if (fs.existsSync(pngPath)) {
-          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.png`
+          return `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
         } else {
-          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`
+          const cleanMapName = parts[0]
+          return `imgs/map/${modePrefix}-${cleanMapName}.png`
         }
       }
-      
-      const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${finalPath}`.replace(/\\/g, '/')
-      return `file:///${bgPath}`
     }
 
-    // 构建干员图片路径的辅助函数
     const getOperatorImgPath = (operatorName) => {
       const relativePath = DataManager.getOperatorImagePath(operatorName)
       const imgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${relativePath}`.replace(/\\/g, '/')
@@ -1055,23 +990,16 @@ export class RecordSubscription extends plugin {
     }
 
     // 创建伪事件对象
-    let fakeE
-    try {
-      fakeE = this.createFakeEvent(platformID)
-      if (!fakeE) {
-        logger.warn(`[战绩订阅] 创建伪事件对象失败: ${platformID}，使用文本消息降级`)
-        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
-      }
-    } catch (error) {
-      logger.error(`[战绩订阅] 创建伪事件对象异常: ${platformID}`, error)
+    const fakeE = this.createFakeEvent(platformID)
+    if (!fakeE) {
+      logger.warn(`[战绩订阅] 创建伪事件对象失败: ${platformID}，使用文本消息降级`)
       return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
     }
 
     // 准备模板数据
-    // 如果是 isRecent 战绩，标题显示"最近的战绩"
     const templateData = {
-      isRecent: isRecent,
-      displayName: displayName,
+      isRecent,
+      displayName,
       modeName: modeText,
       time: record.dtEventTime,
       map: mapName || '未知地图',
@@ -1082,27 +1010,36 @@ export class RecordSubscription extends plugin {
 
     if (recordType === 'sol') {
       const finalPrice = Number(record.FinalPrice || 0).toLocaleString()
-      const income = (record.flowCalGainedPrice != null && record.flowCalGainedPrice !== '') 
-        ? Number(record.flowCalGainedPrice).toLocaleString() 
-        : '未知'
+      const incomeValue = (record.flowCalGainedPrice != null && record.flowCalGainedPrice !== '') 
+        ? Number(record.flowCalGainedPrice) 
+        : null
+      const income = incomeValue !== null ? incomeValue.toLocaleString() : '未知'
+      const incomeClass = incomeValue !== null ? (incomeValue >= 0 ? 'income-positive' : 'income-negative') : ''
       
       const duration = this.formatDuration(Number(record.DurationS))
       const escapeStatus = ESCAPE_REASONS[String(record.EscapeFailReason)] || '撤离失败'
-      
       let statusClass = 'fail'
-      if (record.EscapeFailReason === 1 || record.EscapeFailReason === '1') statusClass = 'success'
-      else if (record.EscapeFailReason === 3 || record.EscapeFailReason === '3') statusClass = 'exit'
+      if (record.EscapeFailReason === 1 || record.EscapeFailReason === '1') {
+        statusClass = 'success'
+      } else if (record.EscapeFailReason === 3 || record.EscapeFailReason === '3') {
+        statusClass = 'exit'
+      }
 
       const killCount = record.KillCount ?? 0
       const killAI = record.KillAICount ?? 0
       const killPlayerAI = record.KillPlayerAICount ?? 0
-      const killsHtml = `<span class="kill-player">${killCount}玩家</span> / <span class="kill-ai-player">${killPlayerAI}AI玩家</span> / <span class="kill-ai">${killAI}AI</span>`
+      const killsHtml = `<span class="kill-item kill-player">玩家 ${killCount}</span><span class="kill-separator">/</span><span class="kill-item kill-ai-player">AI玩家 ${killPlayerAI}</span><span class="kill-separator">/</span><span class="kill-item kill-ai">AI ${killAI}</span>`
 
       templateData.status = escapeStatus
       templateData.statusClass = statusClass
       templateData.duration = duration
       templateData.value = finalPrice
       templateData.income = income
+      templateData.incomeClass = incomeClass
+      // 击杀统计数据 - 即使为0也传递，用于显示
+      templateData.killCount = killCount
+      templateData.killAI = killAI
+      templateData.killPlayerAI = killPlayerAI
       templateData.killsHtml = killsHtml
       if (record.Rescue != null && record.Rescue > 0) {
         templateData.rescue = record.Rescue
@@ -1110,10 +1047,12 @@ export class RecordSubscription extends plugin {
     } else {
       const duration = this.formatDuration(Number(record.gametime))
       const result = MP_RESULTS[String(record.MatchResult)] || '未知结果'
-      
       let statusClass = 'fail'
-      if (record.MatchResult === 1 || record.MatchResult === '1') statusClass = 'success'
-      else if (record.MatchResult === 3 || record.MatchResult === '3') statusClass = 'exit'
+      if (record.MatchResult === 1 || record.MatchResult === '1') {
+        statusClass = 'success'
+      } else if (record.MatchResult === 3 || record.MatchResult === '3') {
+        statusClass = 'exit'
+      }
 
       templateData.status = result
       templateData.statusClass = statusClass
@@ -1125,7 +1064,6 @@ export class RecordSubscription extends plugin {
       }
     }
 
-    // 渲染模板（使用 base64 模式获取图片数据，而不是自动发送）
     try {
       const base64Data = await Render.render('Template/recordPush/recordPush', templateData, {
         e: fakeE,
@@ -1135,14 +1073,11 @@ export class RecordSubscription extends plugin {
       
       if (base64Data) {
         return base64Data
-      } else {
-        // 如果渲染失败，返回文本消息作为降级
-        logger.warn(`[战绩订阅] 图片渲染返回空值，使用文本消息降级: ${platformID} | 模式: ${modeText}`)
-        return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
       }
-    } catch (error) {
-      logger.error(`[战绩订阅] 图片渲染异常: ${platformID} | 模式: ${modeText}`, error)
-      // 如果渲染异常，返回文本消息作为降级
+      logger.warn(`[战绩订阅] 图片渲染返回空值，使用文本消息降级: ${platformID} | 模式: ${modeText}`)
+      return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
+    } catch (err) {
+      logger.error(`[战绩订阅] 图片渲染异常: ${platformID} | 模式: ${modeText}`, err)
       return this.formatRecordMessageText(recordType, record, frameworkToken, displayName, mapName, operatorName, isRecent)
     }
   }

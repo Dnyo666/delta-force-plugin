@@ -64,6 +64,7 @@ pnpm install --filter=delta-force-plugin
 - [x] Token绑定与切换
 - [x] 角色绑定
 - [x] 个人信息查询
+- [x] 地图统计
 - [x] 日报/周报数据
 - [x] 战绩查询
 - [x] 战绩推送
