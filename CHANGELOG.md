@@ -68,6 +68,7 @@
   - 移除未使用的函数：`getWeaponsByCaliber`、`getWeaponCategories`、`getWeaponsByCategory`
 - 优化语音功能（`apps/entertainment/Voice.js`）
   - 使用 `isValidAudioCharacter` 验证角色名，优先识别已知角色
+- 优化地图统计功能（`apps/info/MapStats.js`）
 - 更新文档
 
 ### style（样式）
