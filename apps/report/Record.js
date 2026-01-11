@@ -7,7 +7,8 @@ import fs from 'fs'
 const ESCAPE_REASONS = {
   '1': '撤离成功',
   '2': '被玩家击杀',
-  '3': '被人机击杀'
+  '3': '被人机击杀',
+  '10': '撤离失败'
 }
 
 const MP_RESULTS = {
@@ -60,16 +61,16 @@ export class Record extends plugin {
    * @returns {Promise<Object|null>} 返回 { modeName, image } 或 null（失败时）
    */
   async queryAndRenderMode(mode, page, token) {
-    const modeName = mode === 'sol' ? '烽火地带' : '全面战场';
-    const typeId = mode === 'sol' ? 4 : 5;
-    const recordsPerPage = 10;
+    const modeName = mode === 'sol' ? '烽火地带' : '全面战场'
+    const typeId = mode === 'sol' ? 4 : 5
+    const recordsPerPage = 10
 
-    const res = await this.api.getRecord(token, typeId, page);
-    if (await utils.handleApiError(res, this.e)) return null;
+    const res = await this.api.getRecord(token, typeId, page)
+    if (await utils.handleApiError(res, this.e)) return null
 
     if (!res.data || !Array.isArray(res.data)) {
-      await this.e.reply(`查询失败: ${modeName} API 返回的数据格式不正确。`);
-      return null;
+      await this.e.reply(`查询失败: ${modeName} API 返回的数据格式不正确。`)
+      return null
     }
 
     const records = res.data
@@ -83,42 +84,71 @@ export class Record extends plugin {
     const getMapBgPath = (mapName, gameMode) => {
       const modePrefix = gameMode === 'sol' ? '烽火' : '全面'
       const baseDir = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map`.replace(/\\/g, '/')
-      const parts = mapName.split('-')
-      let finalPath = null
       
-      if (parts.length >= 2) {
-        const baseMapName = parts[0]
-        const difficulty = parts.slice(1).join('-')
-        const exactPath = `${baseDir}/${modePrefix}-${baseMapName}-${difficulty}.png`
-        if (fs.existsSync(exactPath)) {
-          finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
-        } else {
-          const regularPath = `${baseDir}/${modePrefix}-${baseMapName}-常规.png`
-          if (fs.existsSync(regularPath)) {
-            finalPath = `imgs/map/${modePrefix}-${baseMapName}-常规.png`
+      // 全面战场的地图文件格式是"全面-地图名.jpg"，没有难度级别
+      // 烽火地带的地图文件格式是"烽火-地图名-难度.png"，有难度级别
+      if (gameMode === 'mp') {
+        // 全面战场：直接使用地图名称匹配
+        const parts = mapName.split('-')
+        const baseMapName = parts[0] // 取第一部分作为地图名称
+        
+        // 尝试匹配"全面-地图名.jpg"
+        const jpgPath = `${baseDir}/${modePrefix}-${baseMapName}.jpg`
+        if (fs.existsSync(jpgPath)) {
+          const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map/${modePrefix}-${baseMapName}.jpg`.replace(/\\/g, '/')
+          return `file:///${bgPath}`
+        }
+        
+        // 如果找不到，尝试使用完整地图名称（去掉难度部分）
+        const fullMapName = mapName.replace(/-.*$/, '') // 移除"-"后面的所有内容
+        const fullJpgPath = `${baseDir}/${modePrefix}-${fullMapName}.jpg`
+        if (fs.existsSync(fullJpgPath)) {
+          const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map/${modePrefix}-${fullMapName}.jpg`.replace(/\\/g, '/')
+          return `file:///${bgPath}`
+        }
+        
+        // 如果还是找不到，返回默认路径
+        const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/imgs/map/${modePrefix}-${baseMapName}.jpg`.replace(/\\/g, '/')
+        return `file:///${bgPath}`
+      } else {
+        // 烽火地带：处理地图名称和难度级别
+        const parts = mapName.split('-')
+        let finalPath = null
+        
+        if (parts.length >= 2) {
+          // 有难度级别的情况：尝试精确匹配，如果不存在则降级到常规
+          const baseMapName = parts[0]
+          const difficulty = parts.slice(1).join('-')
+          
+          // 优先级1: 精确匹配
+          const exactPath = `${baseDir}/${modePrefix}-${baseMapName}-${difficulty}.png`
+          if (fs.existsSync(exactPath)) {
+            finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
           } else {
-            const basePath = `${baseDir}/${modePrefix}-${baseMapName}.jpg`
-            if (fs.existsSync(basePath)) {
-              finalPath = `imgs/map/${modePrefix}-${baseMapName}.jpg`
+            // 优先级2: 降级到常规版本
+            const regularPath = `${baseDir}/${modePrefix}-${baseMapName}-常规.png`
+            if (fs.existsSync(regularPath)) {
+              finalPath = `imgs/map/${modePrefix}-${baseMapName}-常规.png`
             } else {
+              // 如果都不存在，返回精确匹配路径（让浏览器处理错误）
               finalPath = `imgs/map/${modePrefix}-${baseMapName}-${difficulty}.png`
             }
           }
-        }
-      } else {
-        const cleanMapName = parts[0]
-        const jpgPath = `${baseDir}/${modePrefix}-${cleanMapName}.jpg`
-        const pngPath = `${baseDir}/${modePrefix}-${cleanMapName}.png`
-        if (fs.existsSync(jpgPath)) {
-          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`
-        } else if (fs.existsSync(pngPath)) {
-          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.png`
         } else {
-          finalPath = `imgs/map/${modePrefix}-${cleanMapName}.jpg`
+          // 只有基础地图名称的情况
+          const cleanMapName = parts[0]
+          const pngPath = `${baseDir}/${modePrefix}-${cleanMapName}.png`
+          
+          if (fs.existsSync(pngPath)) {
+            finalPath = `imgs/map/${modePrefix}-${cleanMapName}.png`
+          } else {
+            finalPath = `imgs/map/${modePrefix}-${cleanMapName}.png`
+          }
         }
+        
+        const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${finalPath}`.replace(/\\/g, '/')
+        return `file:///${bgPath}`
       }
-      const bgPath = `${process.cwd()}/plugins/delta-force-plugin/resources/${finalPath}`.replace(/\\/g, '/')
-      return `file:///${bgPath}`
     }
 
     const templateRecords = []
@@ -141,26 +171,34 @@ export class Record extends plugin {
       }
 
       if (mode === 'sol') {
-        const status = ESCAPE_REASONS[String(r.EscapeFailReason)] || '撤离失败'
+        const escapeStatus = ESCAPE_REASONS[String(r.EscapeFailReason)] || '撤离失败'
         const duration = this.formatDuration(Number(r.DurationS))
         let statusClass = 'fail'
-        if (r.EscapeFailReason === 1 || r.EscapeFailReason === '1') statusClass = 'success'
-        else if (r.EscapeFailReason === 3 || r.EscapeFailReason === '3') statusClass = 'exit'
+        if (r.EscapeFailReason === 1 || r.EscapeFailReason === '1') {
+          statusClass = 'success'
+        } else if (r.EscapeFailReason === 3 || r.EscapeFailReason === '3') {
+          statusClass = 'exit'
+        }
 
-        recordData.status = status
+        recordData.status = escapeStatus
         recordData.statusClass = statusClass
         recordData.duration = duration
         recordData.value = Number(r.FinalPrice).toLocaleString()
-        recordData.income = r.flowCalGainedPrice ? Number(r.flowCalGainedPrice).toLocaleString() : '未知'
-        recordData.killsHtml = `<span class="kill-player">干员(${r.KillCount || 0})</span> / <span class="kill-ai-player">AI玩家(${r.KillPlayerAICount || 0})</span> / <span class="kill-ai">其他AI(${r.KillAICount || 0})</span>`
+        const incomeValue = r.flowCalGainedPrice ? Number(r.flowCalGainedPrice) : null
+        recordData.income = incomeValue !== null ? incomeValue.toLocaleString() : '未知'
+        recordData.incomeClass = incomeValue !== null ? (incomeValue >= 0 ? 'income-positive' : 'income-negative') : ''
+        recordData.killsHtml = `<span class="kill-item kill-player">玩家 ${r.KillCount || 0}</span><span class="kill-separator">/</span><span class="kill-item kill-ai-player">AI玩家 ${r.KillPlayerAICount || 0}</span><span class="kill-separator">/</span><span class="kill-item kill-ai">AI ${r.KillAICount || 0}</span>`
       } else {
-        const status = MP_RESULTS[String(r.MatchResult)] || '未知结果'
+        const result = MP_RESULTS[String(r.MatchResult)] || '未知结果'
         const duration = this.formatDuration(Number(r.gametime))
         let statusClass = 'fail'
-        if (r.MatchResult === 1 || r.MatchResult === '1') statusClass = 'success'
-        else if (r.MatchResult === 3 || r.MatchResult === '3') statusClass = 'exit'
+        if (r.MatchResult === 1 || r.MatchResult === '1') {
+          statusClass = 'success'
+        } else if (r.MatchResult === 3 || r.MatchResult === '3') {
+          statusClass = 'exit'
+        }
 
-        recordData.status = status
+        recordData.status = result
         recordData.statusClass = statusClass
         recordData.duration = duration
         recordData.kda = `${r.KillNum}/${r.Death}/${r.Assist}`
@@ -221,18 +259,15 @@ export class Record extends plugin {
     }
 
     if (specifiedMode) {
-      // 只查询一个模式，直接发送图片
       const modeName = specifiedMode === 'sol' ? '烽火地带' : '全面战场'
       await e.reply(`正在查询 ${modeName} 的战绩 (第${page}页)，请稍候...`)
       const result = await this.queryAndRenderMode(specifiedMode, page, token)
-      
       if (result && result.image) {
         await e.reply(result.image)
       }
       return true
     }
 
-    // 查询两个模式，收集图片后决定发送方式
     await e.reply(`正在查询战绩 (第${page}页)，请稍候...`)
     
     const results = []
@@ -243,28 +278,21 @@ export class Record extends plugin {
     if (mpResult) results.push(mpResult)
 
     if (results.length === 0) {
-      // 两个模式都没有数据，已经在前面的方法中回复了
       return true
     }
 
     if (results.length === 1) {
-      // 只有一个模式的图片，直接发送
       await e.reply(results[0].image)
       return true
     }
 
-    // 有两个模式的图片，使用合并转发消息发送
     const bot = Bot.pickUser(e.user_id)
-    const forwardMsg = []
-
-    // 添加标题消息
-    forwardMsg.push({
+    const forwardMsg = [{
       message: `【战绩查询】\n第${page}页\n${results.map(r => r.modeName).join(' + ')}`,
       nickname: bot.nickname,
       user_id: bot.uin
-    })
+    }]
 
-    // 添加两个模式的图片
     for (const result of results) {
       forwardMsg.push({
         message: [`【${result.modeName}】\n`, result.image],
@@ -274,7 +302,6 @@ export class Record extends plugin {
     }
 
     await e.reply(await Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
-    
     return true
   }
 } 

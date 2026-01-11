@@ -1,218 +1,392 @@
-html {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-}
-
 body {
-    background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+    background: #0b0f13;
     color: #F2F2F2;
+    width: 600px;
+    height: auto;
+    min-height: 400px;
     font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
     margin: 0;
-    padding: 20px;
-    width: 600px;
-    transform: none;
-    transform-origin: unset;
-    flex-shrink: 0;
+    padding: 0;
 }
 
 .container {
-    padding: 20px;
-    max-width: 600px;
-    width: 100%;
-    margin: 0 auto;
-}
-
-.header {
-    text-align: center;
-    margin-bottom: 30px;
-    padding-bottom: 20px;
-    border-bottom: 3px solid;
-    border-image: linear-gradient(90deg, transparent, #0FF796, transparent) 1;
-}
-
-.title {
-    font-size: 32px;
-    font-weight: bold;
-    background: linear-gradient(135deg, #0FF796, #00d4aa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0;
-    letter-spacing: 2px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.title .recent-prefix {
-    font-size: 20px;
-    font-weight: 500;
-    opacity: 0.85;
-}
-
-.subtitle {
-    font-size: 16px;
-    color: #aaa;
-    margin-top: 8px;
-    font-weight: 300;
-}
-
-.record-card {
     position: relative;
-    background: linear-gradient(135deg, rgba(44, 44, 50, 0.95), rgba(35, 35, 40, 0.95));
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    width: 600px;
+    min-height: 400px;
     margin: 0 auto;
-    max-width: 560px;
+    background: transparent;
+    overflow: hidden;
 }
 
-/* 地图背景图 */
-.record-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-image: var(--map-bg-url, none);
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    opacity: 0.45;
-    z-index: 0;
-    pointer-events: none;
-}
-
-/* 干员图片（右侧显示） */
-.record-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: auto;
-    right: -18%;
-    bottom: 0;
-    width: 56%;
-    background-image: var(--operator-img-url, none);
-    background-size: contain;
-    background-position: right center;
-    background-repeat: no-repeat;
-    opacity: 0.85;
-    mask-image: linear-gradient(to right, transparent 0%, black 20%, black 100%);
-    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 20%, black 100%);
-    z-index: 1;
-    pointer-events: none;
-}
-
-.record-card > * {
+/* 头部区域 */
+.header {
     position: relative;
     z-index: 2;
+    padding: 20px;
 }
 
-.card-header {
+.header-content {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
-    padding: 14px 22px;
-    background: linear-gradient(135deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.03));
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    font-size: 15px;
+    justify-content: space-between;
+    gap: 20px;
 }
 
-.record-status {
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.game-logo {
+    height: 28px;
+    width: auto;
+    opacity: 0.95;
+    flex-shrink: 0;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+}
+
+.header-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.recent-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    background: rgba(255, 180, 0, 0.2);
+    border: 1px solid rgba(255, 180, 0, 0.4);
+    border-radius: 4px;
+    font-size: 12px;
     font-weight: 600;
-    padding: 6px 16px;
-    border-radius: 25px;
+    color: #ffb400;
+}
+
+.player-name {
+    color: #FFFFFF;
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.3px;
+}
+
+.mode-name {
+    color: rgba(15, 247, 150, 1);
+    font-weight: 600;
     font-size: 13px;
-    white-space: nowrap;
     letter-spacing: 0.5px;
 }
 
-.record-status.success {
-    background: linear-gradient(135deg, rgba(15, 247, 150, 0.25), rgba(15, 247, 150, 0.15));
-    color: #0FF796;
-    border: 1.5px solid rgba(15, 247, 150, 0.5);
+.time-stamp {
+    color: rgba(242, 242, 242, 0.9);
+    font-weight: 500;
+    font-size: 12px;
+    background: rgba(0, 0, 0, 0.4);
+    padding: 5px 12px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    letter-spacing: 0.8px;
+    font-family: 'Consolas', 'Monaco', monospace;
+    white-space: nowrap;
 }
 
-.record-status.fail {
-    background: linear-gradient(135deg, rgba(255, 82, 82, 0.25), rgba(255, 82, 82, 0.15));
-    color: #ff5252;
-    border: 1.5px solid rgba(255, 82, 82, 0.5);
+/* 内容区域 */
+.content {
+    position: relative;
+    z-index: 2;
+    padding: 0 20px 20px 20px;
 }
 
-.record-status.exit {
-    background: linear-gradient(135deg, rgba(255, 180, 0, 0.25), rgba(255, 180, 0, 0.15));
-    color: #ffb400;
-    border: 1.5px solid rgba(255, 180, 0, 0.5);
+/* 主卡片区域：使用地图作为背景 */
+.record-card {
+    position: relative;
+    border-radius: 10px;
+    overflow: hidden;
+    min-height: 300px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: rgba(11, 15, 19, 0.8);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
 }
 
-.card-body {
-    padding: 18px 22px 20px;
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px 18px;
-    background: rgba(0, 0, 0, 0.15);
+/* 地图名称显示（在状态标签行中，左对齐） */
+.map-name-display {
+    font-size: 18px;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-shadow: 
+        0 1px 3px rgba(0, 0, 0, 0.8),
+        0 2px 6px rgba(0, 0, 0, 0.6);
+    letter-spacing: 0.5px;
+    line-height: 1.4;
+    white-space: nowrap;
 }
 
-.stat-item {
-    font-size: 14px;
+.operator-name-display {
+    font-size: 15px;
+    font-weight: bold;
+    color: #FFFFFF;
+    text-shadow: 
+        0 1px 2px rgba(0, 0, 0, 0.6),
+        0 2px 4px rgba(0, 0, 0, 0.4);
+    letter-spacing: 0.3px;
+    line-height: 1.4;
+    white-space: nowrap;
+}
+
+/* 数据区域（占据整个宽度，增加透明度） */
+.data-section {
+    position: relative;
+    width: 100%;
     display: flex;
+    flex-direction: column;
+    z-index: 2;
+    min-height: 300px;
+    background: rgba(11, 15, 19, 0.65);
+}
+
+/* 状态标签和地图名称（同一行） */
+.card-status {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    gap: 12px;
+    background: rgba(0, 0, 0, 0.25);
+}
+
+.title-info {
+    display: flex;
+    flex-direction: row;
     align-items: center;
     gap: 8px;
-    padding: 6px 0;
+    flex: 1;
+    flex-wrap: wrap;
 }
 
-.stat-item strong {
-    color: #999;
-    font-weight: 500;
-    white-space: nowrap;
+.title-separator {
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 16px;
+    font-weight: 300;
+    margin: 0 2px;
+}
+
+.status-badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 4px;
     font-size: 13px;
+    font-weight: bold;
+    color: #FFFFFF;
+    flex-shrink: 0;
 }
 
-.stat-item span {
-    color: #F2F2F2;
+.status-badge.success {
+    background: rgba(15, 247, 150, 0.25);
+    color: #0FF796;
+    border: 1px solid rgba(15, 247, 150, 0.4);
+}
+
+.status-badge.fail {
+    background: rgba(255, 82, 82, 0.25);
+    color: #ff5252;
+    border: 1px solid rgba(255, 82, 82, 0.4);
+}
+
+.status-badge.exit {
+    background: rgba(255, 180, 0, 0.25);
+    color: #ffb400;
+    border: 1px solid rgba(255, 180, 0, 0.4);
+}
+
+/* 数据内容区域 */
+.data-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 20px 15px;
+    flex: 1;
+    justify-content: center;
+}
+
+/* 第1行：主要数据 */
+.data-row-main {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    justify-content: center;
+}
+
+.data-item-main {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    min-width: 120px;
+}
+
+.data-label {
+    font-size: 12px;
+    color: #FFFFFF;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 4px;
     font-weight: 600;
-    font-size: 15px;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: inline-block;
+    letter-spacing: 0.3px;
+    text-align: center;
 }
 
-.stat-item span.kda {
+.data-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: #F2F2F2;
+    line-height: 1.5;
+    word-break: break-word;
+    margin-top: 2px;
+    text-align: center;
+}
+
+.highlight-value,
+.highlight-score,
+.highlight-kda {
     color: #0FF796;
     font-weight: 700;
+    font-size: 19px;
 }
 
-/* 击杀统计特殊样式 */
-.stat-item.kills-stat {
-    grid-column: 1 / -1;
-    padding-top: 12px;
-    margin-top: 6px;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: linear-gradient(90deg, rgba(15, 247, 150, 0.05), transparent);
-    padding-left: 10px;
-    border-radius: 6px;
+.highlight-income {
+    font-weight: 700;
+    font-size: 19px;
 }
 
-.stat-item.kills-stat span {
-    color: #F2F2F2;
-    font-size: 14px;
+/* 净收益正负颜色 */
+.highlight-income.income-positive {
+    color: #0FF796;
 }
 
-/* 击杀数字颜色 - 为不同类型的击杀添加颜色 */
+.highlight-income.income-negative {
+    color: #ff5252;
+}
+
+/* 第2行：击杀统计和救援 */
+.data-row-secondary {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* 击杀统计（烽火地带） */
+.kills-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.kills-label {
+    font-size: 12px;
+    color: #FFFFFF;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: inline-block;
+    letter-spacing: 0.3px;
+    text-align: center;
+}
+
+.kills-content {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    line-height: 1.6;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.kill-item {
+    font-weight: 600;
+    display: inline-block;
+}
+
+.kill-separator {
+    color: rgba(242, 242, 242, 0.5);
+    margin: 0 2px;
+    font-weight: 400;
+}
+
 .kill-player {
     color: #0FF796;
-    font-weight: 700;
 }
 
 .kill-ai-player {
     color: #ff5252;
-    font-weight: 700;
 }
 
 .kill-ai {
     color: #ffb400;
-    font-weight: 700;
+}
+
+/* 救援 */
+.rescue-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.rescue-label {
+    font-size: 12px;
+    color: #FFFFFF;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 600;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: inline-block;
+    letter-spacing: 0.3px;
+    text-align: center;
+}
+
+.rescue-value {
+    font-size: 17px;
+    font-weight: 600;
+    color: #F2F2F2;
+    line-height: 1.5;
+    margin-top: 2px;
+    text-align: center;
+}
+
+/* 页脚 */
+.template-footer {
+    padding: 15px 20px;
+}
+
+.copyright-text {
+    font-size: 12px;
+    color: rgba(242, 242, 242, 0.5);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    text-align: center;
 }

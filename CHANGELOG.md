@@ -68,11 +68,14 @@
   - 移除未使用的函数：`getWeaponsByCaliber`、`getWeaponCategories`、`getWeaponsByCategory`
 - 优化语音功能（`apps/entertainment/Voice.js`）
   - 使用 `isValidAudioCharacter` 验证角色名，优先识别已知角色
+- 优化地图统计功能（`apps/info/MapStats.js`）
 - 更新文档
 
 ### style（样式）
 - 优化周报模板（`weeklyReport.html` 和 `weeklyReport.css`）
   - 新增干员图片占位符功能：当干员图片不存在或加载失败时显示"暂无图片"文字
+- 优化战绩模板（`record.html` 和 `record.css`）
+- 优化战绩推送模板（`recordPush.html` 和 `recordPush.css`）
 
 ## [1.4.0-0] - 历史版本
 

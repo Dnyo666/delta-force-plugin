@@ -4,77 +4,116 @@
 {{/block}}
 {{block 'main'}}
 <div class="container">
+    <!-- 头部区域 -->
     <div class="header">
-        <div class="title">{{modeName}}战绩</div>
-        <div class="subtitle">第 {{page}} 页</div>
+        <div class="header-content">
+            <div class="header-left">
+                <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
+            </div>
+            <div class="header-right">
+                <div class="header-info">
+                    <span class="mode-name">{{modeName}}战绩</span>
+                </div>
+                <span class="time-stamp">第 {{page}} 页</span>
+            </div>
+        </div>
     </div>
 
-    <div class="record-list">
-        {{if records && records.length > 0}}
-            {{each records item index}}
-            <div class="record-card" style="{{if item.mapBg}}--map-bg-url: url({{item.mapBg}});{{/if}}{{if item.operatorImg}}--operator-img-url: url({{item.operatorImg}});{{/if}}">
-                <div class="card-header">
-                    <span class="record-index">#{{item.recordNum}}</span>
-                    <span class="record-time">{{item.time}}</span>
-                    <span class="record-status {{item.statusClass}}">{{item.status}}</span>
+    <div class="content">
+        <div class="record-list">
+            {{if records && records.length > 0}}
+                {{each records item index}}
+                <!-- 战绩卡片：使用地图作为背景 -->
+                <div class="record-card" style="{{if item.mapBg}}background-image: url({{item.mapBg}});{{/if}}">
+                    <!-- 数据区域（占据整个宽度） -->
+                    <div class="data-section">
+                        <!-- 状态标签和地图名称（同一行） -->
+                        <div class="card-status">
+                            <div class="title-info">
+                                <span class="record-index">#{{item.recordNum}}</span>
+                                <span class="map-name-display">{{item.map}}</span>
+                                <span class="title-separator">·</span>
+                                <span class="operator-name-display">{{item.operator}}</span>
+                            </div>
+                            <div class="status-right">
+                                <span class="record-time">{{item.time}}</span>
+                                <span class="status-badge {{item.statusClass}}">{{item.status}}</span>
+                            </div>
+                        </div>
+
+                        <!-- 数据内容区域 -->
+                        <div class="data-content">
+                            <!-- 第1行：主要数据 -->
+                            <div class="data-row-main">
+                                <!-- 烽火地带：带出价值 -->
+                                {{if item.value}}
+                                <div class="data-item-main">
+                                    <div class="data-label">带出价值</div>
+                                    <div class="data-value highlight-value">{{item.value}}</div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 烽火地带：净收益 -->
+                                {{if item.income}}
+                                <div class="data-item-main">
+                                    <div class="data-label">净收益</div>
+                                    <div class="data-value highlight-income {{item.incomeClass}}">{{item.income}}</div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 全面战场：得分 -->
+                                {{if item.score}}
+                                <div class="data-item-main">
+                                    <div class="data-label">得分</div>
+                                    <div class="data-value highlight-score">{{item.score}}</div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 全面战场：KDA -->
+                                {{if item.kda}}
+                                <div class="data-item-main">
+                                    <div class="data-label">KDA</div>
+                                    <div class="data-value highlight-kda">{{item.kda}}</div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 时长（两种模式都有） -->
+                                {{if item.duration}}
+                                <div class="data-item-main">
+                                    <div class="data-label">时长</div>
+                                    <div class="data-value">{{item.duration}}</div>
+                                </div>
+                                {{/if}}
+                            </div>
+
+                            <!-- 第2行：击杀统计和救援 -->
+                            <div class="data-row-secondary">
+                                <!-- 烽火地带：击杀统计 -->
+                                {{if item.killsHtml}}
+                                <div class="kills-section">
+                                    <div class="kills-label">击杀统计</div>
+                                    <div class="kills-content">
+                                        {{@item.killsHtml}}
+                                    </div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 救援次数（两种模式都有） -->
+                                {{if item.rescue}}
+                                <div class="rescue-section">
+                                    <div class="rescue-label">救援</div>
+                                    <div class="rescue-value">{{item.rescue}}次</div>
+                                </div>
+                                {{/if}}
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <div class="stat-item">
-                        <strong>地图:</strong>
-                        <span>{{item.map}}</span>
-                    </div>
-                    <div class="stat-item">
-                        <strong>干员:</strong>
-                        <span>{{item.operator}}</span>
-                    </div>
-                    {{if item.duration}}
-                    <div class="stat-item">
-                        <strong>时长:</strong>
-                        <span>{{item.duration}}</span>
-                    </div>
-                    {{/if}}
-                    {{if item.kda}}
-                    <div class="stat-item">
-                        <strong>KDA:</strong>
-                        <span class="kda">{{item.kda}}</span>
-                    </div>
-                    {{/if}}
-                    {{if item.value}}
-                    <div class="stat-item">
-                        <strong>带出价值:</strong>
-                        <span>{{item.value}}</span>
-                    </div>
-                    {{/if}}
-                    {{if item.income}}
-                    <div class="stat-item">
-                        <strong>净收益:</strong>
-                        <span>{{item.income}}</span>
-                    </div>
-                    {{/if}}
-                    {{if item.score}}
-                    <div class="stat-item">
-                        <strong>得分:</strong>
-                        <span>{{item.score}}</span>
-                    </div>
-                    {{/if}}
-                    {{if item.rescue}}
-                    <div class="stat-item">
-                        <strong>救援:</strong>
-                        <span>{{item.rescue}}</span>
-                    </div>
-                    {{/if}}
-                    {{if item.killsHtml}}
-                    <div class="stat-item kills-stat">
-                        <strong>击杀:</strong>
-                        <span>{{@item.killsHtml}}</span>
-                    </div>
-                    {{/if}}
-                </div>
-            </div>
-            {{/each}}
-        {{else}}
-            <div class="no-data">当前页面无战绩记录</div>
-        {{/if}}
+                {{/each}}
+            {{else}}
+                <div class="no-data">当前页面无战绩记录</div>
+            {{/if}}
+        </div>
     </div>
     
     <!-- 页脚 -->

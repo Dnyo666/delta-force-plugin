@@ -47,11 +47,11 @@ export class MapStats extends plugin {
     return `${sign}${absValue.toLocaleString()}`
   }
 
-  calculateWinRate(winnum, total) {
-    if (!winnum || !total || total === '0') return '0%'
-    const win = parseFloat(winnum)
-    const tot = parseFloat(total)
-    return (isNaN(win) || isNaN(tot) || tot === 0) ? '0%' : `${((win / tot) * 100).toFixed(1)}%`
+  calculateRate(numerator, denominator) {
+    if (!numerator || !denominator || denominator === '0') return '0%'
+    const num = parseFloat(numerator)
+    const den = parseFloat(denominator)
+    return (isNaN(num) || isNaN(den) || den === 0) ? '0%' : `${((num / den) * 100).toFixed(1)}%`
   }
 
   calculateKDA(kill, assist, death) {
@@ -63,18 +63,10 @@ export class MapStats extends plugin {
     return d === 0 ? k.toFixed(2) : ((k + a) / d).toFixed(2)
   }
 
-  calculateEscapeRate(escaped, total) {
-    if (!escaped || !total || total === '0') return '0%'
-    const esc = parseFloat(escaped)
-    const tot = parseFloat(total)
-    return (isNaN(esc) || isNaN(tot) || tot === 0) ? '0%' : `${((esc / tot) * 100).toFixed(1)}%`
-  }
-
   getMapBaseName(mapName) {
     return mapName ? mapName.replace(/[-（(].*$/, '').trim() : ''
   }
 
-  // 处理烽火地带数据项
   processSolItem(item) {
     const mapName = item.mapName || DataManager.getMapName(item.mapId)
     const data = item.data
@@ -87,7 +79,7 @@ export class MapStats extends plugin {
         profit: this.formatProfit(data.a1),
         totalGames: this.formatNumber(data.zdj || data.cs),
         escaped: this.formatNumber(data.isescapednum),
-        escapeRate: this.calculateEscapeRate(data.isescapednum, data.zdj || data.cs),
+        escapeRate: this.calculateRate(data.isescapednum, data.zdj || data.cs),
         kill: this.formatNumber(data.killnum),
         failed: this.formatNumber(data.nums)
       },
@@ -95,7 +87,6 @@ export class MapStats extends plugin {
     }
   }
 
-  // 处理全面战场数据项
   processMpItem(item) {
     const mapName = item.mapName || DataManager.getMapName(item.mapId)
     const data = item.data
@@ -108,7 +99,7 @@ export class MapStats extends plugin {
       mp: {
         win: this.formatNumber(data.winnum),
         totalGames: this.formatNumber(data.zdjnum),
-        winRate: this.calculateWinRate(data.winnum, data.zdjnum),
+        winRate: this.calculateRate(data.winnum, data.zdjnum),
         score: this.formatNumber(data.score),
         gameTime: this.formatDuration(parseInt(data.gametime)),
         kill: this.formatNumber(data.killnum),
@@ -129,6 +120,7 @@ export class MapStats extends plugin {
     const args = argString.split(' ').filter(Boolean)
 
     let type = '', seasonid = 'all', mapKeyword = '', shouldMerge = false
+    let hasSeasonId = false
 
     for (const arg of args) {
       if (['烽火', '烽火地带', 'sol', '摸金'].includes(arg)) {
@@ -137,36 +129,46 @@ export class MapStats extends plugin {
         type = 'mp'
       } else if (['all', '全部'].includes(arg.toLowerCase())) {
         seasonid = 'all'
+        hasSeasonId = true
       } else if (!isNaN(arg)) {
         seasonid = arg
+        hasSeasonId = true
       } else {
         mapKeyword = arg
       }
     }
 
-    if (!type && !mapKeyword && !args.length) {
-      shouldMerge = true
-      type = ''
-      seasonid = 'all'
-    } else if (mapKeyword) {
+    if (mapKeyword) {
       shouldMerge = false
       if (!type) type = ''
-    } else {
+    } else if (hasSeasonId) {
       shouldMerge = false
       if (!type) {
         return await this.e.reply([
           segment.at(this.e.user_id),
-          '\n请指定游戏模式或地图名称：\n' +
+          '\n请指定游戏模式：\n' +
           '格式：\n' +
           '  ^地图统计                    # 合并所有基础地图数据（烽火+全面）\n' +
+          '  ^地图统计 烽火               # 合并显示所有烽火地图数据\n' +
+          '  ^地图统计 全面               # 合并显示所有全面地图数据\n' +
           '  ^地图统计 烽火 5             # 查询烽火地带第5赛季（不合并）\n' +
           '  ^地图统计 全面 all           # 查询全面战场所有赛季（不合并）\n' +
           '  ^地图统计 大坝               # 搜索包含"大坝"的地图（不合并）'
         ])
       }
+    } else if (type) {
+      shouldMerge = true
+      seasonid = 'all'
+    } else {
+      shouldMerge = true
+      type = ''
+      seasonid = 'all'
     }
 
-    await this.e.reply(`正在查询地图统计数据${type ? `（${type === 'sol' ? '烽火地带' : '全面战场'}）` : '（烽火地带 + 全面战场）'}，请稍候...`)
+    const queryTypeText = shouldMerge 
+      ? (type === 'sol' ? '（烽火地带-合并）' : type === 'mp' ? '（全面战场-合并）' : '（烽火地带 + 全面战场-合并）')
+      : (type ? `（${type === 'sol' ? '烽火地带' : '全面战场'}` : '（烽火地带 + 全面战场）')
+    await this.e.reply(`正在查询地图统计数据${queryTypeText}，请稍候...`)
 
     try {
       let solRes = null, mpRes = null
@@ -200,15 +202,15 @@ export class MapStats extends plugin {
             }
           } catch {}
         }
-      } catch (error) {
-        logger.debug(`[MapStats] 获取用户信息失败:`, error)
+      } catch (err) {
+        logger.debug(`[MapStats] 获取用户信息失败:`, err)
       }
 
       const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${this.e.user_id}&spec=640&img_type=jpg`
       const currentDate = new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit' })
 
       if (shouldMerge) {
-        return await this.processMergedData(solRes, mpRes, userName, userAvatar, qqAvatarUrl, currentDate)
+        return await this.processMergedData(solRes, mpRes, type, userName, userAvatar, qqAvatarUrl, currentDate)
       } else if (mapKeyword) {
         return await this.processSearchData(solRes, mpRes, mapKeyword, userName, userAvatar, qqAvatarUrl, currentDate, seasonid)
       } else {
@@ -223,10 +225,10 @@ export class MapStats extends plugin {
     }
   }
 
-  async processMergedData(solRes, mpRes, userName, userAvatar, qqAvatarUrl, currentDate) {
+  async processMergedData(solRes, mpRes, type, userName, userAvatar, qqAvatarUrl, currentDate) {
     const solMapStats = new Map()
 
-    if (solRes?.success && Array.isArray(solRes.data)) {
+    if ((!type || type === 'sol') && solRes?.success && Array.isArray(solRes.data)) {
       const validMaps = solRes.data.filter(item => item.data !== null && item.data !== undefined)
       const groupedByBase = new Map()
 
@@ -257,7 +259,7 @@ export class MapStats extends plugin {
             profit: this.formatProfit(totalProfit),
             totalGames: this.formatNumber(totalGames),
             escaped: this.formatNumber(totalEscaped),
-            escapeRate: this.calculateEscapeRate(totalEscaped, totalGames),
+            escapeRate: this.calculateRate(totalEscaped, totalGames),
             kill: this.formatNumber(totalKill),
             failed: this.formatNumber(totalFailed)
           },
@@ -266,7 +268,7 @@ export class MapStats extends plugin {
       }
     }
 
-    if (mpRes?.success && Array.isArray(mpRes.data)) {
+    if ((!type || type === 'mp') && mpRes?.success && Array.isArray(mpRes.data)) {
       const validMaps = mpRes.data.filter(item => item.data !== null && item.data !== undefined)
       const groupedByBase = new Map()
 
@@ -296,7 +298,7 @@ export class MapStats extends plugin {
         const mergedMp = {
           win: this.formatNumber(totalWin),
           totalGames: this.formatNumber(totalGames),
-          winRate: this.calculateWinRate(totalWin, totalGames),
+          winRate: this.calculateRate(totalWin, totalGames),
           score: this.formatNumber(totalScore),
           gameTime: this.formatDuration(totalGameTime),
           kill: this.formatNumber(totalKill),
@@ -319,11 +321,15 @@ export class MapStats extends plugin {
     }
 
     const allMaps = Array.from(solMapStats.values())
-    if (allMaps.length === 0) return await this.e.reply('暂未查询到地图统计数据。')
+    if (allMaps.length === 0) {
+      return await this.e.reply('暂未查询到地图统计数据。')
+    }
 
     const solMaps = allMaps.filter(map => map.sol !== null)
     const mpMaps = allMaps.filter(map => map.mp !== null)
-    if (solMaps.length === 0 && mpMaps.length === 0) return await this.e.reply('暂未查询到地图统计数据。')
+    if (solMaps.length === 0 && mpMaps.length === 0) {
+      return await this.e.reply('暂未查询到地图统计数据。')
+    }
 
     return await this.sendForwardMessages(solMaps, mpMaps, userName, userAvatar, qqAvatarUrl, currentDate, '全部赛季')
   }
@@ -332,33 +338,26 @@ export class MapStats extends plugin {
     const solMaps = []
     const mpMaps = []
 
-    if (solRes?.success && Array.isArray(solRes.data)) {
-      const validMaps = solRes.data.filter(item => {
-        if (item.data === null || item.data === undefined) return false
-        const mapName = item.mapName || DataManager.getMapName(item.mapId)
-        return mapName && mapName.includes(mapKeyword)
-      })
-      for (const item of validMaps) {
-        solMaps.push(this.processSolItem(item))
+    const filterAndProcess = (res, processFunc, resultArray) => {
+      if (res?.success && Array.isArray(res.data)) {
+        const validMaps = res.data.filter(item => {
+          if (item.data === null || item.data === undefined) return false
+          const mapName = item.mapName || DataManager.getMapName(item.mapId)
+          return mapName && mapName.includes(mapKeyword)
+        })
+        for (const item of validMaps) {
+          resultArray.push(processFunc(item))
+        }
       }
     }
 
-    if (mpRes?.success && Array.isArray(mpRes.data)) {
-      const validMaps = mpRes.data.filter(item => {
-        if (item.data === null || item.data === undefined) return false
-        const mapName = item.mapName || DataManager.getMapName(item.mapId)
-        return mapName && mapName.includes(mapKeyword)
-      })
-      for (const item of validMaps) {
-        mpMaps.push(this.processMpItem(item))
-      }
-    }
+    filterAndProcess(solRes, this.processSolItem.bind(this), solMaps)
+    filterAndProcess(mpRes, this.processMpItem.bind(this), mpMaps)
 
     if (solMaps.length === 0 && mpMaps.length === 0) {
       return await this.e.reply(`未找到包含"${mapKeyword}"的地图数据。`)
     }
 
-    // 按难度等级排序
     const difficultyWeights = { '常规': 1, '机密': 2, '绝密': 3, '适应': 4 }
     const getDifficulty = (mapName) => {
       if (!mapName) return ''
@@ -408,76 +407,81 @@ export class MapStats extends plugin {
 
     const seasonText = seasonid === 'all' ? '全部赛季' : `第${seasonid}赛季`
     const typeName = type === 'sol' ? '烽火地带' : '全面战场'
+    const bot = global.Bot
+    const forwardMsg = [{
+      message: `【地图统计数据】\n查询时间：${currentDate}\n模式：${typeName}\n赛季：${seasonText}\n${type === 'sol' ? `烽火地带：${solMaps.length} 张地图` : `全面战场：${mpMaps.length} 张地图`}`,
+      nickname: bot.nickname,
+      user_id: bot.uin
+    }]
 
-    // 先发送文本信息
-    await this.e.reply(`【地图统计数据】\n查询时间：${currentDate}\n模式：${typeName}\n赛季：${seasonText}\n${type === 'sol' ? `烽火地带：${solMaps.length} 张地图` : `全面战场：${mpMaps.length} 张地图`}`)
+    const modeConfig = type === 'sol' 
+      ? { maps: solMaps, type: 'sol', typeName: '烽火地带' }
+      : { maps: mpMaps, type: 'mp', typeName: '全面战场' }
 
-    // 直接发送图片
-    if (type === 'sol' && solMaps.length > 0) {
-      const image = await this.renderMapStatsImage(solMaps, 'sol', '烽火地带', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
+    if (modeConfig.maps.length > 0) {
+      const image = await this.renderMapStatsImage(modeConfig.maps, modeConfig.type, modeConfig.typeName, seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
       if (image) {
-        const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【烽火地带】\n', imageSegment])
+        forwardMsg.push({
+          message: [`【${modeConfig.typeName}】\n`, this.formatImageSegment(image)],
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       } else {
-        return await this.e.reply('渲染烽火地带图片失败，请稍后重试。')
-      }
-    } else if (type === 'mp' && mpMaps.length > 0) {
-      const image = await this.renderMapStatsImage(mpMaps, 'mp', '全面战场', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
-      if (image) {
-        const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【全面战场】\n', imageSegment])
-      } else {
-        return await this.e.reply('渲染全面战场图片失败，请稍后重试。')
+        forwardMsg.push({
+          message: `【${modeConfig.typeName}】渲染失败，请稍后重试。`,
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       }
     }
 
-    return true
+    const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+    return result || await this.e.reply('未能获取地图统计数据。')
   }
 
   async sendForwardMessages(solMaps, mpMaps, userName, userAvatar, qqAvatarUrl, currentDate, seasonText) {
-    // 先发送文本信息
-    await this.e.reply(`【地图统计数据】\n查询时间：${currentDate}\n赛季：${seasonText}\n烽火地带：${solMaps.length} 张地图\n全面战场：${mpMaps.length} 张地图`)
+    const bot = global.Bot
+    const forwardMsg = [{
+      message: `【地图统计数据】\n查询时间：${currentDate}\n赛季：${seasonText}\n烽火地带：${solMaps.length} 张地图\n全面战场：${mpMaps.length} 张地图`,
+      nickname: bot.nickname,
+      user_id: bot.uin
+    }]
 
-    // 直接发送烽火地带图片
-    if (solMaps.length > 0) {
-      const image = await this.renderMapStatsImage(solMaps, 'sol', '烽火地带', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
-      if (image) {
-        const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【烽火地带】\n', imageSegment])
-      } else {
-        await this.e.reply('渲染烽火地带图片失败，请稍后重试。')
+    const modes = [
+      { maps: solMaps, type: 'sol', typeName: '烽火地带' },
+      { maps: mpMaps, type: 'mp', typeName: '全面战场' }
+    ]
+
+    for (const mode of modes) {
+      if (mode.maps.length > 0) {
+        const image = await this.renderMapStatsImage(mode.maps, mode.type, mode.typeName, seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
+        if (image) {
+          forwardMsg.push({
+            message: [`【${mode.typeName}】\n`, this.formatImageSegment(image)],
+            nickname: bot.nickname,
+            user_id: bot.uin
+          })
+        } else {
+          forwardMsg.push({
+            message: `【${mode.typeName}】渲染失败，请稍后重试。`,
+            nickname: bot.nickname,
+            user_id: bot.uin
+          })
+        }
       }
     }
 
-    // 直接发送全面战场图片
-    if (mpMaps.length > 0) {
-      const image = await this.renderMapStatsImage(mpMaps, 'mp', '全面战场', seasonText, userName, userAvatar, qqAvatarUrl, currentDate)
-      if (image) {
-        const imageSegment = this.formatImageSegment(image)
-        await this.e.reply(['【全面战场】\n', imageSegment])
-      } else {
-        await this.e.reply('渲染全面战场图片失败，请稍后重试。')
-      }
-    }
-
-    return true
+    const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+    return result || await this.e.reply('未能获取地图统计数据。')
   }
 
-  // 格式化图片段，确保返回正确的 segment.image 对象
   formatImageSegment(image) {
-    // 如果已经是 segment.image 对象，直接返回
     if (image && typeof image === 'object' && image.type === 'image') {
       return image
     }
-    // 如果是 base64 字符串，使用 segment.image 包装
     if (typeof image === 'string') {
-      if (image.startsWith('base64://') || image.startsWith('data:image')) {
-        return segment.image(image)
-      }
-      // 如果不是 base64 格式，尝试直接作为图片路径
       return segment.image(image)
     }
-    // 如果都不匹配，返回原始值
     return image
   }
 
