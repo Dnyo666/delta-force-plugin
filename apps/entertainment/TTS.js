@@ -41,7 +41,7 @@ export class TTS extends plugin {
           fnc: 'getTtsHelp'
         },
         {
-          reg: '^(#三角洲|\\^)tts下载$',
+          reg: '^(#三角洲|\\^)tts上传$',
           fnc: 'downloadLastTts'
         },
         {
@@ -223,18 +223,21 @@ export class TTS extends plugin {
     const helpMsg = `【TTS语音合成帮助】
 
 基础命令：
-• ^tts [角色] [情感] 文本 - 合成并发送语音
-• ^tts下载 - 下载上次合成的语音文件
+• ^tts 角色 [情感] 文本 - 合成并发送语音
+• ^tts上传 - 上传上次合成的语音文件
+
+⚠️ 重要：角色、情感、文本之间必须用空格分隔！
 
 示例：
-• ^tts 麦晓雯 开心 你好呀！
-• ^tts下载
+• ^tts 麦晓雯 你好呀！
+• ^tts 麦晓雯 开心 今天天气真好！
+• ^tts maiXiaowen happy Hello!
 
 查询命令：
 • ^tts状态 - 查看服务状态
 • ^tts角色列表 - 查看所有角色
 
-情感：neutral/happy/sad/angry
+情感：中性/开心/激动/悲伤/愤怒/平静/惊讶
 
 注意：文本最长500字符，语音缓存5分钟`
 
@@ -259,8 +262,14 @@ export class TTS extends plugin {
         return true
       }
 
-      // 解析参数：[角色] [情感] 文本
+      // 解析参数：角色 [情感] 文本（必须用空格分隔）
       const parseResult = await this.parseTtsParams(params)
+
+      // 检查解析错误
+      if (parseResult.error) {
+        await this.e.reply(parseResult.error)
+        return true
+      }
 
       if (!parseResult.text) {
         await this.e.reply('请输入要合成的文本内容\n使用 ^tts帮助 查看使用方法')
@@ -356,7 +365,7 @@ export class TTS extends plugin {
 
   /**
    * 下载上次合成的TTS语音文件
-   * 命令：^tts下载
+   * 命令：^tts上传
    */
   async downloadLastTts() {
     try {
@@ -374,21 +383,19 @@ export class TTS extends plugin {
         return true
       }
 
-      await this.e.reply('正在下载语音文件...')
-
       // 使用本地缓存文件发送
       if (cached.localPath && fs.existsSync(cached.localPath)) {
-        await this.e.reply([segment.at(this.e.user_id), segment.file(cached.localPath, cached.filename)])
+        await this.sendFileToGroup(cached.localPath, cached.filename)
       } else {
-        // 本地文件不存在，重新下载
+        // 本地文件不存在，重新下载后发送
         await this.downloadAndSendFile(cached.audio_url, cached.filename)
       }
 
-      logger.info(`[DELTA FORCE PLUGIN] TTS文件下载成功: ${cached.filename}`)
+      logger.info(`[DELTA FORCE PLUGIN] TTS文件上传成功: ${cached.filename}`)
       return true
     } catch (error) {
-      logger.error('[DELTA FORCE PLUGIN] TTS语音下载失败:', error)
-      await this.e.reply('语音文件下载失败，请稍后重试。')
+      logger.error('[DELTA FORCE PLUGIN] TTS语音上传失败:', error)
+      await this.e.reply('语音文件上传失败，请稍后重试。')
       return true
     }
   }
@@ -439,11 +446,18 @@ export class TTS extends plugin {
       const arrayBuffer = await response.arrayBuffer()
       const buffer = Buffer.from(arrayBuffer)
 
-      // 发送文件
-      await this.e.reply([
-        segment.at(this.e.user_id),
-        segment.file(buffer, filename || 'tts_audio.wav')
-      ])
+      // 保存到本地缓存
+      const localFilename = `${this.e.user_id}_${Date.now()}_${filename || 'tts.wav'}`
+      const localPath = path.join(ttsCacheDir, localFilename)
+      fs.writeFileSync(localPath, buffer)
+
+      // 使用sendFile上传到群文件
+      await this.sendFileToGroup(localPath, filename || 'tts_audio.wav')
+
+      // 清理临时文件
+      setTimeout(() => {
+        try { fs.unlinkSync(localPath) } catch (e) {}
+      }, 60 * 1000)
     } catch (error) {
       logger.error('[DELTA FORCE PLUGIN] 下载音频文件失败:', error)
       // 下载失败时尝试发送语音
@@ -456,14 +470,54 @@ export class TTS extends plugin {
   }
 
   /**
+   * 使用sendFile方法上传文件
+   * @param {string} filePath - 本地文件路径
+   * @param {string} filename - 文件名
+   */
+  async sendFileToGroup(filePath, filename) {
+    try {
+      if (this.e.isGroup) {
+        // 群聊使用sendFile上传到群文件
+        const group = this.e.group
+        if (group && typeof group.sendFile === 'function') {
+          const result = await group.sendFile(filePath, '/', filename)
+          logger.info(`[DELTA FORCE PLUGIN] 群文件上传成功:`, result)
+          return
+        }
+      } else {
+        // 私聊使用friend.sendFile
+        const friend = this.e.friend
+        if (friend && typeof friend.sendFile === 'function') {
+          const result = await friend.sendFile(filePath, filename)
+          logger.info(`[DELTA FORCE PLUGIN] 私聊文件发送成功:`, result)
+          return
+        }
+      }
+      
+      // sendFile不可用时，尝试使用文件URL发送语音
+      const fileUrl = `file:///${filePath.replace(/\\/g, '/')}`
+      await this.e.reply(segment.record(fileUrl))
+    } catch (error) {
+      logger.error('[DELTA FORCE PLUGIN] 上传文件失败:', error)
+      // 上传失败时尝试发送语音格式
+      try {
+        const fileUrl = `file:///${filePath.replace(/\\/g, '/')}`
+        await this.e.reply(segment.record(fileUrl))
+      } catch (e) {
+        throw error
+      }
+    }
+  }
+
+  /**
    * 轮询TTS任务状态
    * @param {string} taskId - 任务ID
    * @param {object} parseResult - 解析后的参数（用于日志）
    * @returns {Promise<object>} - 结果对象
    */
   async pollTaskStatus(taskId, parseResult) {
-    const maxAttempts = 60  // 最多轮询60次
-    const pollInterval = 2000  // 每2秒轮询一次
+    const maxAttempts = 90  // 最多轮询90次
+    const pollInterval = 5000  // 每5秒轮询一次
     let lastStatus = ''
 
     for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -531,8 +585,9 @@ export class TTS extends plugin {
 
   /**
    * 解析TTS参数
+   * 格式：角色 [情感] 文本（必须用空格分隔）
    * @param {string} params - 用户输入的参数字符串
-   * @returns {object} 解析后的参数
+   * @returns {object} 解析后的参数，包含error字段表示错误信息
    */
   async parseTtsParams(params) {
     const result = {
@@ -540,7 +595,8 @@ export class TTS extends plugin {
       characterName: null,
       emotion: null,
       emotionName: null,
-      text: params
+      text: null,
+      error: null
     }
 
     // 从本地缓存获取预设列表
@@ -553,25 +609,19 @@ export class TTS extends plugin {
       presets = DataManager.getTtsPresetList()
     }
 
-    // 如果仍然没有预设数据，使用默认角色
+    // 如果仍然没有预设数据，返回错误
     if (!presets || presets.length === 0) {
-      logger.debug('[DELTA FORCE PLUGIN] TTS预设数据不可用，使用默认角色')
-      // 尝试移除开头的角色名
-      const words = params.split(/\s+/)
-      if (words[0] === '麦晓雯' || words[0].toLowerCase() === 'maixiaowen') {
-        result.text = words.slice(1).join(' ').trim()
-      }
+      result.error = 'TTS预设数据不可用，请稍后重试'
       return result
     }
-
-    // 获取默认预设
-    const defaultPresetId = DataManager.getTtsDefaultPreset()
 
     // 构建角色和情感映射
     const characterMap = {}
     const emotionMap = {}
+    const availableCharacters = []
     
     for (const preset of presets) {
+      availableCharacters.push(`${preset.name}(${preset.id})`)
       // 角色ID -> 角色信息
       characterMap[preset.id.toLowerCase()] = {
         id: preset.id,
@@ -594,48 +644,48 @@ export class TTS extends plugin {
       }
     }
 
-    // 尝试解析参数
+    // 严格按空格分隔解析参数
     const words = params.split(/\s+/)
-    let consumedWords = 0
+    
+    // 必须至少有2个词（角色 + 文本）
+    if (words.length < 2) {
+      result.error = `格式错误，请使用空格分隔角色和文本\n正确格式：^tts 角色 [情感] 文本`
+      return result
+    }
 
-    // 第一个词：尝试匹配角色
-    if (words.length > 0) {
-      const firstWord = words[0]
-      const matchedChar = characterMap[firstWord] || characterMap[firstWord.toLowerCase()]
+    // 第一个词：必须匹配角色
+    const firstWord = words[0]
+    const matchedChar = characterMap[firstWord] || characterMap[firstWord.toLowerCase()]
+    
+    if (!matchedChar) {
+      result.error = `未识别的角色: "${firstWord}"\n请使用空格分隔角色和文本}`
+      return result
+    }
+
+    result.character = matchedChar.id
+    result.characterName = matchedChar.name
+    let consumedWords = 1
+
+    // 第二个词：尝试匹配情感（可选）
+    if (words.length > 2) {
+      const secondWord = words[1]
+      const matchedEmo = emotionMap[secondWord] || emotionMap[secondWord.toLowerCase()]
       
-      if (matchedChar) {
-        result.character = matchedChar.id
-        result.characterName = matchedChar.name
-        consumedWords = 1
-
-        // 第二个词：尝试匹配情感
-        if (words.length > 1) {
-          const secondWord = words[1]
-          const matchedEmo = emotionMap[secondWord] || emotionMap[secondWord.toLowerCase()]
-          
-          if (matchedEmo) {
-            result.emotion = matchedEmo.id
-            result.emotionName = matchedEmo.name
-            consumedWords = 2
-          }
-        }
-
-        // 剩余部分作为文本
-        result.text = words.slice(consumedWords).join(' ').trim()
+      if (matchedEmo) {
+        result.emotion = matchedEmo.id
+        result.emotionName = matchedEmo.name
+        consumedWords = 2
       }
     }
 
-    // 如果没有匹配到角色，使用默认预设或第一个预设
-    if (!result.character) {
-      const defaultPreset = defaultPresetId ? DataManager.findTtsPreset(defaultPresetId) : null
-      if (defaultPreset) {
-        result.character = defaultPreset.id
-        result.characterName = defaultPreset.name
-      } else if (presets.length > 0) {
-        result.character = presets[0].id
-        result.characterName = presets[0].name
-      }
-      result.text = params
+    // 剩余部分作为文本
+    result.text = words.slice(consumedWords).join(' ').trim()
+
+    // 检查文本是否为空
+    if (!result.text) {
+      const emotionList = matchedChar.emotions.map(e => e.name).join('、')
+      result.error = `请输入要合成的文本\n格式：^tts ${matchedChar.name} [情感] 文本}`
+      return result
     }
 
     return result
