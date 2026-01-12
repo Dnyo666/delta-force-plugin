@@ -12,6 +12,7 @@ let audioTagsData = null;  // 音频标签数据
 let audioCharactersData = null;  // 音频角色数据
 let audioCategoriesData = null;  // 音频分类数据
 let aiPresetsData = null;  // AI评价预设数据
+let ttsPresetsData = null;  // TTS语音预设数据
 
 // 新增JSON数据缓存变量
 let weaponsData = null;
@@ -43,6 +44,7 @@ const localOperatorsFile = path.join(pluginRoot, 'config', 'operators.yaml');
 const localRankScoreFile = path.join(pluginRoot, 'config', 'rankscore.yaml');
 const localAudioDataFile = path.join(pluginRoot, 'config', 'audio_data.yaml');  // 统一的音频数据文件
 const localAiPresetsFile = path.join(pluginRoot, 'config', 'ai_presets.yaml');  // AI评价预设数据文件
+const localTtsPresetsFile = path.join(pluginRoot, 'config', 'tts_presets.yaml');  // TTS语音预设数据文件
 
 // JSON数据文件路径
 const jsonDataFiles = {
@@ -442,6 +444,40 @@ async function fetchAndCache(dataType) {
                     }
                 }
             }
+        } else if (dataType === 'ttspresets') {
+            try {
+                const res = await api.getTtsPresets();
+                if (res && res.success && res.data && Array.isArray(res.data.presets)) {
+                    // 保存完整的TTS预设数据结构（包含defaultPreset和presets）
+                    ttsPresetsData = {
+                        defaultPreset: res.data.defaultPreset,
+                        presets: res.data.presets
+                    };
+                    // 缓存成功后保存到本地
+                    saveYamlData(ttsPresetsData, localTtsPresetsFile);
+                    logger.debug(`[Delta-Force 数据管理器] TTS预设数据同步成功，共 ${res.data.presets.length} 个预设`);
+                } else {
+                    throw new Error('API返回失败状态');
+                }
+            } catch (apiError) {
+                logger.warn('[Delta-Force 数据管理器] 获取TTS预设数据失败，使用本地缓存:', apiError.message);
+                // API失败时从本地加载
+                if (!ttsPresetsData) {
+                    const localData = loadYamlData(localTtsPresetsFile, true, false);
+                    if (localData && localData.presets && Array.isArray(localData.presets) && localData.presets.length > 0) {
+                        ttsPresetsData = localData;
+                        logger.debug('[Delta-Force 数据管理器] 已从本地加载TTS预设数据（降级）');
+                    } else {
+                        // 检查 API Key 是否配置
+                        const apiKey = Config.get('delta_force', 'api_key');
+                        if (!apiKey || apiKey === 'sk-xxxxxxx') {
+                            showApiKeyWarning();
+                        } else {
+                            logger.warn('[Delta-Force 数据管理器] TTS预设本地数据文件不存在，将在 API 成功时自动生成');
+                        }
+                    }
+                }
+            }
         }
     } catch (error) {
         logger.error(`[Delta-Force 数据管理器] 缓存 ${dataType} 数据失败:`, error);
@@ -498,6 +534,14 @@ async function fetchAndCache(dataType) {
             } else if (!isApiKeyConfigured) {
                 showApiKeyWarning();
             }
+        } else if (dataType === 'ttspresets') {
+            const localData = loadYamlData(localTtsPresetsFile, true, false);
+            if (localData && localData.presets && Array.isArray(localData.presets) && localData.presets.length > 0) {
+                ttsPresetsData = localData;
+                logger.debug('[Delta-Force 数据管理器] 已从本地加载TTS预设数据');
+            } else if (!isApiKeyConfigured) {
+                showApiKeyWarning();
+            }
         }
     }
 }
@@ -550,7 +594,7 @@ export default {
         const successCount = Object.values(jsonDataLoaded).filter(v => v).length;
         const totalCount = Object.keys(jsonDataLoaded).length;
         logger.info(`[Delta-Force 数据管理器] 已加载本地数据 (${successCount}/${totalCount} 个JSON文件)`);
-        
+
         // 然后尝试从API获取最新数据（使用 Promise.allSettled 确保即使API失败也不影响插件加载）
         try {
             const results = await Promise.allSettled([
@@ -558,11 +602,12 @@ export default {
                 fetchAndCache('operators'),
                 fetchAndCache('rankscore'),
                 fetchAndCache('audiodata'),  // 统一获取音频数据
-                fetchAndCache('aipresets')   // AI评价预设数据
+                fetchAndCache('aipresets'),  // AI评价预设数据
+                fetchAndCache('ttspresets')  // TTS语音预设数据
             ]);
-            
+
             // 检查每个结果，记录失败的任务
-            const taskNames = ['地图', '干员', '排位分数', '音频数据', 'AI预设'];
+            const taskNames = ['地图', '干员', '排位分数', '音频数据', 'AI预设', 'TTS预设'];
             const failedTasks = [];
             results.forEach((result, index) => {
                 if (result.status === 'rejected') {
@@ -1277,6 +1322,108 @@ export default {
      */
     async refreshAiPresets() {
         await fetchAndCache('aipresets');
+    },
+
+    /**
+     * 获取TTS预设数据（包含defaultPreset和presets列表）
+     * @returns {Object|null} - { defaultPreset, presets } 或 null
+     */
+    getTtsPresets() {
+        if (!ttsPresetsData) {
+            const localData = loadYamlData(localTtsPresetsFile, true, false);
+            if (localData && localData.presets && Array.isArray(localData.presets) && localData.presets.length > 0) {
+                ttsPresetsData = localData;
+                logger.debug(`[Delta-Force 数据管理器] 已临时从本地加载TTS预设数据 (${localData.presets.length}个预设)`);
+            } else {
+                logger.warn('[Delta-Force 数据管理器] TTS预设数据未就绪');
+                return null;
+            }
+        }
+        return ttsPresetsData;
+    },
+
+    /**
+     * 获取TTS预设列表
+     * @returns {Array|null} - 预设数组或null
+     */
+    getTtsPresetList() {
+        const data = this.getTtsPresets();
+        return data ? data.presets : null;
+    },
+
+    /**
+     * 获取默认TTS预设ID
+     * @returns {string|null} - 默认预设ID
+     */
+    getTtsDefaultPreset() {
+        const data = this.getTtsPresets();
+        return data ? data.defaultPreset : null;
+    },
+
+    /**
+     * 根据ID或名称查找TTS预设
+     * 支持：预设ID(maiXiaowen)、中文名(麦晓雯)
+     * @param {string} keyword - 预设ID或名称
+     * @returns {Object|null} - 预设对象或null
+     */
+    findTtsPreset(keyword) {
+        const presets = this.getTtsPresetList();
+        if (!presets || !keyword) return null;
+
+        const normalizedKeyword = keyword.trim().toLowerCase();
+
+        // 1. 精确匹配ID（不区分大小写）
+        let preset = presets.find(p => p.id.toLowerCase() === normalizedKeyword);
+        if (preset) return preset;
+
+        // 2. 精确匹配名称
+        preset = presets.find(p => p.name === keyword.trim());
+        if (preset) return preset;
+
+        // 3. 名称包含关键词（模糊匹配）
+        preset = presets.find(p => p.name.includes(keyword.trim()));
+        if (preset) return preset;
+
+        return null;
+    },
+
+    /**
+     * 根据预设ID或名称查找情感
+     * @param {string} presetKeyword - 预设ID或名称
+     * @param {string} emotionKeyword - 情感ID或名称
+     * @returns {Object|null} - 情感对象 { id, name, description } 或 null
+     */
+    findTtsEmotion(presetKeyword, emotionKeyword) {
+        const preset = this.findTtsPreset(presetKeyword);
+        if (!preset || !preset.emotions || !emotionKeyword) return null;
+
+        const normalizedKeyword = emotionKeyword.trim().toLowerCase();
+
+        // 1. 精确匹配情感ID
+        let emotion = preset.emotions.find(e => e.id.toLowerCase() === normalizedKeyword);
+        if (emotion) return emotion;
+
+        // 2. 精确匹配情感名称
+        emotion = preset.emotions.find(e => e.name === emotionKeyword.trim());
+        if (emotion) return emotion;
+
+        return null;
+    },
+
+    /**
+     * 验证TTS预设ID是否有效
+     * @param {string} presetId - 预设ID
+     * @returns {boolean} - 是否有效
+     */
+    isValidTtsPreset(presetId) {
+        return this.findTtsPreset(presetId) !== null;
+    },
+
+    /**
+     * 刷新TTS预设数据（从API获取最新数据）
+     */
+    async refreshTtsPresets() {
+        await fetchAndCache('ttspresets');
     }
     
 };

@@ -1204,4 +1204,60 @@ export default class Code {
   async getShushuMusicList(params = {}) {
     return this.request('/df/audio/shushu/list', params, 'GET');
   }
+
+  // ==================== TTS 语音合成接口 ====================
+
+  /**
+   * 检查TTS服务状态
+   * @returns {Promise<object>} - API响应
+   */
+  async getTtsHealth() {
+    return this.request('/df/tts/health', {}, 'GET');
+  }
+
+  /**
+   * 获取TTS角色预设列表
+   * @returns {Promise<object>} - API响应
+   */
+  async getTtsPresets() {
+    return this.request('/df/tts/presets', {}, 'GET');
+  }
+
+  /**
+   * 获取TTS角色预设详情
+   * @param {string} characterId - 角色ID
+   * @returns {Promise<object>} - API响应
+   */
+  async getTtsPreset(characterId) {
+    return this.request('/df/tts/preset', { characterId }, 'GET');
+  }
+
+  /**
+   * TTS语音合成（队列模式）
+   * @param {object} params - 合成参数
+   * @param {string} params.text - 要合成的文本（最大1000字符）
+   * @param {string} params.character - 角色ID（预设模式）
+   * @param {string} [params.emotion] - 情感ID（如 happy, sad）
+   * @returns {Promise<object>} - API响应，包含taskId用于查询任务状态
+   */
+  async ttsSynthesize(params) {
+    return this.requestJson('/df/tts/synthesize', params);
+  }
+
+  /**
+   * 查询TTS任务状态
+   * @param {string} taskId - 任务ID
+   * @returns {Promise<object>} - API响应，包含任务状态（queued/processing/completed/failed）
+   */
+  async getTtsTaskStatus(taskId) {
+    return this.request('/df/tts/task', { taskId }, 'GET');
+  }
+
+  /**
+   * 查询TTS队列状态
+   * @returns {Promise<object>} - API响应，包含队列信息
+   */
+  async getTtsQueueStatus() {
+    return this.request('/df/tts/queue', {}, 'GET');
+  }
 }

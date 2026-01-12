@@ -117,6 +117,7 @@ pnpm install --filter=delta-force-plugin
 - [ ] 对局模拟器
 - [x] 随机音频
 - [x] 鼠鼠音乐（来自Liusy）
+- [x] 角色语音合成（TTS）
 - [ ] 随机表情包
 - [ ] 随机挑战
 

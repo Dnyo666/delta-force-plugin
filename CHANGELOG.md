@@ -5,7 +5,27 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循扩展的语义化版本规范（x.y.z-w 格式）。
 
-## [1.5.0-0] - 当前版本
+## [1.5.1-0] - 当前版本
+
+### refactor（重构）
+- 优化TTS语音预设管理
+  - 新增TTS预设本地缓存机制，插件启动时自动从API同步预设数据
+  - 预设数据保存至 `config/tts_presets.yaml`，支持离线使用
+  - 支持通过预设ID（如 `maiXiaowen`）或中文名（如 `麦晓雯`）匹配角色
+  - 支持情感预设匹配（如 `开心`、`悲伤`、`愤怒` 等）
+  - 移除每次TTS调用时的API请求，提升响应速度
+- 优化AI评价预设管理
+  - 新增AI预设本地缓存机制，插件启动时自动从API同步预设数据
+  - 预设数据保存至 `config/ai_presets.yaml`，支持离线使用
+  - 支持通过预设代码（如 `rp`）或中文名（如 `锐评`）匹配预设
+  - 新增 `DataManager` 访问方法：`getAiPresets()`、`findAiPreset()`、`refreshAiPresets()` 等
+
+### perf（性能优化）
+- 优化数据管理器初始化流程
+  - TTS预设和AI预设在插件启动时统一加载，减少运行时API调用
+  - 使用 `Promise.allSettled` 确保单个数据源失败不影响其他数据加载
+
+## [1.5.0-0] - 历史版本
 
 ### feat（新功能）
 - 新增干员列表查询功能
