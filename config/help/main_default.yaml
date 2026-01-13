@@ -95,9 +95,6 @@ helpList:
         - icon: 80
           title: "^ck登陆 [cookies]"
           desc: "通过cookie登录（^ck登陆查看帮助）"
-        - icon: 71
-          title: "^角色绑定 [角色ID]"
-          desc: "绑定游戏内角色（获取详细游戏数据）"
         - icon: 78
           title: "^信息"
           desc: "查询个人详细信息"
