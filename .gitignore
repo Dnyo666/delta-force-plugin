@@ -13,6 +13,7 @@ config/operators.yaml
 config/rankscore.yaml
 config/audio_data.yaml
 config/ai_presets.yaml
+config/tts_presets.yaml
 
 # 帮助配置文件（默认配置文件需要提交，用户自定义的忽略）
 # 默认配置文件：*_default.yaml 需要提交

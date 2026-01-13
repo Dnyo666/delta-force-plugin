@@ -1,6 +1,6 @@
 {
   "name": "delta-force-plugin",
-  "version": "1.5.1-0",
+  "version": "1.5.1-1",
   "description": "基于 Yunzai 的三角洲行动游戏数据查询插件",
   "main": "index.js",
   "scripts": {
