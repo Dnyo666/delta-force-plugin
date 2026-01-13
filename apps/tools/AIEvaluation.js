@@ -2,6 +2,7 @@ import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
 import Config from '../../components/Config.js'
 import DataManager from '../../utils/Data.js'
+import { ttsCache } from '../entertainment/TTS.js'
 import fs from 'fs'
 import path from 'path'
 
@@ -388,17 +389,28 @@ export class Ai extends plugin {
         return
       }
 
+      // 保存到TTS缓存（5分钟有效），支持 ^tts上传 命令
+      ttsCache.set(e.user_id, {
+        audio_url: result.audio_url,
+        filename: result.filename,
+        localPath: localPath,
+        timestamp: Date.now()
+      })
+      // 5分钟后清理缓存
+      setTimeout(() => {
+        const cached = ttsCache.get(e.user_id)
+        if (cached && cached.localPath === localPath) {
+          try { fs.unlinkSync(cached.localPath) } catch (err) {}
+          ttsCache.delete(e.user_id)
+        }
+      }, 5 * 60 * 1000)
+
       // 发送语音
       const recordUrl = `file:///${localPath.replace(/\\/g, '/')}`
-      await e.reply([segment.at(e.user_id), ' AI评价语音生成完毕！请查收'])
+      await e.reply([segment.at(e.user_id), ' AI评价语音生成完毕！可使用 ^tts上传 获取文件'])
       await e.reply(segment.record(recordUrl))
 
       logger.info(`[AI评价] TTS语音发送成功: ${result.filename}`)
-
-      // 60秒后清理临时文件
-      setTimeout(() => {
-        try { fs.unlinkSync(localPath) } catch (err) {}
-      }, 60 * 1000)
 
     } catch (error) {
       logger.error('[AI评价] TTS语音生成异常:', error)

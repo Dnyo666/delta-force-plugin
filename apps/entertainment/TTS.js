@@ -15,7 +15,7 @@ if (!fs.existsSync(ttsCacheDir)) {
 }
 
 // TTS语音缓存（用户ID -> 语音信息）
-const ttsCache = new Map()
+export const ttsCache = new Map()
 
 export class TTS extends plugin {
   constructor(e) {
