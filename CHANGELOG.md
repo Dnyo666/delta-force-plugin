@@ -5,7 +5,23 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循扩展的语义化版本规范（x.y.z-w 格式）。
 
-## [1.5.1-0] - 当前版本
+## [1.5.1-1] - 当前版本
+
+### docs（文档更新）
+- 更新帮助配置文档
+  - 更新主帮助配置（`config/help/main_default.yaml`），添加缺失的命令说明
+    - 新增 `^ai预设列表` 命令说明
+    - 新增 `^特勤处信息` 命令说明
+    - 新增 `^标签列表` 命令说明
+    - 新增 `^角色绑定` 命令说明
+  - 更新娱乐帮助配置（`config/help/entertainment_default.yaml`），添加TTS功能命令
+    - 新增 "TTS语音合成" 功能组
+    - 添加所有TTS相关命令说明（tts状态、tts角色列表、tts角色详情、tts帮助、tts上传、tts语音合成等）
+- 更新应用目录结构说明（`apps/README.md`）
+  - 添加 `TTS.js` 模块说明
+  - 优化文档结构，添加插件自动加载说明
+
+## [1.5.1-0] - 历史版本
 
 ### refactor（重构）
 - 优化TTS语音预设管理

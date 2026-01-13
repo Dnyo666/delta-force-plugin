@@ -95,6 +95,9 @@ helpList:
         - icon: 80
           title: "^ck登陆 [cookies]"
           desc: "通过cookie登录（^ck登陆查看帮助）"
+        - icon: 71
+          title: "^角色绑定 [角色ID]"
+          desc: "绑定游戏内角色（获取详细游戏数据）"
         - icon: 78
           title: "^信息"
           desc: "查询个人详细信息"
@@ -256,12 +259,18 @@ helpList:
         - icon: 61
           title: "^ai评价 [模式] [预设]"
           desc: "使用其他AI预设来评价烽火地带和全面战场数据"
+        - icon: 78
+          title: "^ai预设列表"
+          desc: "查看所有可用的AI评价预设"
         - icon: 41
           title: "^违规记录"
           desc: "登录QQ安全中心后可查询历史违规"
         - icon: 48
           title: "^特勤处状态"
           desc: "查询特勤处制造状态"
+        - icon: 71
+          title: "^特勤处信息 [场所]"
+          desc: "查询特勤处设施升级信息"
         - icon: 71
           title: "^物品列表 [一级分类] [二级分类] [页码]"
           desc: "获取物品列表（默认props/collection）"

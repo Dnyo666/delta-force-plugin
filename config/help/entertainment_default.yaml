@@ -62,4 +62,27 @@ entertainmentHelpList:
       - icon: 78
         title: "^清理音乐缓存"
         desc: "清空所有音乐缓存（仅主人）"
+  - group: "TTS语音合成"
+    list:
+      - icon: 87
+        title: "^tts [角色] [情感] 文本"
+        desc: "合成并发送语音（角色、情感、文本用空格分隔）"
+      - icon: 87
+        title: "^tts 麦晓雯 开心 你好呀！"
+        desc: "示例：使用指定角色和情感合成语音"
+      - icon: 78
+        title: "^tts状态"
+        desc: "查看TTS服务状态和预设信息"
+      - icon: 78
+        title: "^tts角色列表 | ^tts预设列表"
+        desc: "查看所有可用的角色预设列表"
+      - icon: 78
+        title: "^tts角色详情 [角色ID]"
+        desc: "查看指定角色的详细信息"
+      - icon: 78
+        title: "^tts帮助"
+        desc: "查看TTS功能详细使用说明"
+      - icon: 64
+        title: "^tts上传"
+        desc: "上传上次合成的语音文件"
 
