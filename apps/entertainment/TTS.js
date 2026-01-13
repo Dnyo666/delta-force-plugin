@@ -37,15 +37,11 @@ export class TTS extends plugin {
           fnc: 'getTtsPresetDetail'
         },
         {
-          reg: '^(#三角洲|\\^)tts帮助$',
-          fnc: 'getTtsHelp'
-        },
-        {
           reg: '^(#三角洲|\\^)tts上传$',
           fnc: 'downloadLastTts'
         },
         {
-          reg: '^(#三角洲|\\^)tts\\s+(.+)$',
+          reg: '^(#三角洲|\\^)tts\\s+([\\s\\S]+)$',
           fnc: 'synthesize'
         }
       ]
@@ -216,36 +212,6 @@ export class TTS extends plugin {
   }
 
   /**
-   * TTS帮助
-   * 命令：^tts帮助
-   */
-  async getTtsHelp() {
-    const helpMsg = `【TTS语音合成帮助】
-
-基础命令：
-• ^tts 角色 [情感] 文本 - 合成并发送语音
-• ^tts上传 - 上传上次合成的语音文件
-
-⚠️ 重要：角色、情感、文本之间必须用空格分隔！
-
-示例：
-• ^tts 麦晓雯 你好呀！
-• ^tts 麦晓雯 开心 今天天气真好！
-• ^tts maiXiaowen happy Hello!
-
-查询命令：
-• ^tts状态 - 查看服务状态
-• ^tts角色列表 - 查看所有角色
-
-情感：中性/开心/激动/悲伤/愤怒/平静/惊讶
-
-注意：文本最长500字符，语音缓存5分钟`
-
-    await this.e.reply(helpMsg)
-    return true
-  }
-
-  /**
    * TTS语音合成（队列模式）
    * 命令：^tts [角色] [情感] 文本内容
    * 示例：
@@ -254,7 +220,7 @@ export class TTS extends plugin {
    */
   async synthesize() {
     try {
-      const match = this.e.msg.match(/^(#三角洲|\^)tts\s+(.+)$/)
+      const match = this.e.msg.match(/^(#三角洲|\^)tts\s+([\s\S]+)$/)
       const params = match[2].trim()
 
       if (!params) {
@@ -277,8 +243,8 @@ export class TTS extends plugin {
       }
 
       // 检查文本长度
-      if (parseResult.text.length > 500) {
-        await this.e.reply(`文本过长（${parseResult.text.length}字），最多支持500字符`)
+      if (parseResult.text.length > 800) {
+        await this.e.reply(`文本过长（${parseResult.text.length}字），最多支持800字符`)
         return true
       }
 
