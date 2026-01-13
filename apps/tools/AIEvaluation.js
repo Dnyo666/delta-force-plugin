@@ -122,15 +122,8 @@ export class Ai extends plugin {
         // 成功，将CD延长至1小时
         await redis.expire(cdKey, 3600);
         
-        // 使用合并转发消息发送
-        const bot = Bot.pickUser(e.user_id)
-        const forwardMsg = [{
-          message: [`【${gameMode.name}模式 AI锐评】\n`, fullAnswer],
-          nickname: bot.nickname,
-          user_id: bot.uin
-        }]
-        
-        await e.reply(await Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+        // 直接回复发送内容（引用原消息）
+        await e.reply(`【${gameMode.name}模式 AI锐评】\n${fullAnswer}`, true)
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);
@@ -240,15 +233,8 @@ export class Ai extends plugin {
         // 成功，将CD延长至1小时
         await redis.expire(cdKey, 3600);
         
-        // 使用合并转发消息发送
-        const bot = Bot.pickUser(e.user_id)
-        const forwardMsg = [{
-          message: [`【${gameMode.name}模式 AI${presetName}】\n`, fullAnswer],
-          nickname: bot.nickname,
-          user_id: bot.uin
-        }]
-        
-        await e.reply(await Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+        // 直接回复发送内容（引用原消息）
+        await e.reply(`【${gameMode.name}模式 AI${presetName}】\n${fullAnswer}`, true)
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);
