@@ -180,6 +180,97 @@ export function supportGuoba() {
             placeholder: '请输入QQ号后回车'
           },
         },
+        {
+          component: 'Divider',
+          label: 'TTS语音合成',
+        },
+        {
+          field: 'tts.enabled',
+          label: '启用TTS功能',
+          component: 'Switch',
+          bottomHelpMessage: '开启后可使用 ^tts 命令进行语音合成',
+        },
+        {
+          field: 'tts.mode',
+          label: 'TTS黑白名单模式',
+          component: 'Select',
+          bottomHelpMessage: '白名单模式下只有列表中的群/用户可用，黑名单模式下列表中的群/用户禁用',
+          componentProps: {
+            options: [
+              { label: '黑名单模式', value: 'blacklist' },
+              { label: '白名单模式', value: 'whitelist' },
+            ],
+          },
+        },
+        {
+          field: 'tts.group_list',
+          label: 'TTS群号列表',
+          component: 'GSelectGroup',
+          bottomHelpMessage: '配合黑白名单模式使用',
+          componentProps: {
+            placeholder: '点击选择群'
+          },
+        },
+        {
+          field: 'tts.user_list',
+          label: 'TTS用户列表',
+          component: 'GTags',
+          bottomHelpMessage: '配合黑白名单模式使用，输入QQ号后回车',
+          componentProps: {
+            placeholder: '请输入QQ号后回车'
+          },
+        },
+        {
+          field: 'tts.max_length',
+          label: 'TTS最大字数',
+          component: 'InputNumber',
+          bottomHelpMessage: 'TTS文本的最大字数限制',
+          componentProps: {
+            min: 20,
+            max: 800,
+            placeholder: '后端目前最高800字'
+          },
+        },
+        {
+          component: 'Divider',
+          label: 'AI评价TTS语音',
+        },
+        {
+          field: 'tts.ai_tts.enabled',
+          label: '启用AI评价TTS',
+          component: 'Switch',
+          bottomHelpMessage: '开启后AI评价命令可附加音色参数生成语音',
+        },
+        {
+          field: 'tts.ai_tts.mode',
+          label: 'AI评价TTS黑白名单模式',
+          component: 'Select',
+          bottomHelpMessage: '白名单模式下只有列表中的群/用户可用，黑名单模式下列表中的群/用户禁用',
+          componentProps: {
+            options: [
+              { label: '黑名单模式', value: 'blacklist' },
+              { label: '白名单模式', value: 'whitelist' },
+            ],
+          },
+        },
+        {
+          field: 'tts.ai_tts.group_list',
+          label: 'AI评价TTS群号列表',
+          component: 'GSelectGroup',
+          bottomHelpMessage: '配合黑白名单模式使用',
+          componentProps: {
+            placeholder: '点击选择群'
+          },
+        },
+        {
+          field: 'tts.ai_tts.user_list',
+          label: 'AI评价TTS用户列表',
+          component: 'GTags',
+          bottomHelpMessage: '配合黑白名单模式使用，输入QQ号后回车',
+          componentProps: {
+            placeholder: '请输入QQ号后回车'
+          },
+        },
       ],
       getConfigData() {
         // 直接从文件读取最新的、未经缓存的配置
@@ -255,6 +346,28 @@ export function supportGuoba() {
             }
           },
           df.broadcast_notification,
+          (objValue, srcValue) => {
+            if (lodash.isArray(srcValue)) {
+              return srcValue;
+            }
+          }
+        );
+
+        df.tts = lodash.mergeWith(
+          {
+            enabled: true,
+            mode: 'blacklist',
+            group_list: [],
+            user_list: [],
+            max_length: 800,
+            ai_tts: {
+              enabled: true,
+              mode: 'blacklist',
+              group_list: [],
+              user_list: []
+            }
+          },
+          df.tts,
           (objValue, srcValue) => {
             if (lodash.isArray(srcValue)) {
               return srcValue;

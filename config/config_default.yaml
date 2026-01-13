@@ -34,3 +34,14 @@ delta_force:
       group: [] # 推送目标群号列表，如 [123456789, 987654321]
       private_enabled: false # 是否启用私信推送
       private: [] # 私信推送目标QQ号，留空则默认推送给主人
+  tts:
+    enabled: true # 是否启用TTS功能
+    mode: "blacklist" # 黑白名单模式: whitelist(白名单) | blacklist(黑名单)
+    group_list: [] # 群号列表（白名单模式下只有这些群可用，黑名单模式下这些群禁用）
+    user_list: [] # 用户QQ号列表
+    max_length: 800 # TTS文本最大字数限制
+    ai_tts:
+      enabled: true # 是否启用AI评价TTS功能
+      mode: "blacklist" # 黑白名单模式: whitelist(白名单) | blacklist(黑名单)
+      group_list: [] # 群号列表
+      user_list: [] # 用户QQ号列表
