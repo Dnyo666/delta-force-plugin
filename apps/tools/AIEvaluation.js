@@ -135,7 +135,7 @@ export class Ai extends plugin {
         await redis.expire(cdKey, 3600);
         
         // 直接回复发送内容（引用原消息）
-        await e.reply(`【${gameMode.name}模式 AI锐评】\n${fullAnswer}`)
+        await e.reply(`【${gameMode.name}模式 AI锐评】\n${fullAnswer}`,true)
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);
