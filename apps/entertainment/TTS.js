@@ -1,4 +1,5 @@
 import Code from '../../components/Code.js'
+import Config from '../../components/Config.js'
 import utils from '../../utils/utils.js'
 import DataManager from '../../utils/Data.js'
 import fs from 'fs'
@@ -14,7 +15,7 @@ if (!fs.existsSync(ttsCacheDir)) {
 }
 
 // TTS语音缓存（用户ID -> 语音信息）
-const ttsCache = new Map()
+export const ttsCache = new Map()
 
 export class TTS extends plugin {
   constructor(e) {
@@ -37,15 +38,11 @@ export class TTS extends plugin {
           fnc: 'getTtsPresetDetail'
         },
         {
-          reg: '^(#三角洲|\\^)tts帮助$',
-          fnc: 'getTtsHelp'
-        },
-        {
           reg: '^(#三角洲|\\^)tts上传$',
           fnc: 'downloadLastTts'
         },
         {
-          reg: '^(#三角洲|\\^)tts\\s+(.+)$',
+          reg: '^(#三角洲|\\^)tts\\s+([\\s\\S]+)$',
           fnc: 'synthesize'
         }
       ]
@@ -216,33 +213,51 @@ export class TTS extends plugin {
   }
 
   /**
-   * TTS帮助
-   * 命令：^tts帮助
+   * 检查TTS功能权限
+   * @returns {object} { allowed: boolean, message: string }
    */
-  async getTtsHelp() {
-    const helpMsg = `【TTS语音合成帮助】
+  checkTtsPermission() {
+    const ttsConfig = Config.getConfig()?.delta_force?.tts || {}
+    
+    // 检查功能是否启用
+    if (ttsConfig.enabled === false) {
+      return { allowed: false, message: 'TTS功能未启用' }
+    }
+    
+    const mode = ttsConfig.mode || 'blacklist'
+    const groupList = (ttsConfig.group_list || []).map(String)
+    const userList = (ttsConfig.user_list || []).map(String)
+    
+    const userId = String(this.e.user_id)
+    const groupId = this.e.isGroup ? String(this.e.group_id) : null
+    
+    if (mode === 'whitelist') {
+      // 白名单模式：只有列表中的群/用户可用
+      const userAllowed = userList.includes(userId)
+      const groupAllowed = groupId && groupList.includes(groupId)
+      if (!userAllowed && !groupAllowed) {
+        return { allowed: false, message: 'TTS功能未对您开放' }
+      }
+    } else {
+      // 黑名单模式：列表中的群/用户禁用
+      if (userList.includes(userId)) {
+        return { allowed: false, message: 'TTS功能已被禁用' }
+      }
+      if (groupId && groupList.includes(groupId)) {
+        return { allowed: false, message: 'TTS功能在本群已被禁用' }
+      }
+    }
+    
+    return { allowed: true, message: '' }
+  }
 
-基础命令：
-• ^tts 角色 [情感] 文本 - 合成并发送语音
-• ^tts上传 - 上传上次合成的语音文件
-
-⚠️ 重要：角色、情感、文本之间必须用空格分隔！
-
-示例：
-• ^tts 麦晓雯 你好呀！
-• ^tts 麦晓雯 开心 今天天气真好！
-• ^tts maiXiaowen happy Hello!
-
-查询命令：
-• ^tts状态 - 查看服务状态
-• ^tts角色列表 - 查看所有角色
-
-情感：中性/开心/激动/悲伤/愤怒/平静/惊讶
-
-注意：文本最长500字符，语音缓存5分钟`
-
-    await this.e.reply(helpMsg)
-    return true
+  /**
+   * 获取TTS最大字数限制
+   * @returns {number}
+   */
+  getTtsMaxLength() {
+    const ttsConfig = Config.getConfig()?.delta_force?.tts || {}
+    return ttsConfig.max_length || 800
   }
 
   /**
@@ -254,11 +269,18 @@ export class TTS extends plugin {
    */
   async synthesize() {
     try {
-      const match = this.e.msg.match(/^(#三角洲|\^)tts\s+(.+)$/)
+      // 检查TTS权限
+      const permission = this.checkTtsPermission()
+      if (!permission.allowed) {
+        await this.e.reply(permission.message)
+        return true
+      }
+
+      const match = this.e.msg.match(/^(#三角洲|\^)tts\s+([\s\S]+)$/)
       const params = match[2].trim()
 
       if (!params) {
-        await this.e.reply('请输入要合成的内容\n使用 ^tts帮助 查看使用方法')
+        await this.e.reply('请输入要合成的内容')
         return true
       }
 
@@ -272,13 +294,14 @@ export class TTS extends plugin {
       }
 
       if (!parseResult.text) {
-        await this.e.reply('请输入要合成的文本内容\n使用 ^tts帮助 查看使用方法')
+        await this.e.reply('请输入要合成的文本内容')
         return true
       }
 
-      // 检查文本长度
-      if (parseResult.text.length > 500) {
-        await this.e.reply(`文本过长（${parseResult.text.length}字），最多支持500字符`)
+      // 检查文本长度（使用配置的最大字数）
+      const maxLength = this.getTtsMaxLength()
+      if (parseResult.text.length > maxLength) {
+        await this.e.reply(`文本过长（${parseResult.text.length}字），最多支持${maxLength}字符`)
         return true
       }
 

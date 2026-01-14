@@ -1,6 +1,19 @@
 import utils from '../../utils/utils.js'
 import Code from '../../components/Code.js'
+import Config from '../../components/Config.js'
 import DataManager from '../../utils/Data.js'
+import { ttsCache } from '../entertainment/TTS.js'
+import fs from 'fs'
+import path from 'path'
+
+// TTS缓存目录
+const pluginCache = path.join(process.cwd(), 'temp', 'delta-force-plugin')
+const ttsCacheDir = path.join(pluginCache, 'tts')
+
+// 确保缓存目录存在
+if (!fs.existsSync(ttsCacheDir)) {
+  fs.mkdirSync(ttsCacheDir, { recursive: true })
+}
 
 export class Ai extends plugin {
   constructor () {
@@ -15,7 +28,7 @@ export class Ai extends plugin {
           fnc: 'getAiCommentary'
         },
         {
-          reg: '^(#三角洲|\\^)(ai|AI)评价\\s+(\\S+)\\s+(\\S+)$',
+          reg: '^(#三角洲|\\^)(ai|AI)评价\\s+(\\S+)\\s+(\\S+)(?:\\s+(\\S+))?$',
           fnc: 'getAiCommentaryWithPreset'
         },
         {
@@ -123,7 +136,7 @@ export class Ai extends plugin {
         await redis.expire(cdKey, 3600);
         
         // 直接回复发送内容（引用原消息）
-        await e.reply(`【${gameMode.name}模式 AI锐评】\n${fullAnswer}`, true)
+        await e.reply(`【${gameMode.name}模式 AI锐评】\n${fullAnswer}`,true)
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);
@@ -140,16 +153,18 @@ export class Ai extends plugin {
 
   /**
    * 使用指定预设进行AI评价
-   * 命令格式: ^ai评价 模式 预设
+   * 命令格式: ^ai评价 模式 预设 [音色]
    * 支持预设代码(rp/cxg)或中文名(锐评/雌小鬼)
+   * 可选音色参数用于生成TTS语音
    */
   async getAiCommentaryWithPreset (e) {
     const api = new Code(e);
     
-    // 解析参数: 模式 预设
+    // 解析参数: 模式 预设 [音色]
     const match = e.msg.match(this.rule[1].reg);
     const modeStr = match[3];
     const presetInput = match[4];
+    const voiceInput = match[5] || null; // 可选的TTS音色预设
     
     // 解析游戏模式
     const gameMode = this.parseGameMode(modeStr);
@@ -235,6 +250,11 @@ export class Ai extends plugin {
         
         // 直接回复发送内容（引用原消息）
         await e.reply(`【${gameMode.name}模式 AI${presetName}】\n${fullAnswer}`, true)
+        
+        // 如果指定了音色预设，异步生成TTS语音
+        if (voiceInput) {
+          this.generateTtsVoice(e, api, fullAnswer, voiceInput)
+        }
       } else {
         // 失败，立即删除CD
         await redis.del(cdKey);
@@ -247,6 +267,243 @@ export class Ai extends plugin {
     }
 
     return true
+  }
+
+  /**
+   * 检查AI评价TTS功能权限
+   * @param {object} e - 消息事件对象
+   * @returns {object} { allowed: boolean, message: string }
+   */
+  checkAiTtsPermission(e) {
+    const ttsConfig = Config.getConfig()?.delta_force?.tts || {}
+    const aiTtsConfig = ttsConfig.ai_tts || {}
+    
+    // 检查功能是否启用
+    if (aiTtsConfig.enabled === false) {
+      return { allowed: false, message: 'AI评价TTS功能未启用' }
+    }
+    
+    const mode = aiTtsConfig.mode || 'blacklist'
+    const groupList = (aiTtsConfig.group_list || []).map(String)
+    const userList = (aiTtsConfig.user_list || []).map(String)
+    
+    const userId = String(e.user_id)
+    const groupId = e.isGroup ? String(e.group_id) : null
+    
+    if (mode === 'whitelist') {
+      const userAllowed = userList.includes(userId)
+      const groupAllowed = groupId && groupList.includes(groupId)
+      if (!userAllowed && !groupAllowed) {
+        return { allowed: false, message: 'AI评价TTS功能未对您开放' }
+      }
+    } else {
+      if (userList.includes(userId)) {
+        return { allowed: false, message: 'AI评价TTS功能已被禁用' }
+      }
+      if (groupId && groupList.includes(groupId)) {
+        return { allowed: false, message: 'AI评价TTS功能在本群已被禁用' }
+      }
+    }
+    
+    return { allowed: true, message: '' }
+  }
+
+  /**
+   * 获取TTS最大字数限制
+   * @returns {number}
+   */
+  getTtsMaxLength() {
+    const ttsConfig = Config.getConfig()?.delta_force?.tts || {}
+    return ttsConfig.max_length || 800
+  }
+
+  /**
+   * 异步生成TTS语音
+   * @param {object} e - 消息事件对象
+   * @param {Code} api - API实例
+   * @param {string} text - 要转换的文本
+   * @param {string} voiceInput - 音色预设（ID或中文名）
+   */
+  async generateTtsVoice(e, api, text, voiceInput) {
+    try {
+      // 检查AI评价TTS权限
+      const permission = this.checkAiTtsPermission(e)
+      if (!permission.allowed) {
+        await e.reply(permission.message)
+        return
+      }
+
+      // 查找TTS音色预设
+      let voicePreset = DataManager.findTtsPreset(voiceInput)
+      if (!voicePreset) {
+        await DataManager.refreshTtsPresets()
+        voicePreset = DataManager.findTtsPreset(voiceInput)
+        
+        if (!voicePreset) {
+          const ttsPresets = DataManager.getTtsPresetList()
+          let voiceHint = ''
+          if (ttsPresets && ttsPresets.length > 0) {
+            voiceHint = '\n可用音色: ' + ttsPresets.map(p => `${p.name}(${p.id})`).join(', ')
+          }
+          await e.reply(`无效的音色预设: ${voiceInput}${voiceHint}`)
+          return
+        }
+      }
+
+      const characterId = voicePreset.id
+      const characterName = voicePreset.name
+
+      // AI评价TTS不限制字数，直接使用全文
+      const ttsText = text
+
+      logger.info(`[AI评价] 开始生成TTS语音，角色: ${characterName}, 文本长度: ${ttsText.length}`)
+
+      // 调用TTS合成API
+      const res = await api.ttsSynthesize({
+        text: ttsText,
+        character: characterId
+      })
+
+      if (!res.success || !res.data || !res.data.taskId) {
+        logger.warn(`[AI评价] TTS任务提交失败: ${res.message || '未知错误'}`)
+        await e.reply(`语音生成失败: ${res.message || '未知错误'}`)
+        return
+      }
+
+      const taskId = res.data.taskId
+
+      // 轮询任务状态
+      const result = await this.pollTtsTaskStatus(api, taskId)
+
+      if (!result.success) {
+        logger.warn(`[AI评价] TTS生成失败: ${result.message}`)
+        await e.reply(`语音生成失败: ${result.message}`)
+        return
+      }
+
+      // 下载音频到本地
+      const localPath = await this.downloadTtsAudio(result.audio_url, result.filename, e.user_id)
+
+      if (!localPath) {
+        await e.reply('语音下载失败，请稍后重试')
+        return
+      }
+
+      // 保存到TTS缓存（5分钟有效），支持 ^tts上传 命令
+      ttsCache.set(e.user_id, {
+        audio_url: result.audio_url,
+        filename: result.filename,
+        localPath: localPath,
+        timestamp: Date.now()
+      })
+      // 5分钟后清理缓存
+      setTimeout(() => {
+        const cached = ttsCache.get(e.user_id)
+        if (cached && cached.localPath === localPath) {
+          try { fs.unlinkSync(cached.localPath) } catch (err) {}
+          ttsCache.delete(e.user_id)
+        }
+      }, 5 * 60 * 1000)
+
+      // 发送语音
+      const recordUrl = `file:///${localPath.replace(/\\/g, '/')}`
+      await e.reply([segment.at(e.user_id), ' AI评价语音生成完毕！可使用 ^tts上传 获取文件'])
+      await e.reply(segment.record(recordUrl))
+
+      logger.info(`[AI评价] TTS语音发送成功: ${result.filename}`)
+
+    } catch (error) {
+      logger.error('[AI评价] TTS语音生成异常:', error)
+      await e.reply(`语音生成出错: ${error.message}`)
+    }
+  }
+
+  /**
+   * 轮询TTS任务状态
+   * @param {Code} api - API实例
+   * @param {string} taskId - 任务ID
+   * @returns {Promise<object>} - 结果对象
+   */
+  async pollTtsTaskStatus(api, taskId) {
+    const maxAttempts = 90
+    const pollInterval = 5000
+
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      try {
+        const res = await api.getTtsTaskStatus(taskId)
+
+        if (!res.success || !res.data) {
+          await this.sleep(pollInterval)
+          continue
+        }
+
+        const { status, result, error } = res.data
+
+        switch (status) {
+          case 'completed':
+            if (result && result.audio_url) {
+              return {
+                success: true,
+                audio_url: result.audio_url,
+                filename: result.filename
+              }
+            }
+            return { success: false, message: '任务完成但未获取到音频链接' }
+
+          case 'failed':
+            return { success: false, message: error || '语音合成失败' }
+
+          case 'queued':
+          case 'processing':
+            break
+        }
+
+        await this.sleep(pollInterval)
+      } catch (error) {
+        logger.error(`[AI评价] TTS任务状态轮询异常:`, error)
+        await this.sleep(pollInterval)
+      }
+    }
+
+    return { success: false, message: '语音合成超时，请稍后重试' }
+  }
+
+  /**
+   * 下载TTS音频到本地缓存
+   * @param {string} audioUrl - 音频URL
+   * @param {string} filename - 文件名
+   * @param {string} userId - 用户ID
+   * @returns {Promise<string|null>} - 本地文件路径
+   */
+  async downloadTtsAudio(audioUrl, filename, userId) {
+    try {
+      const response = await fetch(audioUrl)
+      if (!response.ok) {
+        throw new Error(`下载失败: ${response.status}`)
+      }
+
+      const arrayBuffer = await response.arrayBuffer()
+      const buffer = Buffer.from(arrayBuffer)
+
+      const localFilename = `${userId}_${Date.now()}_${filename || 'ai_tts.wav'}`
+      const localPath = path.join(ttsCacheDir, localFilename)
+
+      fs.writeFileSync(localPath, buffer)
+      logger.info(`[AI评价] TTS音频已缓存: ${localPath}`)
+
+      return localPath
+    } catch (error) {
+      logger.error('[AI评价] 下载TTS音频失败:', error)
+      return null
+    }
+  }
+
+  /**
+   * 延时函数
+   * @param {number} ms - 延时毫秒数
+   */
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms))
   }
 
   /**
@@ -272,9 +529,11 @@ export class Ai extends plugin {
     msg += '\n使用方法:\n';
     msg += '• ^ai锐评 模式 - 使用默认预设(锐评)\n';
     msg += '• ^ai评价 模式 预设 - 使用指定预设\n';
+    msg += '• ^ai评价 模式 预设 音色 - 额外生成TTS语音\n';
     msg += '\n示例:\n';
     msg += '• ^ai评价 烽火 cxg\n';
     msg += '• ^ai评价 烽火 雌小鬼\n';
+    msg += '• ^ai评价 烽火 雌小鬼 麦晓雯 (带语音)\n';
     msg += '• ^ai评价 mp 锐评';
     
     await e.reply(msg);
