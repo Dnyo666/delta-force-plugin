@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的藏品</title>
+    <link rel="stylesheet" type="text/css" href="{{_res_path}}Template/collection/collection.css"/>
+</head>
+<body>
+    <div class="page-section page-section--collection">
+        <div class="page-section-bg"></div>
+        <div class="page-section-main">
+            <div class="layout-main">
+                <div class="layout-box-filter">
+                    <div class="layout-box-head">
+                        <div class="layout-box-title">我的藏品</div>
+                    </div>
+                    
+                    <div class="layout-box-content">
+                        <div class="tab-container">
+                            <div class="tab-container-head">
+                                <div class="ui-tabs">
+                                    <div class="ui-tabs-item current">
+                                        <div class="ui-tabs-menu">{{typeName}}</div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="tab-container-cont">
+                                <div class="collections">
+                                    <div class="list-toolbar">
+                                        <div class="toolbar-main">
+                                            <span>已拥有数量 <span class="text-count">{{totalCount}}</span></span>
+                                        </div>
+                                        <div class="toolbar-side">
+                                            {{each qualityStats stat}}
+                                            <div class="icon-quality icon-quality--{{stat.level}}">
+                                                {{stat.count}}
+                                            </div>
+                                            {{/each}}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="collections-cont">
+                                        {{each categories category}}
+                                        <div class="category-section">
+                                            <div class="category-header">{{category.name}}</div>
+                                            <div class="collections-list" data-bg="{{category.bgImage}}" {{if category.bgImageUrl}}style="--operator-skin-bg-url: url('{{category.bgImageUrl}}')"{{/if}}>
+                                                {{each category.items item}}
+                                                <div class="collection-item collection-card--{{item.qualityLevel}}">
+                                                    <div class="collection-item-inner">
+                                                        <div class="collection-item-bg">
+                                                            <div class="collection-item-bg-ele"></div>
+                                                        </div>
+                                                        {{if category.bgImage !== 'operator-skin'}}
+                                                        <div class="collection-img-wrap">
+                                                            <img class="collection-img collection-img--{{item.category}}" src="{{item.imageUrl}}" alt="{{item.name}}" onerror="this.style.display='none';" />
+                                                        </div>
+                                                        {{/if}}
+                                                        <div class="collection-item-info">
+                                                            <div class="item-info">
+                                                                <p>{{item.id}}</p>
+                                                            </div>
+                                                        </div>
+                                                        <div class="collection-item-title">
+                                                            <span class="title-info">{{item.name}}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                {{/each}}
+                                            </div>
+                                        </div>
+                                        {{/each}}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
