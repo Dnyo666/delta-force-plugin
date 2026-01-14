@@ -30,6 +30,20 @@ export class PlaceInfo extends plugin {
 
     // 解析参数
     const argString = this.e.msg.replace(/^(#三角洲|\^)(特勤处信息|placeinfo)\s*/, '').trim()
+    
+    // 如果没有参数，提示用户正确命令
+    if (!argString || argString.trim() === '') {
+      await this.e.reply([
+        '请使用以下命令格式：\n',
+        '• ^特勤处信息 all - 查询所有设施（每个类型一个合并转发）\n',
+        '• ^特勤处信息 仓库 - 查询仓库所有等级\n',
+        '• ^特勤处信息 仓库 1 - 查询仓库等级1\n',
+        '\n支持的设施类型：\n',
+        '仓库、指挥中心、工作台、技术中心、靶场、训练中心、制药台、防具台、收藏室、潜水中心'
+      ].join(''))
+      return true
+    }
+    
     const placeMap = {
       '仓库': 'storage',
       '指挥中心': 'control',
@@ -42,7 +56,15 @@ export class PlaceInfo extends plugin {
       '收藏室': 'collect',
       '潜水中心': 'diving'
     }
-    const placeType = placeMap[argString.trim()] || ''
+    
+    // 解析参数：支持 "仓库 1" 或 "仓库" 格式
+    const args = argString.trim().split(/\s+/)
+    const firstArg = args[0]
+    const secondArg = args[1] ? parseInt(args[1]) : null
+    
+    const isAll = firstArg.toLowerCase() === 'all'
+    const placeType = isAll ? '' : (placeMap[firstArg] || '')
+    const targetLevel = secondArg !== null && !isNaN(secondArg) ? secondArg : null
 
     await this.e.reply('正在查询特勤处信息，请稍候...')
 
@@ -100,48 +122,139 @@ export class PlaceInfo extends plugin {
     // QQ头像
     qqAvatarUrl = `https://q1.qlogo.cn/g?b=qq&nk=${this.e.user_id}&s=640`
 
-    // 如果指定了类型，直接生成一张图片
+    // 如果指定了类型，按等级分组，每个等级生成一张图片
     if (placeType) {
       const processedPlaces = this.processPlaces(places, typeNameMap, relateMap)
-      // 按设施类型分组（显示名称相同的归为一组）
-      const groupedByDisplayName = {}
+      // 按等级分组
+      const groupedByLevel = {}
       processedPlaces.forEach(place => {
-        const displayName = place.displayName
-        if (!groupedByDisplayName[displayName]) {
-          groupedByDisplayName[displayName] = []
+        const level = place.level || 0
+        if (!groupedByLevel[level]) {
+          groupedByLevel[level] = []
         }
-        groupedByDisplayName[displayName].push(place)
+        groupedByLevel[level].push(place)
       })
 
-      // 转换为数组并排序
-      const placesByType = Object.keys(groupedByDisplayName).map(displayName => {
-        const typePlaces = groupedByDisplayName[displayName]
-        // 按等级排序
-        typePlaces.sort((a, b) => a.level - b.level)
-        return {
-          typeName: displayName,
-          displayName: displayName, // 添加 displayName 字段，方便模板使用
-          places: typePlaces
-        }
-      })
-
+      const sortedLevels = Object.keys(groupedByLevel).sort((a, b) => parseInt(a) - parseInt(b))
       const placeTypeName = typeNameMap[placeType] || placeType
-      const templateData = {
-        userName: userName,
-        userAvatar: userAvatar || qqAvatarUrl,
-        qqAvatarUrl: qqAvatarUrl,
-        placeTypeName: placeTypeName,
-        totalCount: processedPlaces.length,
-        placesByType: placesByType
+      const bot = global.Bot
+
+      // 如果指定了等级，只返回该等级的图
+      if (targetLevel !== null) {
+        let levelPlaces = groupedByLevel[targetLevel]
+        let actualLevel = targetLevel
+        let needNotify = false
+        
+        // 如果指定等级不存在，返回最高等级
+        if (!levelPlaces || levelPlaces.length === 0) {
+          if (sortedLevels.length === 0) {
+            await this.e.reply(`未找到 ${placeTypeName} 的设施信息。`)
+            return true
+          }
+          const maxLevel = Math.max(...sortedLevels.map(l => parseInt(l)))
+          levelPlaces = groupedByLevel[maxLevel]
+          actualLevel = maxLevel
+          if (!levelPlaces || levelPlaces.length === 0) {
+            await this.e.reply(`未找到 ${placeTypeName} 的设施信息。`)
+            return true
+          }
+          needNotify = true
+        }
+
+        const place = levelPlaces[0]
+        const templateData = {
+          userName: userName,
+          userAvatar: userAvatar || qqAvatarUrl,
+          qqAvatarUrl: qqAvatarUrl,
+          placeTypeName: placeTypeName,
+          places: [place]
+        }
+
+        try {
+          const imageResult = await Render.render('Template/placeInfo/placeInfo', templateData, {
+            e: this.e,
+            retType: 'default'
+          })
+          
+          // 如果等级不存在，先发送提示，再发送图片
+          if (needNotify) {
+            await this.e.reply(`未找到 ${placeTypeName} 等级 ${targetLevel}，已返回最高等级 ${actualLevel}。`)
+          }
+          
+          return imageResult
+        } catch (error) {
+          logger.error(`[特勤处信息] 渲染 ${placeTypeName} Lv.${actualLevel} 图片失败:`, error)
+          await this.e.reply(`渲染 ${placeTypeName} 等级 ${actualLevel} 图片失败，请稍后重试。`)
+          return true
+        }
       }
 
-      return await Render.render('Template/placeInfo/placeInfo', templateData, {
-        e: this.e,
-        retType: 'default'
+      // 如果没有指定等级，返回所有等级的合并转发
+      const forwardMsg = []
+
+      // 添加标题消息
+      forwardMsg.push({
+        message: `【${placeTypeName}】\n共 ${processedPlaces.length} 个设施，${sortedLevels.length} 个等级`,
+        nickname: bot.nickname,
+        user_id: bot.uin
       })
+
+      // 为每个等级生成一张图片
+      for (const level of sortedLevels) {
+        const levelPlaces = groupedByLevel[level]
+        if (levelPlaces.length === 0) continue
+
+        // 每个等级可能有多个设施（同名不同等级），这里只取第一个
+        const place = levelPlaces[0]
+        const templateData = {
+          userName: userName,
+          userAvatar: userAvatar || qqAvatarUrl,
+          qqAvatarUrl: qqAvatarUrl,
+          placeTypeName: placeTypeName,
+          places: [place] // 模板现在只显示单个设施
+        }
+
+        try {
+          const imageSegment = await Render.render('Template/placeInfo/placeInfo', templateData, {
+            e: this.e,
+            retType: 'base64',
+            saveId: `${this.e.user_id}_placeinfo_${placeType}_${level}`
+          })
+
+          if (imageSegment) {
+            forwardMsg.push({
+              message: [
+                `【${placeTypeName} - Lv.${level}】\n`,
+                imageSegment
+              ],
+              nickname: bot.nickname,
+              user_id: bot.uin
+            })
+          }
+        } catch (error) {
+          logger.error(`[特勤处信息] 渲染 ${placeTypeName} Lv.${level} 图片失败:`, error)
+          forwardMsg.push({
+            message: `【${placeTypeName} - Lv.${level}】渲染失败，请稍后重试`,
+            nickname: bot.nickname,
+            user_id: bot.uin
+          })
+        }
+      }
+
+      // 发送合并转发消息
+      if (forwardMsg.length > 1) {
+        const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+        if (!result) {
+          await this.e.reply('生成转发消息失败，请联系管理员。')
+        }
+      } else {
+        await this.e.reply('未能生成任何图片，请稍后重试。')
+      }
+
+      return true
     }
 
-    // 如果没有指定类型，按场所类型分组，每个类型生成一张图片
+    // 如果没有指定类型（包括 all），按场所类型分组，每个类型一个合并转发，每个等级一张图片
     const groupedByType = {}
     places.forEach(place => {
       const type = place.placeType || 'unknown'
@@ -162,18 +275,9 @@ export class PlaceInfo extends plugin {
       return indexA - indexB
     })
 
-    // 构建合并转发消息数组
-    const forwardMsg = []
     const bot = global.Bot
 
-    // 添加标题消息
-    forwardMsg.push({
-      message: `特勤处信息查询\n共 ${places.length} 个设施，${sortedTypes.length} 种类型`,
-      nickname: bot.nickname,
-      user_id: bot.uin
-    })
-
-    // 为每个类型生成一张图片
+    // 为每个类型生成一个合并转发
     for (const type of sortedTypes) {
       const typePlaces = groupedByType[type]
       if (typePlaces.length === 0) continue
@@ -181,58 +285,75 @@ export class PlaceInfo extends plugin {
       const processedPlaces = this.processPlaces(typePlaces, typeNameMap, relateMap)
       const placeTypeName = typeNameMap[type] || type
 
-      const templateData = {
-        userName: userName,
-        userAvatar: userAvatar || qqAvatarUrl,
-        qqAvatarUrl: qqAvatarUrl,
-        placeTypeName: placeTypeName,
-        totalCount: processedPlaces.length,
-        // 模板要求使用 placesByType 结构进行渲染
-        placesByType: [{
-          typeName: placeTypeName,
-          displayName: processedPlaces[0]?.displayName || placeTypeName,
-          places: processedPlaces
-        }]
-      }
+      // 按等级分组
+      const groupedByLevel = {}
+      processedPlaces.forEach(place => {
+        const level = place.level || 0
+        if (!groupedByLevel[level]) {
+          groupedByLevel[level] = []
+        }
+        groupedByLevel[level].push(place)
+      })
 
-      try {
-        // 渲染图片（retType: 'base64' 返回的是 segment.image 对象）
-        const imageSegment = await Render.render('Template/placeInfo/placeInfo', templateData, {
-          e: this.e,
-          retType: 'base64',
-          saveId: `${this.e.user_id}_placeinfo_${type}`
-        })
+      const sortedLevels = Object.keys(groupedByLevel).sort((a, b) => parseInt(a) - parseInt(b))
+      const forwardMsg = []
 
-        if (imageSegment) {
-          // 将类型标题和图片合并到一条消息中
+      // 添加标题消息
+      forwardMsg.push({
+        message: `【${placeTypeName}】\n共 ${processedPlaces.length} 个设施，${sortedLevels.length} 个等级`,
+        nickname: bot.nickname,
+        user_id: bot.uin
+      })
+
+      // 为每个等级生成一张图片
+      for (const level of sortedLevels) {
+        const levelPlaces = groupedByLevel[level]
+        if (levelPlaces.length === 0) continue
+
+        // 每个等级可能有多个设施（同名不同等级），这里只取第一个
+        const place = levelPlaces[0]
+        const templateData = {
+          userName: userName,
+          userAvatar: userAvatar || qqAvatarUrl,
+          qqAvatarUrl: qqAvatarUrl,
+          placeTypeName: placeTypeName,
+          places: [place] // 模板现在只显示单个设施
+        }
+
+        try {
+          const imageSegment = await Render.render('Template/placeInfo/placeInfo', templateData, {
+            e: this.e,
+            retType: 'base64',
+            saveId: `${this.e.user_id}_placeinfo_${type}_${level}`
+          })
+
+          if (imageSegment) {
+            forwardMsg.push({
+              message: [
+                `【${placeTypeName} - Lv.${level}】\n`,
+                imageSegment
+              ],
+              nickname: bot.nickname,
+              user_id: bot.uin
+            })
+          }
+        } catch (error) {
+          logger.error(`[特勤处信息] 渲染 ${placeTypeName} Lv.${level} 图片失败:`, error)
           forwardMsg.push({
-            message: [
-              `【${placeTypeName}】\n`,
-              imageSegment
-            ],
+            message: `【${placeTypeName} - Lv.${level}】渲染失败，请稍后重试`,
             nickname: bot.nickname,
             user_id: bot.uin
           })
         }
-      } catch (error) {
-        logger.error(`[特勤处信息] 渲染 ${placeTypeName} 图片失败:`, error)
-        // 如果渲染失败，添加文本消息作为降级方案
-        forwardMsg.push({
-          message: `【${placeTypeName}】渲染失败，请稍后重试`,
-          nickname: bot.nickname,
-          user_id: bot.uin
-        })
       }
-    }
 
-    // 发送合并转发消息
-    if (forwardMsg.length > 1) {
-      const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
-      if (!result) {
-        await this.e.reply('生成转发消息失败，请联系管理员。')
+      // 发送该类型的合并转发消息
+      if (forwardMsg.length > 1) {
+        const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+        if (!result) {
+          await this.e.reply(`生成 ${placeTypeName} 转发消息失败，请联系管理员。`)
+        }
       }
-    } else {
-      await this.e.reply('未能生成任何图片，请稍后重试。')
     }
 
     return true
@@ -284,14 +405,24 @@ export class PlaceInfo extends plugin {
           // 解析升级条件，按分号分割并过滤空字符串
           let conditionText = place.upgradeInfo.condition || '无'
           let conditions = []
+          let levelCondition = null
           if (conditionText && conditionText !== '无' && conditionText !== '默认解锁') {
             // 按分号分割条件
-            conditions = conditionText.split(/[;；]/).map(c => c.trim()).filter(c => c.length > 0)
+            const allConditions = conditionText.split(/[;；]/).map(c => c.trim()).filter(c => c.length > 0)
+            // 分离等级条件和其他条件
+            allConditions.forEach(condition => {
+              if (/解锁等级|等级\d+/.test(condition)) {
+                levelCondition = condition
+              } else {
+                conditions.push(condition)
+              }
+            })
           }
           
           processedPlace.upgradeInfo = {
             condition: conditionText,
-            conditions: conditions, // 添加条件数组
+            conditions: conditions, // 其他条件数组
+            levelCondition: levelCondition, // 等级条件单独提取
             hafCount: place.upgradeInfo.hafCount || 0,
             hafCountFormatted: place.upgradeInfo.hafCount > 0 ? place.upgradeInfo.hafCount.toLocaleString() : '0'
           }

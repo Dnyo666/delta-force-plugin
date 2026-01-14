@@ -321,22 +321,36 @@ export class Help extends plugin {
         const iconPath = path.join(pluginRoot, 'resources', 'help', 'imgs', themePath, 'icon.png');
         
         // 检查图片文件是否存在，不存在则记录警告日志
+        let bgExists = false;
+        let iconExists = false;
         try {
             await fs.access(bgPath);
+            bgExists = true;
         } catch (error) {
             logger.warn(`[Delta-Force Help] 背景图片不存在: ${bgPath}`);
         }
         
         try {
             await fs.access(iconPath);
+            iconExists = true;
         } catch (error) {
             logger.warn(`[Delta-Force Help] 图标图片不存在: ${iconPath}`);
         }
         
+        // 将文件路径转换为 file:// 协议（Puppeteer 需要）
+        // Windows 路径需要将反斜杠转换为正斜杠
+        const pathToFileUrl = (filePath) => {
+            if (!filePath) return '';
+            // 将路径标准化并转换为正斜杠
+            const normalizedPath = path.resolve(filePath).replace(/\\/g, '/');
+            // 添加 file:// 协议前缀
+            return `file://${normalizedPath}`;
+        };
+        
         const theme = {
-            main: bgPath,
-            bg: bgPath,
-            icon: iconPath,
+            main: bgExists ? pathToFileUrl(bgPath) : '',
+            bg: bgExists ? pathToFileUrl(bgPath) : '',
+            icon: iconExists ? pathToFileUrl(iconPath) : '',
             style: style,
             themePath: themePath
         };
@@ -345,13 +359,16 @@ export class Help extends plugin {
         
         // body 样式设置（宽度、字体、背景图）
         const bodyFontFamily = themeStyle.fontFamily ?? diyStyle.fontFamily ?? sysStyle.fontFamily ?? 'Microsoft YaHei, SimHei, Arial, sans-serif';
-        ret.push(`body{width:${width}px;font-family:${bodyFontFamily};background-image:url("${theme.bg}");background-repeat:no-repeat;background-size:cover;}`);
+        const bodyBgImage = theme.bg ? `background-image:url("${theme.bg}");background-repeat:no-repeat;background-size:cover;` : '';
+        ret.push(`body{width:${width}px;font-family:${bodyFontFamily};${bodyBgImage}}`);
         
         // container 样式设置（宽度、背景图）
-        ret.push(`.container{width:${width}px;background-image:url("${theme.main}");background-position:top left;background-repeat:no-repeat;background-size:100% auto;}`);
+        const containerBgImage = theme.main ? `background-image:url("${theme.main}");background-position:top left;background-repeat:no-repeat;background-size:100% auto;` : '';
+        ret.push(`.container{width:${width}px;${containerBgImage}}`);
         
         // help-icon 样式设置（背景图）
-        ret.push(`.help-icon{background-image:url("${theme.icon}");background-size:500px auto;}`);
+        const iconBgImage = theme.icon ? `background-image:url("${theme.icon}");background-size:500px auto;` : '';
+        ret.push(`.help-icon{${iconBgImage}}`);
         
         // 表格宽度
         ret.push(`.help-table .td,.help-table .th{width:${100 / colCount}%}`);
