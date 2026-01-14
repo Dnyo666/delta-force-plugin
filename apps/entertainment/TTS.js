@@ -375,7 +375,7 @@ export class TTS extends plugin {
 
       // 艾特用户并发送语音（使用本地文件）
       const recordUrl = localPath ? `file:///${localPath.replace(/\\/g, '/')}` : result.audio_url
-      await this.e.reply([segment.at(this.e.user_id), segment.record(recordUrl)])
+      await this.e.reply(segment.record(recordUrl))
 
       logger.info(`[DELTA FORCE PLUGIN] TTS合成成功: ${result.filename}, 文本: ${parseResult.text.substring(0, 20)}...`)
       return true
