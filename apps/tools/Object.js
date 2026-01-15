@@ -83,7 +83,7 @@ export class Object extends plugin {
     paginatedItems.forEach(item => {
       let msg = ''
       msg += `名称: ${item.objectName} (ID: ${item.objectID || item.id})\n`
-      msg += `分类: ${item.primaryClass} / ${item.secondClass}\n`
+      msg += `分类: ${item.primaryClass} / ${item.secondClassCN || item.secondClass}\n`
       msg += `价格: ${item.price?.toLocaleString() || item.avgPrice?.toLocaleString() || '未知'} | 重量: ${item.weight} | 稀有度: ${item.grade}\n`
       msg += `描述: ${item.desc}\n`
       forwardMsg.push({ ...userInfo, message: msg })
@@ -136,7 +136,7 @@ export class Object extends plugin {
     items.forEach(item => {
         let msg = '';
         msg += `名称: ${item.objectName} (ID: ${item.objectID})\n`;
-        msg += `分类: ${item.primaryClass} / ${item.secondClass}\n`;
+        msg += `分类: ${item.primaryClass} / ${item.secondClassCN || item.secondClass}\n`;
         msg += `价格: ${item.avgPrice?.toLocaleString() || '未知'} | 重量: ${item.weight} | 稀有度: ${item.grade}\n`;
         msg += `描述: ${item.desc}`;
         forwardMsg.push({ ...userInfo, message: msg });

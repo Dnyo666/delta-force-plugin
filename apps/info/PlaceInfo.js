@@ -162,19 +162,19 @@ export class PlaceInfo extends plugin {
         }
 
         const place = levelPlaces[0]
-        const templateData = {
-          userName: userName,
-          userAvatar: userAvatar || qqAvatarUrl,
-          qqAvatarUrl: qqAvatarUrl,
-          placeTypeName: placeTypeName,
+      const templateData = {
+        userName: userName,
+        userAvatar: userAvatar || qqAvatarUrl,
+        qqAvatarUrl: qqAvatarUrl,
+        placeTypeName: placeTypeName,
           places: [place]
-        }
+      }
 
         try {
           const imageResult = await Render.render('Template/placeInfo/placeInfo', templateData, {
-            e: this.e,
-            retType: 'default'
-          })
+        e: this.e,
+        retType: 'default'
+      })
           
           // 如果等级不存在，先发送提示，再发送图片
           if (needNotify) {
@@ -312,45 +312,45 @@ export class PlaceInfo extends plugin {
 
         // 每个等级可能有多个设施（同名不同等级），这里只取第一个
         const place = levelPlaces[0]
-        const templateData = {
-          userName: userName,
-          userAvatar: userAvatar || qqAvatarUrl,
-          qqAvatarUrl: qqAvatarUrl,
-          placeTypeName: placeTypeName,
+      const templateData = {
+        userName: userName,
+        userAvatar: userAvatar || qqAvatarUrl,
+        qqAvatarUrl: qqAvatarUrl,
+        placeTypeName: placeTypeName,
           places: [place] // 模板现在只显示单个设施
-        }
+      }
 
-        try {
-          const imageSegment = await Render.render('Template/placeInfo/placeInfo', templateData, {
-            e: this.e,
-            retType: 'base64',
+      try {
+        const imageSegment = await Render.render('Template/placeInfo/placeInfo', templateData, {
+          e: this.e,
+          retType: 'base64',
             saveId: `${this.e.user_id}_placeinfo_${type}_${level}`
-          })
+        })
 
-          if (imageSegment) {
-            forwardMsg.push({
-              message: [
-                `【${placeTypeName} - Lv.${level}】\n`,
-                imageSegment
-              ],
-              nickname: bot.nickname,
-              user_id: bot.uin
-            })
-          }
-        } catch (error) {
-          logger.error(`[特勤处信息] 渲染 ${placeTypeName} Lv.${level} 图片失败:`, error)
+        if (imageSegment) {
           forwardMsg.push({
-            message: `【${placeTypeName} - Lv.${level}】渲染失败，请稍后重试`,
+            message: [
+                `【${placeTypeName} - Lv.${level}】\n`,
+              imageSegment
+            ],
             nickname: bot.nickname,
             user_id: bot.uin
           })
         }
+      } catch (error) {
+          logger.error(`[特勤处信息] 渲染 ${placeTypeName} Lv.${level} 图片失败:`, error)
+        forwardMsg.push({
+            message: `【${placeTypeName} - Lv.${level}】渲染失败，请稍后重试`,
+          nickname: bot.nickname,
+          user_id: bot.uin
+        })
       }
+    }
 
       // 发送该类型的合并转发消息
-      if (forwardMsg.length > 1) {
-        const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
-        if (!result) {
+    if (forwardMsg.length > 1) {
+      const result = await this.e.reply(await bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 })
+      if (!result) {
           await this.e.reply(`生成 ${placeTypeName} 转发消息失败，请联系管理员。`)
         }
       }
