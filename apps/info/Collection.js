@@ -170,13 +170,9 @@ export class Collection extends plugin {
       '其他资产': 'property-gx-li3.webp'
     }
     
-    // 为每个分类添加背景图片和特殊处理
+    // 为每个分类添加背景图片
     categories.forEach(category => {
       category.bgImage = categoryBgMap[category.name] || 'property-gx-li3.webp'
-      // 如果是干员皮肤，收集第一个物品的图片作为背景
-      if (category.bgImage === 'operator-skin' && category.items.length > 0) {
-        category.bgImageUrl = category.items[0].imageUrl
-      }
     })
     
     const templateData = {
