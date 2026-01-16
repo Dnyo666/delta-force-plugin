@@ -98,6 +98,20 @@ export class PlaceInfo extends plugin {
       'diving': '潜水中心'
     }
 
+    // 场所类型图片映射
+    const typeImageMap = {
+      'storage': '仓库.png',
+      'control': '指挥中心.png',
+      'workbench': '工作台.png',
+      'tech': '技术中心.png',
+      'shoot': '靶场.png',
+      'training': '训练中心.png',
+      'pharmacy': '制药台.png',
+      'armory': '防具台.png',
+      'collect': '收藏室.png',
+      'diving': '潜水中心.png'
+    }
+
     // 获取用户信息
     let userName = this.e.sender.card || this.e.sender.nickname
     let userAvatar = ''
@@ -367,6 +381,19 @@ export class PlaceInfo extends plugin {
    * @returns {Array} - 处理后的场所数组
    */
   processPlaces(places, typeNameMap, relateMap) {
+    // 场所类型图片映射
+    const typeImageMap = {
+      'storage': '仓库.png',
+      'control': '指挥中心.png',
+      'workbench': '工作台.png',
+      'tech': '技术中心.png',
+      'shoot': '靶场.png',
+      'training': '训练中心.png',
+      'pharmacy': '制药台.png',
+      'armory': '防具台.png',
+      'collect': '收藏室.png',
+      'diving': '潜水中心.png'
+    }
     // 按等级分组并排序
     const groupedByLevel = {}
     places.forEach(place => {
@@ -391,9 +418,14 @@ export class PlaceInfo extends plugin {
           displayName = typeNameMap[placeTypeValue] || placeName || '未知设施'
         }
 
+        // 获取设施图片路径（相对路径，模板会自动添加 _res_path）
+        const imageFileName = typeImageMap[placeTypeValue] || null
+        const imageUrl = imageFileName ? `imgs/place/${imageFileName}` : null
+
         const processedPlace = {
           displayName: displayName,
           level: place.level || 0,
+          imageUrl: imageUrl,
           upgradeInfo: null,
           upgradeRequired: [],
           unlockInfo: null,

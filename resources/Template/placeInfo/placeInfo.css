@@ -15,71 +15,56 @@
   font-display: swap;
 }
 
-/* ========== 基础重置样式 ========== */
+/* ========== 基础样式 ========== */
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-/* ========== Body 样式 ========== */
-body {
-    background: #0b0f13;
-    color: #F2F2F2;
-    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
     margin: 0;
     padding: 0;
-    width: 1200px;
+    box-sizing: border-box;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+body {
+    background: #06090c;
+    color: #d1d5db;
+    font-family: 'ProjectD', "Microsoft YaHei", sans-serif;
+    width: 1700px;
+    margin: 0 auto;
+    overflow: hidden;
     height: auto;
     min-height: 600px;
-    transform: none;
-    transform-origin: unset;
-    overflow: visible;
 }
 
-/* ========== 容器样式 ========== */
 .container {
     position: relative;
-    width: 1200px;
-    min-height: 600px;
-    margin: 0 auto;
-    background: transparent;
-    overflow: hidden;
+    width: 100%;
+    min-height: 1000px;
+    background: radial-gradient(circle at 50% 0%, #161d24 0%, #06090c 100%);
+    padding-bottom: 60px;
 }
 
-.bg-image {
+/* 背景点阵装饰 */
+.container::before {
+    content: "";
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    object-position: center;
-    opacity: 0.4;
+    inset: 0;
+    background-image: radial-gradient(rgba(15, 247, 150, 0.05) 1px, transparent 1px);
+    background-size: 30px 30px;
     z-index: 0;
 }
 
-/* ========== 头部样式 ========== */
+/* ========== 头部 ========== */
 .header {
     position: relative;
     z-index: 2;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 25px 30px 20px;
-    background: transparent;
+    padding: 40px 60px;
+    border-bottom: 1px solid rgba(15, 247, 150, 0.1);
 }
 
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.game-logo {
-    height: 35px;
+.game-logo { 
+    height: 40px; 
     width: auto;
 }
 
@@ -87,394 +72,283 @@ body {
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
+    text-align: center;
 }
 
 .title {
     color: #FFFFFF;
-    font-size: 22px;
+    font-size: 32px;
     font-weight: 700;
-    letter-spacing: 2px;
+    letter-spacing: 6px;
+    text-shadow: 0 0 20px rgba(15, 247, 150, 0.4);
 }
 
-/* ========== 内容区域 ========== */
+.subtitle {
+    font-size: 12px;
+    color: rgba(15, 247, 150, 0.5);
+    letter-spacing: 2px;
+    margin-top: 5px;
+    text-transform: uppercase;
+}
+
+/* ========== 核心布局 ========== */
 .content {
     position: relative;
     z-index: 2;
-    padding: 0 30px 30px;
+    padding: 40px 60px 0 60px;
 }
 
-/* ========== 设施卡片样式（参考原神武器图） ========== */
 .place-card {
-    background: linear-gradient(135deg, rgba(44, 44, 50, 0.98), rgba(35, 35, 40, 0.98));
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 16px;
-    margin-bottom: 20px;
-    overflow: hidden;
     display: flex;
-    min-height: 500px;
+    gap: 60px;
+    background: rgba(20, 25, 30, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    padding: 50px;
+    position: relative;
+    margin-bottom: 0;
 }
 
-/* ========== 左侧：设施信息 ========== */
+/* 装饰角 */
+.place-card::after {
+    content: "";
+    position: absolute;
+    top: -1px; 
+    left: -1px;
+    width: 30px; 
+    height: 30px;
+    border-top: 3px solid #0FF796;
+    border-left: 3px solid #0FF796;
+}
+
+/* ========== 左侧：视觉展示 ========== */
 .place-left {
-    width: 300px;
-    background: linear-gradient(180deg, rgba(15, 247, 150, 0.08), rgba(0, 0, 0, 0.2));
-    border-right: 2px solid rgba(15, 247, 150, 0.3);
-    padding: 40px 30px;
+    width: 480px;
+    flex-shrink: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    position: relative;
-}
-
-.place-left::after {
-    content: '';
-    position: absolute;
-    right: 0;
-    top: 0;
-    bottom: 0;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, rgba(15, 247, 150, 0.4), transparent);
+    justify-content: space-between;
 }
 
 .place-name {
-    color: #0FF796;
-    font-size: 32px;
+    font-size: 56px;
     font-weight: 700;
-    text-align: center;
-    letter-spacing: 3px;
-    line-height: 1.3;
-    margin-bottom: 20px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid rgba(15, 247, 150, 0.3);
-    width: 100%;
-}
-
-.place-level-badge {
     color: #FFFFFF;
-    font-size: 48px;
-    font-weight: 700;
-    text-align: center;
+    margin-bottom: 40px;
     letter-spacing: 2px;
-    background: linear-gradient(135deg, rgba(15, 247, 150, 0.2), rgba(15, 247, 150, 0.1));
-    padding: 20px 30px;
-    border: 2px solid rgba(15, 247, 150, 0.4);
-    border-radius: 12px;
-    width: 100%;
+    text-align: center;
 }
 
-/* ========== 右侧：详细信息 ========== */
+.image-box {
+    width: 450px;
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 0;
+    flex: 1;
+}
+
+.place-image {
+    max-width: 150%;
+    max-height: 150%;
+    object-fit: contain;
+    filter: drop-shadow(0 0 40px rgba(15, 247, 150, 0.15));
+}
+
+.level-display {
+    margin-top: 0;
+    width: 100%;
+    text-align: center;
+    padding-top: 20px;
+}
+
+.level-label { 
+    font-size: 14px; 
+    color: #FFFFFF; 
+    font-weight: 700;
+    letter-spacing: 4px;
+    display: block;
+    margin-bottom: 10px;
+}
+
+.level-value { 
+    font-size: 100px; 
+    font-weight: 800; 
+    color: #FFFFFF; 
+    line-height: 1;
+}
+
+/* ========== 右侧：数据面板 ========== */
 .place-right {
     flex: 1;
-    padding: 30px;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 40px;
 }
 
-/* ========== 信息行样式 ========== */
-.info-row {
-    display: flex;
-    align-items: center;
-    padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.4);
-    border-radius: 8px;
-    border-left: 3px solid #0FF796;
-    flex-shrink: 0;
+.section {
+    width: 100%;
 }
 
-.info-label {
-    color: rgba(255, 255, 255, 0.85);
-    font-size: 15px;
-    font-weight: 600;
-    min-width: 120px;
-    flex-shrink: 0;
-}
-
-.info-value {
-    color: #FFFFFF;
-    font-size: 16px;
-    font-weight: 600;
-    flex: 1;
-    word-break: break-word;
-}
-
-
-/* ========== 升级条件样式 ========== */
-.upgrade-info-section {
-    margin-bottom: 16px;
-    flex-shrink: 0;
-}
-
-.info-label-large {
+.section-title {
+    font-size: 14px;
     color: #0FF796;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    letter-spacing: 0.5px;
-}
-
-.level-condition-item {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 10px 20px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 20px;
-    border: 1px solid rgba(15, 247, 150, 0.3);
-    line-height: 1.4;
-    white-space: nowrap;
-    flex-shrink: 0;
-    margin-bottom: 12px;
-    display: inline-block;
-    text-align: center;
-    min-width: 120px;
-}
-
-.conditions-list {
+    font-weight: bold;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
     display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
-}
-
-.condition-item {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 14px;
-    font-weight: 500;
-    padding: 8px 16px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 20px;
-    border: 1px solid rgba(15, 247, 150, 0.25);
-    line-height: 1.4;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.haf-row {
-    display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 8px;
-    border: 1px solid rgba(15, 247, 150, 0.25);
     gap: 12px;
+    text-transform: uppercase;
 }
 
-.haf-label {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 15px;
-    font-weight: 500;
-    flex-shrink: 0;
+.section-title::before {
+    content: "";
+    width: 4px; 
+    height: 14px;
+    background: #0FF796;
 }
 
-.haf-value {
-    color: #0FF796;
-    font-size: 18px;
-    font-weight: 700;
-    flex-shrink: 0;
+/* 升级条件 */
+.upgrade-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
 }
 
-/* ========== 分隔线 ========== */
-.section-divider {
-    height: 1px;
-    background: rgba(80, 85, 90, 0.5);
-    margin: 8px 0;
-    flex-shrink: 0;
+.info-tile {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 20px 25px;
+    border-radius: 4px;
 }
 
-/* ========== 区块标题 ========== */
-.section-header {
-    color: #0FF796;
-    font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 12px;
-    padding: 4px 0;
-    border-left: 3px solid #0FF796;
-    padding-left: 12px;
-    letter-spacing: 0.5px;
-    flex-shrink: 0;
+.tile-label { 
+    font-size: 12px; 
+    color: #888; 
+    margin-bottom: 10px; 
 }
 
-/* ========== 物品列表样式 ========== */
-.items-list {
+.tile-value { 
+    font-size: 24px; 
+    font-weight: bold; 
+    color: #fff; 
+}
+
+.tile-value.highlight { 
+    color: #0FF796; 
+}
+
+/* 物资列表 - 重新设计 */
+.materials-list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+}
+
+.material-item {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 25px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-bottom: 4px;
-}
-
-.item-card {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(15, 247, 150, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    flex-direction: row;
     align-items: center;
-    gap: 16px;
-    min-height: 80px;
+    border-radius: 4px;
 }
 
-.item-image-wrapper {
+.mat-img-container {
+    width: 120px;
+    height: 120px;
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    box-shadow: inset 0 0 20px rgba(15, 247, 150, 0.1);
+}
+
+.mat-img {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+}
+
+.mat-name {
+    font-size: 16px;
+    color: #eee;
+    margin-bottom: 8px;
+    font-weight: bold;
+}
+
+.mat-count {
+    font-size: 20px;
+    color: #0FF796;
+    font-weight: 800;
+}
+
+/* 物品库网格 */
+.unlock-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
+.unlock-tag {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #FFFFFF;
+    font-weight: 700;
+    text-align: center;
+    border-radius: 4px;
+    min-height: 120px;
+}
+
+.unlock-tag-img {
     width: 64px;
     height: 64px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid rgba(15, 247, 150, 0.2);
-}
-
-.item-image {
-    width: 100%;
-    height: 100%;
     object-fit: contain;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px;
+    border-radius: 4px;
+    flex-shrink: 0;
 }
 
-.item-info {
-    flex: 1;
+.unlock-tag span {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 100%;
+    text-align: center;
+}
+
+/* 效果标签 */
+.effect-row {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
-.item-name {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.4;
-    word-break: break-word;
-    flex: 1;
-}
-
-.item-count {
+.effect-chip {
+    background: rgba(15, 247, 150, 0.1);
+    border: 1px solid rgba(15, 247, 150, 0.3);
     color: #0FF796;
-    font-size: 16px;
-    font-weight: 700;
-    flex-shrink: 0;
+    padding: 5px 15px;
+    border-radius: 2px;
+    font-size: 13px;
 }
 
-/* ========== 解锁效果样式 ========== */
-.unlock-info-section {
-    margin-bottom: 16px;
-    flex-shrink: 0;
-}
-
-.unlock-effects-list {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
-.effect-badge {
-    background: rgba(0, 217, 255, 0.15);
-    border: 1px solid rgba(0, 217, 255, 0.4);
-    border-radius: 20px;
-    padding: 10px 18px;
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-
-.unlock-props-list {
-    display: flex;
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-
-/* 有图片的卡片样式 */
-.prop-card {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(0, 217, 255, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 12px;
-    flex-shrink: 0;
-    min-width: 200px;
-}
-
-.prop-image-wrapper {
-    width: 48px;
-    height: 48px;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(0, 0, 0, 0.5);
-    border-radius: 6px;
-    overflow: hidden;
-    border: 1px solid rgba(0, 217, 255, 0.2);
-}
-
-.prop-image {
-    width: 100%;
-    height: 100%;
-    object-fit: contain;
-}
-
-.prop-info {
-    flex: 1;
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-}
-
-.prop-name {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-    word-break: break-word;
-    flex: 1;
-}
-
-.prop-count {
-    color: rgba(0, 217, 255, 0.9);
-    font-size: 14px;
-    font-weight: 700;
-    flex-shrink: 0;
-}
-
-/* 仅文字的胶囊样式 */
-.prop-badge {
-    background: rgba(0, 217, 255, 0.15);
-    border: 1px solid rgba(0, 217, 255, 0.4);
-    border-radius: 20px;
-    padding: 10px 18px;
-    display: inline-block;
-    flex-shrink: 0;
-}
-
-.prop-badge .prop-name {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 14px;
-    font-weight: 600;
-    line-height: 1.4;
-    white-space: nowrap;
-}
-
-/* ========== 详情样式 ========== */
+/* 详情文本 */
 .detail-text {
     color: rgba(255, 255, 255, 0.8);
     font-size: 14px;
@@ -482,6 +356,6 @@ body {
     font-style: italic;
     padding: 12px 16px;
     background: rgba(0, 0, 0, 0.4);
-    border-radius: 8px;
+    border-radius: 4px;
     border-left: 3px solid #0FF796;
 }

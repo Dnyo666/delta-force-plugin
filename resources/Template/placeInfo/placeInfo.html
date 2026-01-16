@@ -2,119 +2,128 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>特勤处信息</title>
     <link rel="stylesheet" type="text/css" href="{{_res_path}}Template/placeInfo/placeInfo.css"/>
 </head>
 <body>
     <div class="container">
-        <!-- 背景图片 -->
-        <img class="bg-image" src="{{_res_path}}imgs/others/loading13.png" alt="" />
-        
-        <!-- 头部区域 -->
+        <!-- 头部 -->
         <div class="header">
-            <div class="header-left">
-                <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
-            </div>
+            <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="LOGO" />
             <div class="header-center">
                 <div class="title">特勤处信息</div>
+                <div class="subtitle">Special Services Division Intel</div>
             </div>
         </div>
 
         <div class="content">
             {{each places place}}
             <div class="place-card">
-                <!-- 左侧：设施信息 -->
+                <!-- 左侧视觉 -->
                 <div class="place-left">
                     <div class="place-name">{{place.displayName}}</div>
-                    <div class="place-level-badge">Lv.{{place.level}}</div>
+                    {{if place.imageUrl}}
+                    <div class="image-box">
+                        <img class="place-image" src="{{_res_path}}{{place.imageUrl}}" alt="{{place.displayName}}" />
+                    </div>
+                    {{/if}}
+                    <div class="level-display">
+                        <span class="level-label">当前等级 / CURRENT LEVEL</span>
+                        <span class="level-value">{{place.level}}</span>
+                    </div>
                 </div>
-                
-                <!-- 右侧：详细信息 -->
+
+                <!-- 右侧数据 -->
                 <div class="place-right">
+                    <!-- 升级条件 -->
                     {{if place.upgradeInfo}}
-                    <div class="upgrade-info-section">
-                        <div class="info-label-large">升级条件</div>
-                        {{if place.upgradeInfo.levelCondition}}
-                        <div class="level-condition-item">{{place.upgradeInfo.levelCondition}}</div>
-                        {{/if}}
-                        {{if place.upgradeInfo.conditions && place.upgradeInfo.conditions.length > 0}}
-                        <div class="conditions-list">
+                    <div class="section">
+                        <div class="section-title">升级条件 / REQUIREMENTS</div>
+                        <div class="upgrade-grid">
+                            {{if place.upgradeInfo.levelCondition}}
+                            <div class="info-tile">
+                                <div class="tile-label">解锁等级</div>
+                                <div class="tile-value">{{place.upgradeInfo.levelCondition}}</div>
+                            </div>
+                            {{/if}}
+                            {{if place.upgradeInfo.conditions && place.upgradeInfo.conditions.length > 0}}
                             {{each place.upgradeInfo.conditions condition}}
-                            <div class="condition-item">{{condition}}</div>
+                            <div class="info-tile">
+                                <div class="tile-label">条件</div>
+                                <div class="tile-value">{{condition}}</div>
+                            </div>
                             {{/each}}
+                            {{else if place.upgradeInfo.condition && !place.upgradeInfo.levelCondition}}
+                            <div class="info-tile">
+                                <div class="tile-label">条件</div>
+                                <div class="tile-value">{{place.upgradeInfo.condition}}</div>
+                            </div>
+                            {{/if}}
+                            {{if place.upgradeInfo.hafCount > 0}}
+                            <div class="info-tile">
+                                <div class="tile-label">所需哈夫币</div>
+                                <div class="tile-value highlight">{{place.upgradeInfo.hafCountFormatted}}</div>
+                            </div>
+                            {{/if}}
                         </div>
-                        {{else if place.upgradeInfo.condition && !place.upgradeInfo.levelCondition}}
-                        <div class="condition-item">{{place.upgradeInfo.condition}}</div>
-                        {{/if}}
-                        {{if place.upgradeInfo.hafCount > 0}}
-                        <div class="haf-row">
-                            <div class="haf-label">所需哈夫币</div>
-                            <div class="haf-value">{{place.upgradeInfo.hafCountFormatted}}</div>
-                        </div>
-                        {{/if}}
                     </div>
                     {{/if}}
 
+                    <!-- 所需物资 -->
                     {{if place.upgradeRequired && place.upgradeRequired.length > 0}}
-                    <div class="section-divider"></div>
-                    <div class="section-header">升级所需物品</div>
-                    <div class="items-list">
-                        {{each place.upgradeRequired item}}
-                        <div class="item-card">
-                            {{if item.imageUrl}}
-                            <div class="item-image-wrapper">
-                                <img class="item-image" src="{{item.imageUrl}}" alt="{{item.objectName}}" onerror="this.style.display='none'; this.parentElement.style.display='none';" />
+                    <div class="section">
+                        <div class="section-title">所需物资 / MATERIALS</div>
+                        <div class="materials-list">
+                            {{each place.upgradeRequired item}}
+                            <div class="material-item">
+                                <div class="mat-img-container">
+                                    <img class="mat-img" src="{{item.imageUrl}}" alt="{{item.objectName}}" />
+                                </div>
+                                <div class="mat-name">{{item.objectName}}</div>
+                                <div class="mat-count">×{{item.count}}</div>
                             </div>
-                            {{/if}}
-                            <div class="item-info">
-                                <div class="item-name">{{item.objectName}}</div>
-                                <div class="item-count">×{{item.count}}</div>
-                            </div>
+                            {{/each}}
                         </div>
-                        {{/each}}
                     </div>
                     {{/if}}
 
+                    <!-- 解锁效果 -->
                     {{if place.unlockInfo}}
-                    <div class="unlock-info-section">
-                        <div class="section-header">解锁效果</div>
-                        {{if place.unlockInfo.properties && place.unlockInfo.properties.length > 0}}
-                        <div class="unlock-effects-list">
+                    {{if place.unlockInfo.properties && place.unlockInfo.properties.length > 0}}
+                    <div class="section">
+                        <div class="section-title">解锁效果 / UNLOCK EFFECTS</div>
+                        <div class="effect-row">
                             {{each place.unlockInfo.properties prop}}
-                            <div class="effect-badge">{{prop}}</div>
+                            <div class="effect-chip">+ {{prop}}</div>
                             {{/each}}
                         </div>
-                        {{/if}}
-                        {{if place.unlockInfo.props && place.unlockInfo.props.length > 0}}
-                        <div class="unlock-props-list">
-                            {{each place.unlockInfo.props prop}}
-                            {{if prop.imageUrl}}
-                            <div class="prop-card">
-                                <div class="prop-image-wrapper">
-                                    <img class="prop-image" src="{{prop.imageUrl}}" alt="{{prop.objectName}}" onerror="this.style.display='none'; this.parentElement.style.display='none';" />
-                                </div>
-                                <div class="prop-info">
-                                    <div class="prop-name">{{prop.objectName}}</div>
-                                    {{if prop.count}}
-                                    <div class="prop-count">×{{prop.count}}</div>
-                                    {{/if}}
-                                </div>
-                            </div>
-                            {{else}}
-                            <div class="prop-badge">
-                                <div class="prop-name">{{prop.objectName}}{{if prop.count}} ×{{prop.count}}{{/if}}</div>
-                            </div>
-                            {{/if}}
-                            {{/each}}
-                        </div>
-                        {{/if}}
                     </div>
                     {{/if}}
 
+                    <!-- 解锁物品 -->
+                    {{if place.unlockInfo.props && place.unlockInfo.props.length > 0}}
+                    <div class="section">
+                        <div class="section-title">解锁物品库 / ITEM REGISTRY</div>
+                        <div class="unlock-grid">
+                            {{each place.unlockInfo.props prop}}
+                            <div class="unlock-tag">
+                                {{if prop.imageUrl}}
+                                <img class="unlock-tag-img" src="{{prop.imageUrl}}" alt="{{prop.objectName}}" />
+                                {{/if}}
+                                <span>{{prop.objectName}}{{if prop.count}} ×{{prop.count}}{{/if}}</span>
+                            </div>
+                            {{/each}}
+                        </div>
+                    </div>
+                    {{/if}}
+                    {{/if}}
+
+                    <!-- 详情 -->
                     {{if place.detail}}
-                    <div class="section-divider"></div>
-                    <div class="detail-text">{{place.detail}}</div>
+                    <div class="section">
+                        <div class="section-title">详情 / DETAILS</div>
+                        <div class="detail-text">{{place.detail}}</div>
+                    </div>
                     {{/if}}
                 </div>
             </div>
