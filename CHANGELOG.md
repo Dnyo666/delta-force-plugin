@@ -5,7 +5,16 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.0.0/)，
 版本号遵循扩展的语义化版本规范（x.y.z-w 格式）。
 
-### [1.5.2-3] - 当前版本
+### [1.5.2-4] - 当前版本
+
+### fix（修复）
+- 优化战绩查询功能（`apps/report/Record.js`）
+  - 全面战场模式移除队友信息显示，仅烽火地带显示队友信息
+
+### style（样式）
+- 同步修改战绩查询渲染模板（`resources/Template/record/`）
+
+## [1.5.2-3] - 历史版本
 
 ### fix（修复）
 - 修复语音发送艾特的情况，避免无法发送

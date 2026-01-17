@@ -41,70 +41,73 @@
                             </div>
                         </div>
 
-                        <!-- 数据内容区域 -->
-                        <div class="data-content">
-                            <!-- 烽火地带：带出价值 -->
-                            {{if item.value}}
-                            <div class="data-item-main">
-                                <div class="data-label">带出价值</div>
-                                <div class="data-value highlight-value">{{item.value}}</div>
-                            </div>
-                            {{/if}}
-
-                            <!-- 烽火地带：净收益 -->
-                            {{if item.income}}
-                            <div class="data-item-main">
-                                <div class="data-label">净收益</div>
-                                <div class="data-value highlight-income {{item.incomeClass}}">{{item.income}}</div>
-                            </div>
-                            {{/if}}
-
-                            <!-- 全面战场：得分 -->
-                            {{if item.score}}
-                            <div class="data-item-main">
-                                <div class="data-label">得分</div>
-                                <div class="data-value highlight-score">{{item.score}}</div>
-                            </div>
-                            {{/if}}
-
-                            <!-- 全面战场：KDA -->
-                            {{if item.kda}}
-                            <div class="data-item-main">
-                                <div class="data-label">KDA</div>
-                                <div class="data-value highlight-kda">{{item.kda}}</div>
-                            </div>
-                            {{/if}}
-
-                            <!-- 时长 -->
-                            {{if item.duration}}
-                            <div class="data-item-main">
-                                <div class="data-label">作战时长</div>
-                                <div class="data-value">{{item.duration}}</div>
-                            </div>
-                            {{/if}}
-                        </div>
-
-                        <!-- 第2行：击杀统计和救援 -->
-                        <div class="data-row-secondary">
-                            {{if item.killsHtml}}
-                            <div class="kills-section">
-                                <div class="kills-label">击杀明细</div>
-                                <div class="kills-content">
-                                    {{@item.killsHtml}}
+                        <!-- 内容区域包装器（用于垂直居中） -->
+                        <div class="data-content-wrapper">
+                            <!-- 数据内容区域 -->
+                            <div class="data-content">
+                                <!-- 烽火地带：带出价值 -->
+                                {{if item.value}}
+                                <div class="data-item-main">
+                                    <div class="data-label">带出价值</div>
+                                    <div class="data-value highlight-value">{{item.value}}</div>
                                 </div>
-                            </div>
-                            {{/if}}
+                                {{/if}}
 
-                            {{if item.rescue}}
-                            <div class="rescue-section">
-                                <div class="rescue-label">战场救援</div>
-                                <div class="rescue-value">{{item.rescue}} 次</div>
+                                <!-- 烽火地带：净收益 -->
+                                {{if item.income}}
+                                <div class="data-item-main">
+                                    <div class="data-label">净收益</div>
+                                    <div class="data-value highlight-income {{item.incomeClass}}">{{item.income}}</div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 全面战场：得分 -->
+                                {{if item.score}}
+                                <div class="data-item-main">
+                                    <div class="data-label">得分</div>
+                                    <div class="data-value highlight-score">{{item.score}}</div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 全面战场：KDA -->
+                                {{if item.kda}}
+                                <div class="data-item-main">
+                                    <div class="data-label">KDA</div>
+                                    <div class="data-value highlight-kda">{{item.kda}}</div>
+                                </div>
+                                {{/if}}
+
+                                <!-- 时长 -->
+                                {{if item.duration}}
+                                <div class="data-item-main">
+                                    <div class="data-label">作战时长</div>
+                                    <div class="data-value">{{item.duration}}</div>
+                                </div>
+                                {{/if}}
                             </div>
-                            {{/if}}
+
+                            <!-- 第2行：击杀统计和救援 -->
+                            <div class="data-row-secondary">
+                                {{if item.killsHtml}}
+                                <div class="kills-section">
+                                    <div class="kills-label">击杀明细</div>
+                                    <div class="kills-content">
+                                        {{@item.killsHtml}}
+                                    </div>
+                                </div>
+                                {{/if}}
+
+                                {{if item.rescue}}
+                                <div class="rescue-section">
+                                    <div class="rescue-label">战场救援</div>
+                                    <div class="rescue-value">{{item.rescue}} 次</div>
+                                </div>
+                                {{/if}}
+                            </div>
                         </div>
 
-                        <!-- 队友信息区域 -->
-                        {{if item.teammates && item.teammates.length > 0}}
+                        <!-- 队友信息区域（仅烽火地带显示） -->
+                        {{if item.value && item.teammates && item.teammates.length > 0}}
                         <div class="teammates-section">
                             <div class="teammates-label">队友信息</div>
                             <div class="teammates-list">
@@ -119,18 +122,6 @@
                                         <div class="teammate-item">
                                             <span class="teammate-item-label">价值</span>
                                             <span class="teammate-item-value">{{teammate.value}}</span>
-                                        </div>
-                                        {{/if}}
-                                        {{if teammate.score}}
-                                        <div class="teammate-item">
-                                            <span class="teammate-item-label">得分</span>
-                                            <span class="teammate-item-value">{{teammate.score}}</span>
-                                        </div>
-                                        {{/if}}
-                                        {{if teammate.kda}}
-                                        <div class="teammate-item">
-                                            <span class="teammate-item-label">KDA</span>
-                                            <span class="teammate-item-value">{{teammate.kda}}</span>
                                         </div>
                                         {{/if}}
                                         {{if teammate.kills}}
