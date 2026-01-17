@@ -1,411 +1,323 @@
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* 基础设置 */
+:root {
+    --primary-color: #0FF796;
+    --bg-dark: #05080a;
+    --card-bg: rgba(255, 255, 255, 0.03);
+    --border-color: rgba(15, 247, 150, 0.2);
 }
 
 body {
-    background: #0b0f13;
-    color: #F2F2F2;
-    font-family: 'ProjectD', "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: var(--bg-dark);
+    color: #fff;
+    font-family: 'ProjectD', "Microsoft YaHei", sans-serif;
     margin: 0;
-    padding: 0;
-    width: 680px;
-    height: auto;
-    min-height: 400px;
-    transform: none;
-    transform-origin: unset;
-    overflow: visible;
+    width: 2000px; /* 保持原稿宽度 */
 }
 
 .container {
+    padding: 60px;
     position: relative;
-    width: 680px;
-    min-height: 400px;
-    margin: 0 auto;
-    background: transparent;
-    overflow: visible;
+    min-height: 1200px;
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-.bg-image {
+/* 背景装饰 */
+.bg-grid {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    opacity: 0.25;
-    z-index: 0;
-    pointer-events: none;
-    border-radius: 0;
+    inset: 0;
+    background-image: radial-gradient(circle at 2px 2px, rgba(15, 247, 150, 0.05) 1px, transparent 0);
+    background-size: 40px 40px;
+    z-index: -1;
 }
 
-.bg-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(135deg, rgba(11, 15, 19, 0.96) 0%, rgba(13, 18, 23, 0.96) 100%);
-    z-index: 1;
-    pointer-events: none;
-}
 
-/* ========== 头部区域 ========== */
+/* 头部 */
 .header {
-    position: relative;
-    z-index: 2;
-    margin-bottom: 25px;
-    padding: 20px;
-    border-bottom: 3px solid;
-    border-image: linear-gradient(90deg, transparent, #0FF796, transparent) 1;
-}
-
-.header-content {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 20px;
-    position: relative;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.game-logo {
-    height: 35px;
-    width: auto;
-    opacity: 0.95;
-    filter: drop-shadow(0 0 8px rgba(15, 247, 150, 0.3));
-    flex-shrink: 0;
-}
-
-.title {
-    position: absolute;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 32px;
-    font-weight: bold;
-    background: linear-gradient(135deg, #0FF796, #00d4aa);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin: 0;
-    letter-spacing: 2px;
-    line-height: 1.2;
-    white-space: nowrap;
-}
-
-.header-right {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    flex-shrink: 0;
-}
-
-.user-avatar-wrapper {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    overflow: hidden;
-    border: 2px solid rgba(15, 247, 150, 0.5);
-    box-shadow: 0 0 12px rgba(15, 247, 150, 0.3);
-    background: rgba(0, 0, 0, 0.3);
-    flex-shrink: 0;
-}
-
-.user-avatar {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-.header-meta {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 4px;
-    font-size: 14px;
-    flex-shrink: 0;
-}
-
-.user-name-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
-}
-
-.user-name {
-    color: #FFFFFF;
-    font-weight: 600;
-    font-size: 16px;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    letter-spacing: 0.5px;
-}
-
-.report-date {
-    color: rgba(15, 247, 150, 1);
-    font-weight: 600;
-    font-size: 13px;
-    letter-spacing: 1px;
-    text-shadow: 0 0 8px rgba(15, 247, 150, 0.5);
-}
-
-.season-badge {
-    padding: 3px 10px;
-    background: linear-gradient(135deg, rgba(15, 247, 150, 0.2), rgba(15, 247, 150, 0.1));
-    border: 1px solid rgba(15, 247, 150, 0.4);
-    border-radius: 10px;
-    color: #0FF796;
-    font-size: 12px;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    text-shadow: 0 0 8px rgba(15, 247, 150, 0.5);
-    box-shadow: 0 0 12px rgba(15, 247, 150, 0.2);
-    white-space: nowrap;
-    line-height: 1.2;
-}
-
-/* ========== 内容区域 ========== */
-.content {
-    position: relative;
-    z-index: 2;
-    margin-bottom: 15px;
-    padding: 0 30px;
-}
-
-/* ========== 数据卡片区域 ========== */
-.data-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    width: 100%;
-}
-
-.data-card {
-    background: linear-gradient(135deg, rgba(44, 44, 50, 0.98), rgba(35, 35, 40, 0.98));
-    border-radius: 12px;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
-    overflow: visible;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    height: fit-content;
-    min-height: auto;
-}
-
-.card-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px 12px;
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-bottom: 2px solid rgba(15, 247, 150, 0.3);
-    position: relative;
-    overflow: hidden;
-    min-height: 36px;
-    border-radius: 12px 12px 0 0;
+    margin-bottom: 60px;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 30px;
 }
 
-.card-header::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
-    z-index: 0;
+.header-left { display: flex; align-items: center; gap: 30px; }
+.logo-box img { height: 70px; }
+
+.header-right { display: flex; align-items: flex-start; gap: 20px; }
+.user-info { text-align: right; display: flex; flex-direction: column; }
+.user-name-row { display: flex; align-items: center; gap: 15px; justify-content: flex-end; margin-bottom: 6px; }
+.season-info { font-size: 18px; color: #FFFFFF; font-weight: 700; }
+.user-name { font-size: 36px; font-weight: 700; color: #FFFFFF; }
+.report-date { font-size: 16px; color: #FFFFFF; font-weight: 700; }
+.avatar-wrapper img {
+    width: 100px; height: 100px;
+    border: 2px solid var(--primary-color);
+    padding: 4px;
+    background: #000;
 }
 
-.card-header::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(135deg, rgba(15, 247, 150, 0.2), rgba(15, 247, 150, 0.05));
-    z-index: 1;
-    border-radius: 12px 12px 0 0;
+/* 数据看板区域 */
+.dashboard-section {
+    margin-bottom: 60px;
 }
 
-.card-header > * {
-    position: relative;
-    z-index: 1;
-}
-
-.card-title {
-    font-size: 14px;
-    font-weight: bold;
-    color: #FFFFFF;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    letter-spacing: 1px;
-}
-
-.mp-card .card-header {
-    border-bottom: 2px solid rgba(255, 107, 107, 0.3);
-}
-
-.mp-card .card-header::after {
-    background: linear-gradient(135deg, rgba(255, 107, 107, 0.2), rgba(255, 82, 82, 0.05));
-}
-
-.card-content {
-    padding: 14px 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 7px;
-}
-
-.stats-overview {
+.dashboard-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 20px;
 }
 
-.stat-item {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    padding: 6px 8px;
-    background: rgba(0, 0, 0, 0.25);
-    border-radius: 6px;
-    position: relative;
+.dashboard-grid.mp-grid {
+    grid-template-columns: repeat(5, 1fr);
 }
 
-.stat-item.full-width {
-    grid-column: 1 / -1;
-}
-
-/* 统一标题样式 - 用于所有小标题 */
-.stat-label-overlay {
-    color: #FFFFFF;
-    font-weight: 700;
-    font-size: 12px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 6px 12px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-bottom: 4px;
-    letter-spacing: 0.5px;
-    line-height: 1.2;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    white-space: nowrap;
-    width: fit-content;
-    max-width: 100%;
-    box-sizing: border-box;
-}
-
-/* 兼容旧样式 */
-.stat-label {
-    color: #999;
-    font-weight: 500;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.stat-value {
-    color: #F2F2F2;
-    font-weight: 700;
-    font-size: 14px;
-    margin-top: 2px;
-    line-height: 1.3;
-    word-break: break-word;
-}
-
-.stat-value.highlight {
+.node-value.highlight-green {
     color: #0FF796;
-    font-size: 16px;
 }
 
-.mp-card .stat-value.highlight {
-    color: #ff6b6b;
+.data-node {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 25px;
+    position: relative;
+    border-left: 4px solid rgba(255,255,255,0.2);
 }
 
-/* 带图标的统计项 */
-.stat-item-with-icon {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
+.data-node.highlight { border-left-color: var(--primary-color); background: rgba(15, 247, 150, 0.02); }
+.data-node.gold { border-left-color: #ffb800; }
+
+.node-label { font-size: 24px; color: #FFFFFF; margin-bottom: 15px; font-weight: 700; }
+.node-value { font-size: 36px; font-weight: 800; font-family: 'ProjectD', 'D-DIN', sans-serif; }
+.node-value.large { font-size: 54px; color: var(--primary-color); }
+
+.rank-display { display: flex; align-items: center; gap: 20px; }
+.rank-img { height: 70px; }
+
+/* KD数据卡片 */
+.kd-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
+    border-left: 4px solid rgba(255,255,255,0.2);
+    padding: 25px;
+    margin-bottom: 30px;
 }
 
-.stat-value-with-icon {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.rank-icon {
-    width: 24px;
-    height: 24px;
-    object-fit: contain;
-    flex-shrink: 0;
-}
-
-.sub-text {
-    color: #858788;
-    font-size: 11px;
-    font-weight: 400;
-}
-
-/* ========== KD 区域 ========== */
-.kd-section {
-    margin-top: 2px;
-    padding-top: 8px;
-    border-top: 1px solid rgba(15, 247, 150, 0.2);
-}
-
-.kd-title {
+.kd-label {
+    font-size: 20px;
     color: #FFFFFF;
+    margin-bottom: 20px;
     font-weight: 700;
-    font-size: 12px;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 6px 12px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-bottom: 8px;
-    letter-spacing: 0.5px;
-    line-height: 1.2;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
-    white-space: nowrap;
-    width: fit-content;
-    max-width: 100%;
-    box-sizing: border-box;
 }
 
 .kd-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 6px;
+    gap: 20px;
 }
 
 .kd-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 4px;
-    padding: 8px;
-    background: rgba(0, 0, 0, 0.3);
-    border-radius: 6px;
+    text-align: center;
 }
 
-.kd-label {
-    color: #999;
-    font-size: 10px;
-    font-weight: 500;
-}
-
-.kd-value {
-    color: #0FF796;
+.kd-item small {
+    display: block;
+    color: #FFFFFF;
     font-size: 16px;
+    margin-bottom: 8px;
     font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
+.kd-item span {
+    font-size: 36px;
+    font-weight: 800;
+    color: var(--primary-color);
+    font-family: 'ProjectD', 'D-DIN', sans-serif;
+}
 
+/* 区块样式 */
+.section-block {
+    background: rgba(255,255,255,0.01);
+    border: 1px solid rgba(255,255,255,0.05);
+    padding: 30px;
+    margin-bottom: 40px;
+}
+
+.section-header {
+    font-size: 36px; font-weight: bold; margin-bottom: 25px;
+    display: flex; align-items: center; gap: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 10px;
+}
+
+.section-header .dot { width: 8px; height: 8px; background: var(--primary-color); }
+
+/* 地图卡片 */
+.map-list { 
+    display: flex;
+    flex-direction: column;
+    gap: 20px; 
+}
+
+.map-list-mp {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+.map-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 20px;
+}
+.map-card {
+    position: relative; height: 220px; border-radius: 8px; overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.map-bg { width: 100%; height: 100%; object-fit: cover; opacity: 0.5; transition: 0.3s; }
+.map-card:hover .map-bg { transform: scale(1.1); opacity: 0.8; }
+.map-content {
+    position: absolute; bottom: 0; left: 0; width: 100%;
+    padding: 25px; background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    min-height: 100px;
+}
+.map-name { font-weight: bold; font-size: 24px; color: #FFFFFF; margin-bottom: 12px; }
+.map-stats { font-size: 18px; color: #FFFFFF; font-weight: 700; }
+
+/* 武器列表 */
+.weapon-list { 
+    display: grid; 
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+    gap: 15px; 
+}
+.weapon-item {
+    display: flex; 
+    flex-direction: column;
+    background: rgba(255,255,255,0.03);
+    padding: 15px; 
+    border-radius: 4px; 
+    align-items: center;
+    gap: 12px;
+}
+.weapon-img-box { 
+    width: 100%; 
+    height: 150px; 
+    background: rgba(0,0,0,0.3); 
+    border-radius: 4px; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    flex-shrink: 0;
+}
+.weapon-img-box img { 
+    max-width: 100%; 
+    max-height: 100%; 
+    object-fit: contain; 
+}
+.weapon-info { 
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+}
+.weapon-name { 
+    font-size: 34px; 
+    font-weight: 700; 
+    color: #FFFFFF; 
+}
+.weapon-meta { 
+    font-size: 28px; 
+    color: #FFFFFF; 
+    font-weight: 700; 
+}
+.weapon-val { 
+    font-size: 28px; 
+    color: #0FF796; 
+    font-weight: 700; 
+    font-family: 'D-DIN', monospace; 
+}
+
+/* 收藏品统计 */
+.collection-stats {
+    margin-bottom: 30px;
+}
+
+.collection-stats .data-node {
+    max-width: 400px;
+}
+
+/* 收藏品列表 */
+.asset-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+}
+
+.asset-item {
+    display: flex;
+    gap: 15px;
+    background: rgba(255,255,255,0.03);
+    padding: 15px;
+    border-radius: 4px;
+    align-items: center;
+    border: 1px solid rgba(255,255,255,0.05);
+}
+
+.asset-img-box {
+    width: 80px;
+    height: 80px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.asset-img-box img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+.asset-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.asset-name {
+    font-size: 38px;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+.asset-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.asset-price {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0FF796;
+    font-family: 'D-DIN', monospace;
+}
+
+.asset-count {
+    font-size: 28px;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+/* 全面战场红色主题 */
+.mp-theme { --primary-color: #ff5252; }
