@@ -63,7 +63,7 @@ export class Record extends plugin {
   async queryAndRenderMode(mode, page, token) {
     const modeName = mode === 'sol' ? '烽火地带' : '全面战场'
     const typeId = mode === 'sol' ? 4 : 5
-    const recordsPerPage = 10
+    const recordsPerPage = 5
 
     const res = await this.api.getRecord(token, typeId, page)
     if (await utils.handleApiError(res, this.e)) return null
@@ -206,6 +206,69 @@ export class Record extends plugin {
         if (r.RescueTeammateCount) {
           recordData.rescue = r.RescueTeammateCount
         }
+      }
+
+      // 处理队友信息
+      // 全面战场从RoomInfo.mpDetailList获取，烽火地带从teammateArr获取
+      let teammateSource = null
+      if (mode === 'mp' && r.RoomInfo && r.RoomInfo.data && r.RoomInfo.data.mpDetailList && Array.isArray(r.RoomInfo.data.mpDetailList)) {
+        // 全面战场：从RoomInfo.mpDetailList获取，排除当前用户
+        teammateSource = r.RoomInfo.data.mpDetailList.filter(t => !t.isCurrentUser)
+      } else if (r.teammateArr && Array.isArray(r.teammateArr) && r.teammateArr.length > 0) {
+        // 烽火地带：从teammateArr获取
+        teammateSource = r.teammateArr
+      }
+
+      if (teammateSource && teammateSource.length > 0) {
+        recordData.teammates = teammateSource.map(teammate => {
+          const teammateOperator = DataManager.getOperatorName(teammate.ArmedForceId)
+          const teammateData = {
+            operator: teammateOperator,
+            operatorImg: `file:///${process.cwd()}/plugins/delta-force-plugin/resources/${DataManager.getOperatorImagePath(teammateOperator)}`.replace(/\\/g, '/')
+          }
+
+          if (mode === 'sol') {
+            const teammateStatus = ESCAPE_REASONS[String(teammate.EscapeFailReason)] || '撤离失败'
+            let teammateStatusClass = 'fail'
+            if (teammate.EscapeFailReason === 1 || teammate.EscapeFailReason === '1') {
+              teammateStatusClass = 'success'
+            } else if (teammate.EscapeFailReason === 3 || teammate.EscapeFailReason === '3') {
+              teammateStatusClass = 'exit'
+            }
+
+            teammateData.status = teammateStatus
+            teammateData.statusClass = teammateStatusClass
+            teammateData.value = Number(teammate.FinalPrice || 0).toLocaleString()
+            teammateData.duration = this.formatDuration(Number(teammate.DurationS || 0))
+            teammateData.kills = `${(teammate.KillCount || 0) + (teammate.KillPlayerAICount || 0) + (teammate.KillAICount || 0)}`
+            teammateData.rescue = teammate.Rescue || 0
+          } else {
+            // 全面战场：处理RoomInfo.mpDetailList中的队友数据
+            const teammateResult = MP_RESULTS[String(teammate.matchResult || teammate.MatchResult)] || '未知结果'
+            let teammateStatusClass = 'fail'
+            const matchResult = teammate.matchResult || teammate.MatchResult
+            if (matchResult === 1 || matchResult === '1') {
+              teammateStatusClass = 'success'
+            } else if (matchResult === 3 || matchResult === '3') {
+              teammateStatusClass = 'exit'
+            }
+
+            teammateData.status = teammateResult
+            teammateData.statusClass = teammateStatusClass
+            teammateData.kda = `${teammate.killNum || teammate.KillNum || 0}/${teammate.death || teammate.Death || 0}/${teammate.assist || teammate.Assist || 0}`
+            teammateData.score = (teammate.totalScore || teammate.TotalScore || 0).toLocaleString()
+            teammateData.duration = this.formatDuration(Number(teammate.gameTime || teammate.gametime || teammate.DurationS || 0))
+            teammateData.rescue = teammate.rescueTeammateCount || teammate.RescueTeammateCount || teammate.Rescue || 0
+            // 全面战场队友的干员ID字段可能是armedForceType
+            if (teammate.armedForceType && !teammate.ArmedForceId) {
+              const mpTeammateOperator = DataManager.getOperatorName(teammate.armedForceType)
+              teammateData.operator = mpTeammateOperator
+              teammateData.operatorImg = `file:///${process.cwd()}/plugins/delta-force-plugin/resources/${DataManager.getOperatorImagePath(mpTeammateOperator)}`.replace(/\\/g, '/')
+            }
+          }
+
+          return teammateData
+        })
       }
 
       templateRecords.push(recordData)

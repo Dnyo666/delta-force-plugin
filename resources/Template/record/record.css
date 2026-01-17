@@ -93,27 +93,26 @@ body {
     gap: 18px;
 }
 
-/* 战绩卡片：使用地图作为背景 */
+/* 修改 record-card，增加深色渐变叠加，确保文字在复杂背景下清晰 */
 .record-card {
     position: relative;
-    border-radius: 10px;
+    border-radius: 12px;
     overflow: hidden;
-    min-height: 280px;
+    margin-bottom: 20px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    background-color: rgba(11, 15, 19, 0.8);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    background-clip: padding-box;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    min-height: 300px;
+    isolation: isolate;
 }
 
 /* 地图名称显示（在状态标签行中，左对齐） */
 .map-name-display {
     font-size: 18px;
-    font-weight: bold;
+    font-weight: 700;
     color: #FFFFFF;
-    text-shadow: 
-        0 1px 3px rgba(0, 0, 0, 0.8),
-        0 2px 6px rgba(0, 0, 0, 0.6);
     letter-spacing: 0.5px;
     line-height: 1.4;
     white-space: nowrap;
@@ -121,46 +120,45 @@ body {
 
 .operator-name-display {
     font-size: 15px;
-    font-weight: bold;
+    font-weight: 700;
     color: #FFFFFF;
-    text-shadow: 
-        0 1px 2px rgba(0, 0, 0, 0.6),
-        0 2px 4px rgba(0, 0, 0, 0.4);
     letter-spacing: 0.3px;
     line-height: 1.4;
     white-space: nowrap;
 }
 
 .record-index {
+    font-family: 'Consolas', monospace;
+    font-size: 20px;
+    margin-right: 10px;
     font-weight: bold;
     background: linear-gradient(135deg, #0FF796, #00d4aa);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-size: 18px;
-    margin-right: 8px;
 }
 
-/* 数据区域（占据整个宽度，增加透明度） */
+/* 增强数据区域的遮罩感 */
 .data-section {
     position: relative;
     width: 100%;
+    min-height: 100%;
     display: flex;
     flex-direction: column;
     z-index: 2;
-    min-height: 280px;
-    background: rgba(11, 15, 19, 0.65);
+    background: linear-gradient(180deg, rgba(11, 15, 19, 0.4) 0%, rgba(11, 15, 19, 0.6) 100%);
+    border-radius: 12px;
 }
 
-/* 状态标签和地图名称（同一行） */
+/* 优化头部标题行 */
 .card-status {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 15px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 14px 18px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     gap: 12px;
-    background: rgba(0, 0, 0, 0.25);
     flex-wrap: wrap;
 }
 
@@ -224,55 +222,43 @@ body {
     border: 1px solid rgba(255, 180, 0, 0.4);
 }
 
-/* 数据内容区域 */
+/* 优化数据网格布局，使其更像专业战绩面板 */
 .data-content {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px 15px;
-    flex: 1;
-    justify-content: center;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 15px;
+    padding: 20px 18px 0 18px;
 }
 
-/* 第1行：主要数据 */
-.data-row-main {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    align-items: center;
-    justify-content: center;
-}
-
+/* 重新定义数据项样式 */
 .data-item-main {
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    align-items: center;
-    min-width: 120px;
+    align-items: flex-start; /* 改为左对齐更有专业感 */
+    padding-left: 10px;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .data-label {
-    font-size: 12px;
+    background: transparent; /* 去掉背景，改用简洁风格 */
+    border: none;
+    padding: 0;
+    font-size: 11px;
     color: #FFFFFF;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-weight: 600;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    font-weight: 700;
     white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: inline-block;
     letter-spacing: 0.3px;
-    text-align: center;
 }
 
 .data-value {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: 600;
     color: #F2F2F2;
     line-height: 1.5;
     word-break: break-word;
-    margin-top: 2px;
-    text-align: center;
+    letter-spacing: -0.5px;
 }
 
 .highlight-value,
@@ -299,11 +285,10 @@ body {
 
 /* 第2行：击杀统计和救援 */
 .data-row-secondary {
+    padding: 20px 18px 20px 18px;
     display: flex;
-    flex-wrap: wrap;
-    gap: 24px;
-    align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    align-items: flex-end;
 }
 
 /* 击杀统计（烽火地带） */
@@ -311,21 +296,22 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: center;
+    align-items: flex-start;
+    padding-left: 10px;
+    border-left: 2px solid rgba(255, 255, 255, 0.1);
 }
 
 .kills-label {
-    font-size: 12px;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-size: 11px;
     color: #FFFFFF;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-weight: 600;
+    margin-bottom: 6px;
+    font-weight: 700;
     white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: inline-block;
     letter-spacing: 0.3px;
-    text-align: center;
+    text-transform: uppercase;
 }
 
 .kills-content {
@@ -367,21 +353,19 @@ body {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    align-items: center;
+    align-items: flex-end;
 }
 
 .rescue-label {
-    font-size: 12px;
+    font-size: 11px;
     color: #FFFFFF;
-    background: rgba(0, 0, 0, 0.5);
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-weight: 600;
+    background: transparent;
+    border: none;
+    padding: 0;
+    font-weight: 700;
     white-space: nowrap;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    display: inline-block;
     letter-spacing: 0.3px;
-    text-align: center;
+    text-transform: uppercase;
 }
 
 .rescue-value {
@@ -389,8 +373,6 @@ body {
     font-weight: 600;
     color: #F2F2F2;
     line-height: 1.5;
-    margin-top: 2px;
-    text-align: center;
 }
 
 /* 无数据提示 */
@@ -402,6 +384,114 @@ body {
     background: rgba(255, 255, 255, 0.03);
     border-radius: 10px;
     border: 2px dashed rgba(255, 255, 255, 0.1);
+}
+
+/* 队友区域精简化 */
+.teammates-section {
+    margin: 0 18px 18px;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.teammates-label {
+    font-size: 12px;
+    color: #FFFFFF;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-weight: 700;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    display: inline-block;
+    letter-spacing: 0.3px;
+    margin-bottom: 12px;
+}
+
+.teammates-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.teammate-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 6px;
+    padding: 8px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.teammate-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0;
+    flex: 0 0 120px;
+    gap: 8px;
+}
+
+.teammate-operator {
+    font-size: 13px;
+    font-weight: 600;
+    color: #FFFFFF;
+    flex: 1;
+}
+
+.teammate-status-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 11px;
+    font-weight: bold;
+    color: #FFFFFF;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.teammate-status-badge.success {
+    background: rgba(15, 247, 150, 0.25);
+    color: #0FF796;
+    border: 1px solid rgba(15, 247, 150, 0.4);
+}
+
+.teammate-status-badge.fail {
+    background: rgba(255, 82, 82, 0.25);
+    color: #ff5252;
+    border: 1px solid rgba(255, 82, 82, 0.4);
+}
+
+.teammate-status-badge.exit {
+    background: rgba(255, 180, 0, 0.25);
+    color: #ffb400;
+    border: 1px solid rgba(255, 180, 0, 0.4);
+}
+
+.teammate-data {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+    flex: 1;
+    justify-content: flex-end;
+}
+
+.teammate-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 11px;
+}
+
+.teammate-item-label {
+    color: #FFFFFF;
+    font-weight: 700;
+}
+
+.teammate-item-value {
+    color: #0FF796;
+    font-weight: 600;
 }
 
 /* 页脚 */

@@ -11,7 +11,7 @@
                 <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
             </div>
             <div class="header-right">
-                {{if isRecent}}<span class="recent-badge">最近的战绩</span>{{/if}}
+                {{if isRecent}}<span class="recent-badge">最近战绩</span>{{/if}}
                 <div class="header-info">
                     <span class="player-name">{{displayName}}</span>
                     <span class="mode-name">{{modeName}}</span>
@@ -22,11 +22,10 @@
     </div>
 
     <div class="content">
-        <!-- 主卡片区域：使用地图作为背景 -->
+        <!-- 主卡片区域 -->
         <div class="record-card" style="{{if mapBg}}background-image: url('{{_res_path}}{{mapBg}}');{{/if}}">
-            <!-- 数据区域（占据整个宽度） -->
             <div class="data-section">
-                <!-- 状态标签和地图名称（同一行） -->
+                <!-- 状态与标题 -->
                 <div class="card-status">
                     <div class="title-info">
                         <span class="map-name-display">{{map}}</span>
@@ -36,68 +35,66 @@
                     <span class="status-badge {{statusClass}}">{{status}}</span>
                 </div>
 
-                <!-- 数据内容区域 -->
-                <div class="data-content">
-                    <!-- 第1行：主要数据 -->
-                    <div class="data-row-main">
-                        <!-- 烽火地带：带出价值 -->
-                        {{if value}}
-                        <div class="data-item-main">
-                            <div class="data-label">带出价值</div>
-                            <div class="data-value highlight-value">{{value}}</div>
-                        </div>
-                        {{/if}}
+                <!-- 数据内容容器 -->
+                <div class="data-content-wrapper">
+                    <!-- 数据内容 -->
+                    <div class="data-content">
+                    <!-- 烽火地带：带出价值 -->
+                    {{if value}}
+                    <div class="data-item-main">
+                        <div class="data-label">带出价值</div>
+                        <div class="data-value highlight-value">{{value}}</div>
+                    </div>
+                    {{/if}}
 
-                        <!-- 烽火地带：净收益 -->
-                        {{if income}}
-                        <div class="data-item-main">
-                            <div class="data-label">净收益</div>
-                            <div class="data-value highlight-income {{incomeClass}}">{{income}}</div>
-                        </div>
-                        {{/if}}
+                    <!-- 烽火地带：净收益 -->
+                    {{if income}}
+                    <div class="data-item-main">
+                        <div class="data-label">净收益</div>
+                        <div class="data-value highlight-income {{incomeClass}}">{{income}}</div>
+                    </div>
+                    {{/if}}
 
-                        <!-- 全面战场：得分 -->
-                        {{if score}}
-                        <div class="data-item-main">
-                            <div class="data-label">得分</div>
-                            <div class="data-value highlight-score">{{score}}</div>
-                        </div>
-                        {{/if}}
+                    <!-- 全面战场：得分 -->
+                    {{if score}}
+                    <div class="data-item-main">
+                        <div class="data-label">得分</div>
+                        <div class="data-value highlight-score">{{score}}</div>
+                    </div>
+                    {{/if}}
 
-                        <!-- 全面战场：KDA -->
-                        {{if kda}}
-                        <div class="data-item-main">
-                            <div class="data-label">KDA</div>
-                            <div class="data-value highlight-kda">{{kda}}</div>
-                        </div>
-                        {{/if}}
+                    <!-- 全面战场：KDA -->
+                    {{if kda}}
+                    <div class="data-item-main">
+                        <div class="data-label">KDA</div>
+                        <div class="data-value highlight-kda">{{kda}}</div>
+                    </div>
+                    {{/if}}
 
-                        <!-- 时长（两种模式都有） -->
-                        {{if duration}}
-                        <div class="data-item-main">
-                            <div class="data-label">时长</div>
-                            <div class="data-value">{{duration}}</div>
-                        </div>
-                        {{/if}}
+                    <!-- 时长 -->
+                    {{if duration}}
+                    <div class="data-item-main">
+                        <div class="data-label">作战时长</div>
+                        <div class="data-value">{{duration}}</div>
+                    </div>
+                    {{/if}}
                     </div>
 
                     <!-- 第2行：击杀统计和救援 -->
                     <div class="data-row-secondary">
-                        <!-- 烽火地带：击杀统计 -->
                         {{if killsHtml}}
                         <div class="kills-section">
-                            <div class="kills-label">击杀统计</div>
+                            <div class="kills-label">击杀明细</div>
                             <div class="kills-content">
                                 {{@killsHtml}}
                             </div>
                         </div>
                         {{/if}}
 
-                        <!-- 救援次数（两种模式都有） -->
                         {{if rescue}}
                         <div class="rescue-section">
-                            <div class="rescue-label">救援</div>
-                            <div class="rescue-value">{{rescue}}次</div>
+                            <div class="rescue-label">战场救援</div>
+                            <div class="rescue-value">{{rescue}} 次</div>
                         </div>
                         {{/if}}
                     </div>
@@ -106,7 +103,6 @@
         </div>
     </div>
     
-    <!-- 页脚 -->
     <div class="template-footer">
         <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
     </div>
