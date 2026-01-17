@@ -140,9 +140,9 @@ body {
 
 /* 增强数据区域的遮罩感 */
 .data-section {
-    position: relative;
+    position: absolute;
     width: 100%;
-    min-height: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     z-index: 2;
@@ -160,6 +160,7 @@ body {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
     gap: 12px;
     flex-wrap: wrap;
+    flex-shrink: 0;
 }
 
 .title-info {
@@ -220,6 +221,15 @@ body {
     background: rgba(255, 180, 0, 0.25);
     color: #ffb400;
     border: 1px solid rgba(255, 180, 0, 0.4);
+}
+
+/* 内容区域包装器（用于垂直居中） */
+.data-content-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
 }
 
 /* 优化数据网格布局，使其更像专业战绩面板 */
@@ -289,6 +299,7 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
+    flex-shrink: 0;
 }
 
 /* 击杀统计（烽火地带） */
@@ -391,6 +402,7 @@ body {
     margin: 0 18px 18px;
     padding-top: 15px;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
+    flex-shrink: 0;
 }
 
 .teammates-label {
