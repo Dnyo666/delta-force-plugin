@@ -357,13 +357,15 @@ body {
     white-space: nowrap;
     letter-spacing: 0.3px;
     text-transform: uppercase;
+    margin-bottom: 6px;
 }
 
 .rescue-value {
-    font-size: 17px;
+    font-size: 15px;
     font-weight: 600;
-    color: #F2F2F2;
-    line-height: 1.5;
+    color: #FFFFFF;
+    line-height: 1.6;
+    white-space: nowrap;
 }
 
 /* 页脚 */

@@ -3,208 +3,237 @@
 <link rel="stylesheet" type="text/css" href="{{_res_path}}Template/personalData/personalData.css"/>
 {{/block}}
 {{block 'main'}}
-<div class="container">
-    <!-- 背景图片 -->
-    <img class="bg-image" src="{{_res_path}}imgs/others/loading13.png" alt="" />
-    <div class="bg-overlay"></div>
+<div class="container {{if mpDetail}}mp-theme{{/if}}">
+    <!-- 背景装饰层 -->
+    <div class="bg-grid"></div>
     
     <!-- 头部区域 -->
     <div class="header">
-        <div class="header-content">
-            <div class="header-left">
-            <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
+        <div class="header-left">
+            <div class="logo-box">
+                <img src="{{_res_path}}imgs/others/logo.png" alt="Logo" />
+            </div>
         </div>
-            <div class="title">个人统计</div>
-            <div class="header-right">
-                <div class="user-avatar-wrapper">
-                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';this.parentElement.style.display='none';}" />
+        <div class="header-right">
+            <div class="user-info">
+                <div class="user-name-row">
+                    <div class="season-info">赛季 - {{season === '全部' ? '全部' : season}}</div>
+                    <div class="user-name">{{userName}}</div>
                 </div>
-                <div class="header-meta">
-                    <div class="user-name-row">
-                        {{if userName}}
-                        <span class="user-name">{{userName}}</span>
-                        {{/if}}
-                        <span class="season-badge">S{{season}}</span>
-                    </div>
-                    {{if currentDate}}
-                    <span class="report-date">{{currentDate}}</span>
-                    {{/if}}
-                </div>
+                <div class="report-date">报告日期: {{currentDate}}</div>
+            </div>
+            <div class="avatar-wrapper">
+                <img src="{{userAvatar}}" alt="Avatar" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}" />
             </div>
         </div>
     </div>
 
-    <!-- 内容区域 -->
-    <div class="content">
-    <!-- 数据卡片区域 -->
-    <div class="data-grid">
-        {{if solDetail}}
-        <div class="data-card sol-card">
-            <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/fire_limit_normal.png');">
-                <div class="card-title">烽火地带</div>
-            </div>
-            <div class="card-content">
-                    <!-- 段位和总对局 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item stat-item-with-icon">
-                            <span class="stat-label-overlay">段位</span>
-                            <div class="stat-value-with-icon">
-                        {{if solRankImage}}
-                                <img class="rank-icon" src="{{_res_path}}{{solRankImage}}" alt="{{solRank}}" onerror="this.style.display='none';" />
-                        {{/if}}
-                                <span class="stat-value">{{solRank}}</span>
-                    </div>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">总对局</span>
-                    <span class="stat-value">{{solDetail.totalFight || '-'}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 总撤离和总击杀 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">总撤离</span>
-                            <span class="stat-value highlight">{{solDetail.totalEscape || '-'}}</span>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">总击杀 (干员)</span>
-                    <span class="stat-value highlight">{{solDetail.totalKill || '-'}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 总带出价值和赚损比 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">总带出价值</span>
-                    <span class="stat-value highlight">{{solDetail.totalGainedPriceFormatted}}</span>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">赚损比</span>
-                    <span class="stat-value">{{solDetail.profitLossRatioFormatted}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 游戏时长和好友排行 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">游戏时长</span>
-                    <span class="stat-value">{{solDetail.totalGameTime}}</span>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">好友排行</span>
-                    <span class="stat-value">{{solDetail.userRank || '-'}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 收藏大红价值 - 全宽 -->
-                    <div class="stat-item full-width">
-                        <span class="stat-label-overlay">收藏大红价值</span>
-                    <span class="stat-value highlight">{{solDetail.redTotalMoney?.toLocaleString() || '-'}} <span class="sub-text">({{solDetail.redTotalCount}}个)</span></span>
-                </div>
-                    
-                    <!-- KD 比率 -->
-                <div class="kd-section">
-                    <div class="kd-title">KD 比率</div>
-                    <div class="kd-grid">
-                        <div class="kd-item">
-                            <span class="kd-label">常规</span>
-                            <span class="kd-value">{{solDetail.lowKD}}</span>
-                        </div>
-                        <div class="kd-item">
-                            <span class="kd-label">机密</span>
-                            <span class="kd-value">{{solDetail.medKD}}</span>
-                        </div>
-                        <div class="kd-item">
-                            <span class="kd-label">绝密</span>
-                            <span class="kd-value">{{solDetail.highKD}}</span>
-                        </div>
-                    </div>
+    <!-- 数据看板 -->
+    <div class="dashboard-section">
+        <div class="dashboard-grid {{if mpDetail}}mp-grid{{/if}}">
+            {{if solDetail}}
+            <!-- 第一行：段位、总撤离、总带出价值、收藏大红（固定4个） -->
+            <div class="data-node highlight">
+                <div class="node-label"><i class="icon-rank"></i> 段位 / OPERATOR RANK</div>
+                <div class="rank-display">
+                    {{if solRankImage}}
+                    <img src="{{_res_path}}{{solRankImage}}" class="rank-img" alt="{{solRank}}" onerror="this.style.display='none';" />
+                    {{/if}}
+                    <span class="node-value">{{solRank}}</span>
                 </div>
             </div>
-        </div>
-        {{/if}}
+            <div class="data-node highlight">
+                <div class="node-label">总撤离 / TOTAL EXTRACTIONS</div>
+                <span class="node-value large">{{solDetail.totalEscape || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总带出价值 / TOTAL VALUE</div>
+                <span class="node-value large">{{solDetail.totalGainedPriceFormatted || '-'}}</span>
+            </div>
+                <div class="data-node highlight">
+                    <div class="node-label">收藏大红 / COLLECTION VALUE</div>
+                    <span class="node-value large">{{solDetail.redTotalMoney?.toLocaleString() || '-'}}</span>
+                </div>
+            <!-- 第二行：其他数据（4个一行） -->
+            <div class="data-node highlight">
+                <div class="node-label">用户排名 / USER RANK</div>
+                <span class="node-value highlight-green">{{solDetail.userRank || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总对局 / TOTAL FIGHTS</div>
+                <span class="node-value large">{{solDetail.totalFight || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总击杀 / TOTAL KILLS</div>
+                <span class="node-value large">{{solDetail.totalKill || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总游戏时长 / TOTAL GAME TIME</div>
+                <span class="node-value highlight-green">{{solDetail.totalGameTime || '-'}}</span>
+            </div>
+            {{/if}}
 
-        {{if mpDetail}}
-        <div class="data-card mp-card">
-            <div class="card-header" style="background-image: url('{{_res_path}}imgs/others/allwar_limit_normal.png');">
-                <div class="card-title">全面战场</div>
+            {{if mpDetail}}
+            <!-- 第一行：5个数据 -->
+            <div class="data-node highlight">
+                <div class="node-label">段位 / BATTLEFIELD RANK</div>
+                <div class="rank-display">
+                    {{if mpRankImage}}
+                    <img src="{{_res_path}}{{mpRankImage}}" class="rank-img" alt="{{mpRank}}" onerror="this.style.display='none';" />
+                    {{/if}}
+                    <span class="node-value">{{mpRank}}</span>
+                </div>
             </div>
-            <div class="card-content">
-                    <!-- 段位和总对局 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item stat-item-with-icon">
-                            <span class="stat-label-overlay">段位</span>
-                            <div class="stat-value-with-icon">
-                        {{if mpRankImage}}
-                                <img class="rank-icon" src="{{_res_path}}{{mpRankImage}}" alt="{{mpRank}}" onerror="this.style.display='none';" />
-                        {{/if}}
-                                <span class="stat-value">{{mpRank}}</span>
-                    </div>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">总对局</span>
-                    <span class="stat-value">{{mpDetail.totalFight || '-'}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 总胜场和胜率 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">总胜场</span>
-                    <span class="stat-value highlight">{{mpDetail.totalWin || '-'}}</span>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">胜率</span>
-                    <span class="stat-value highlight">{{mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 总得分 - 全宽 -->
-                    <div class="stat-item full-width">
-                        <span class="stat-label-overlay">总得分</span>
-                    <span class="stat-value highlight">{{mpDetail.totalScore?.toLocaleString() || '-'}}</span>
-                </div>
-                    
-                    <!-- 分均击杀和分均得分 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">分均击杀</span>
-                    <span class="stat-value">{{mpDetail.avgKillPerMinuteFormatted}}</span>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">分均得分</span>
-                    <span class="stat-value">{{mpDetail.avgScorePerMinuteFormatted}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 游戏时长和载具击杀 - 一行两列 -->
-                    <div class="stats-overview">
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">游戏时长</span>
-                    <span class="stat-value">{{mpDetail.totalGameTime}}</span>
-                </div>
-                        <div class="stat-item">
-                            <span class="stat-label-overlay">载具击杀</span>
-                    <span class="stat-value">{{mpDetail.totalVehicleKill || '-'}}</span>
-                </div>
-                    </div>
-                    
-                    <!-- 破坏载具 - 全宽 -->
-                    <div class="stat-item full-width">
-                        <span class="stat-label-overlay">破坏载具</span>
-                    <span class="stat-value">{{mpDetail.totalVehicleDestroyed || '-'}}</span>
-                    </div>
-                </div>
+            <div class="data-node highlight">
+                <div class="node-label">胜率 / WIN RATE</div>
+                <span class="node-value large">{{mpDetail.winRatio ? mpDetail.winRatio + '%' : '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总得分 / TOTAL SCORE</div>
+                <span class="node-value large">{{mpDetail.totalScore?.toLocaleString() || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">每分钟击杀 / KILLS PER MINUTE</div>
+                <span class="node-value">{{mpDetail.avgKillPerMinuteFormatted || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">每分钟得分 / SCORE PER MINUTE</div>
+                <span class="node-value">{{mpDetail.avgScorePerMinuteFormatted || '-'}}</span>
+            </div>
+            <!-- 第二行：5个数据 -->
+            <div class="data-node highlight">
+                <div class="node-label">总对局 / TOTAL FIGHTS</div>
+                <span class="node-value large">{{mpDetail.totalFight || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总胜利 / TOTAL WINS</div>
+                <span class="node-value large">{{mpDetail.totalWin || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">载具击杀 / VEHICLE KILLS</div>
+                <span class="node-value">{{mpDetail.totalVehicleKill || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">载具摧毁 / VEHICLE DESTROYED</div>
+                <span class="node-value">{{mpDetail.totalVehicleDestroyed || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总游戏时长 / TOTAL GAME TIME</div>
+                <span class="node-value">{{mpDetail.totalGameTime || '-'}}</span>
             </div>
             {{/if}}
         </div>
     </div>
-    
-    <!-- 页脚 -->
-    <div class="template-footer">
-        <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
+
+    <!-- 地图历史 -->
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 常玩地图 / DEPLOYMENT HISTORY
+        </div>
+        {{if solDetail}}
+        <div class="kd-card">
+            <div class="kd-label">击杀比 / K/D RATIO</div>
+            <div class="kd-grid">
+                <div class="kd-item">
+                    <small>常规</small>
+                    <span>{{solDetail.lowKD || '-'}}</span>
+                </div>
+                <div class="kd-item">
+                    <small>机密</small>
+                    <span>{{solDetail.medKD || '-'}}</span>
+                </div>
+                <div class="kd-item">
+                    <small>绝密</small>
+                    <span>{{solDetail.highKD || '-'}}</span>
+                </div>
+            </div>
+        </div>
+        {{/if}}
+        <div class="map-list">
+            {{if solDetail && solDetail.mapList}}
+                {{each solDetail.mapList group}}
+                <div class="map-row">
+                    {{each group.maps map}}
+                    <div class="map-card">
+                        <img src="{{_res_path}}{{map.mapImage}}" class="map-bg" alt="{{map.mapName}}" onerror="this.style.display='none';" />
+                        <div class="map-content">
+                            <div class="map-name">{{map.mapName}}</div>
+                            <div class="map-stats">对局: {{map.totalCount}} | 撤离: {{map.leaveCount}}</div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+                {{/each}}
+            {{/if}}
+            {{if mpDetail && mpDetail.mapList}}
+                <div class="map-list-mp">
+                    {{each mpDetail.mapList map}}
+                    <div class="map-card">
+                        <img src="{{_res_path}}{{map.mapImage}}" class="map-bg" alt="{{map.mapName}}" onerror="this.style.display='none';" />
+                        <div class="map-content">
+                            <div class="map-name">{{map.mapName}}</div>
+                            <div class="map-stats">对局: {{map.totalCount}} | 撤离: {{map.leaveCount}}</div>
+                        </div>
+                    </div>
+                    {{/each}}
+                </div>
+            {{/if}}
+        </div>
     </div>
+
+    <!-- 武器登记 (仅烽火地带) -->
+    {{if solDetail}}
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 常用武器 / WEAPON REGISTRY
+        </div>
+        <div class="weapon-list">
+            {{if solDetail.gunPlayList && solDetail.gunPlayList.length > 0}}
+                {{each solDetail.gunPlayList weapon}}
+                <div class="weapon-item">
+                    <div class="weapon-img-box">
+                        <img src="{{weapon.imageUrl}}" alt="{{weapon.weaponName}}" onerror="this.style.display='none';" />
+                    </div>
+                    <div class="weapon-info">
+                        <div class="weapon-name">{{weapon.weaponName}}</div>
+                        <div class="weapon-meta">对局: {{weapon.fightCount || 0}} | 撤离: {{weapon.escapeCount || 0}}</div>
+                        <div class="weapon-val">收益：{{weapon.totalPriceFormatted || '-'}}</div>
+                    </div>
+                </div>
+                {{/each}}
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- 收藏品 (仅烽火地带) -->
+    {{if solDetail}}
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 收藏品 / HIGH-VALUE ASSETS
+        </div>
+        <div class="asset-list">
+            {{if solDetail.redCollectionList && solDetail.redCollectionList.length > 0}}
+                {{each solDetail.redCollectionList item}}
+                <div class="asset-item">
+                    <div class="asset-img-box">
+                        <img src="{{item.imageUrl}}" alt="{{item.objectName}}" onerror="this.style.display='none';" />
+                    </div>
+                    <div class="asset-info">
+                        <div class="asset-name">{{item.objectName}}</div>
+                        <div class="asset-meta">
+                            <span class="asset-price">{{item.priceFormatted}}</span>
+                            <span class="asset-count">X{{item.count}}</span>
+                        </div>
+                    </div>
+                </div>
+                {{/each}}
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
+
 </div>
 {{/block}}
-{{block 'footer'}}{{/block}}
+{{block 'footer'}}
+{{/block}}
