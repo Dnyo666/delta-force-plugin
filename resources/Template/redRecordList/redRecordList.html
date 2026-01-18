@@ -37,27 +37,27 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-content">
-                    <div class="stat-label">收藏种类</div>
-                    <div class="stat-value">{{statistics.redGodCount}}</div>
+                <div class="stat-label">收藏种类</div>
+                <div class="stat-value">{{statistics.redGodCount}}</div>
                 </div>
             </div>
             <div class="stat-card">
                 <div class="stat-content">
-                    <div class="stat-label">总出红次数</div>
-                    <div class="stat-value">{{statistics.redTotalCount}}</div>
+                <div class="stat-label">总出红次数</div>
+                <div class="stat-value">{{statistics.redTotalCount}}</div>
                 </div>
             </div>
             <div class="stat-card highlight">
                 <div class="stat-content">
-                    <div class="stat-label">总价值</div>
+                <div class="stat-label">总价值</div>
                     <div class="stat-value text-glow">{{statistics.redTotalValue}}</div>
                 </div>
             </div>
             {{if statistics.unlockedCount}}
             <div class="stat-card">
                 <div class="stat-content">
-                    <div class="stat-label">未解锁</div>
-                    <div class="stat-value">{{statistics.unlockedCount}}</div>
+                <div class="stat-label">未解锁</div>
+                <div class="stat-value">{{statistics.unlockedCount}}</div>
                 </div>
             </div>
             {{/if}}
@@ -72,7 +72,7 @@
             <span class="records-badge">{{totalRecords}}</span>
             {{/if}}
         </div>
-
+        
         <div class="records-content">
             {{if records && records.length > 0}}
                 {{each records record index}}
