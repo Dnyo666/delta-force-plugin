@@ -6,7 +6,6 @@ import Config from '../../components/Config.js'
 import Render from '../../components/Render.js'
 
 export class Weekly extends plugin {
-    // URL解码函数
     decodeUserInfo(str) {
         try {
             return decodeURIComponent(str || '')
@@ -73,59 +72,49 @@ export class Weekly extends plugin {
         }
     
         let solData, mpData;
-        if (mode) { // 指定模式查询
+        if (mode) {
             const detailData = res.data?.data?.data;
             if (mode === 'sol') {
                 solData = detailData;
             } else if (mode === 'mp') {
                 mpData = detailData;
             }
-        } else { // 查询全部
+        } else {
             solData = res.data?.sol?.data?.data;
             mpData = res.data?.mp?.data?.data;
         }
 
-        // 如果查询全部模式，即使某个模式没有数据，也要显示卡片
-        // 只有当两个模式都没有数据时，才提示无数据
-        if (!mode) {
-            // 查询全部模式：即使某个模式没有数据，也要在模板中设置（显示"暂无数据"）
-            if (!solData && !mpData) {
-                return e.reply('暂无周报数据，不打两把吗？')
+        if (mode) {
+            if (mode === 'sol' && !solData) {
+                return e.reply('暂无烽火地带周报数据，不打两把吗？')
             }
-        } else {
-            // 指定模式查询：如果没有数据，提示无数据
-            if (!solData && !mpData) {
-                return e.reply('暂无周报数据，不打两把吗？')
+            if (mode === 'mp' && !mpData) {
+                return e.reply('暂无全面战场周报数据，不打两把吗？')
             }
         }
 
-        // --- 获取用户信息（包括头像） ---
         let userName = e.sender.card || e.sender.nickname
         let userAvatar = ''
         try {
             const personalInfoRes = await this.api.getPersonalInfo(token)
-            if (personalInfoRes && personalInfoRes.data && personalInfoRes.roleInfo) {
-                const { userData, careerData } = personalInfoRes.data
+            if (personalInfoRes?.data && personalInfoRes?.roleInfo) {
+                const { userData } = personalInfoRes.data
                 const { roleInfo } = personalInfoRes
 
-                // 获取用户名（优先使用游戏内名称）
                 const gameUserName = this.decodeUserInfo(userData?.charac_name || roleInfo?.charac_name)
                 if (gameUserName) {
                     userName = gameUserName
                 }
 
-                // 获取用户头像
                 userAvatar = this.decodeUserInfo(userData?.picurl || roleInfo?.picurl)
                 if (userAvatar && /^[0-9]+$/.test(userAvatar)) {
                     userAvatar = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${userAvatar}.webp`
                 }
             }
         } catch (error) {
-            // 获取个人信息失败，使用默认值
             logger.debug(`[Weekly] 获取用户信息失败:`, error)
         }
 
-        // --- 提取所有队友的OpenID并获取昵称 ---
         const allTeammateOpenIDs = new Set();
         if (solData?.teammates) {
             solData.teammates.forEach(t => allTeammateOpenIDs.add(t.friend_openid));
@@ -149,19 +138,14 @@ export class Weekly extends plugin {
                     if (data.charac_name) {
                         nicknameMap.set(openid, data.charac_name);
                     }
-                    // 处理头像
                     if (data.picurl) {
                         let avatarUrl = data.picurl;
-                        // 如果是纯数字，使用游戏内头像接口
                         if (/^[0-9]+$/.test(avatarUrl)) {
                             avatarUrl = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${avatarUrl}.webp`;
                         } else {
-                            // QQ/微信头像需要URL解码
                             try {
                                 avatarUrl = decodeURIComponent(avatarUrl);
-                            } catch (e) {
-                                // 解码失败，使用原始URL
-                            }
+                            } catch (e) {}
                         }
                         avatarMap.set(openid, avatarUrl);
                     }
@@ -169,7 +153,6 @@ export class Weekly extends plugin {
             });
         }
 
-        // --- 数据解析和渲染 ---
         const parseAndGetName = (dataStr, idKey, countKey, dataManagerFunc) => {
             if (!dataStr || typeof dataStr !== 'string') return '无';
             const items = dataStr.split('#').map(s => {
@@ -180,7 +163,6 @@ export class Weekly extends plugin {
             }).filter(Boolean);
     
             if (items.length === 0) return '无';
-
             const mostUsed = items.reduce((a, b) => (a[countKey] > b[countKey] ? a : b));
             return dataManagerFunc(mostUsed[idKey]);
         };
@@ -194,113 +176,82 @@ export class Weekly extends plugin {
             mpData.mostUsedOperator = DataManager.getOperatorName(mpData.max_inum_DeployArmedForceType);
         }
 
-        // 如果没有提供日期，使用当前日期（格式：YYYYMMDD）
         let displayDate = date
         if (!displayDate) {
             const now = new Date()
-            const year = now.getFullYear()
-            const month = String(now.getMonth() + 1).padStart(2, '0')
-            const day = String(now.getDate()).padStart(2, '0')
-            displayDate = `${year}${month}${day}`
+            displayDate = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`
         }
 
-        // --- 构建模板数据 ---
         const qqAvatarUrl = `http://q.qlogo.cn/headimg_dl?dst_uin=${e.user_id}&spec=640&img_type=jpg`
         const templateData = {
-            userName: userName,
-            userAvatar: userAvatar,
+            userName,
+            userAvatar,
             userId: e.user_id,
-            qqAvatarUrl: qqAvatarUrl,
+            qqAvatarUrl,
             date: displayDate
         };
 
-        // 处理烽火地带数据
-        // 如果查询全部模式或指定sol模式，都需要显示卡片
         if (!mode || mode === 'sol') {
             if (solData) {
-                // 判断是否有有效数据：总对局数大于0
                 const hasValidData = solData.total_sol_num && Number(solData.total_sol_num) > 0;
                 
                 if (!hasValidData) {
-                    // 没有数据，但需要显示卡片
-                    templateData.solData = {
-                        isEmpty: true
-                    };
+                    templateData.solData = { isEmpty: true };
                 } else {
                 const solRank = solData.Rank_Score ? DataManager.getRankByScore(solData.Rank_Score, 'sol') : '-';
                 
-                // 检查收益和消费数据，避免NaN
                 const gainedPrice = Number(solData.Gained_Price) || 0;
                 const consumePrice = Number(solData.consume_Price) || 0;
                 let profitRatio = '0';
                 if (gainedPrice > 0 && consumePrice > 0) {
                     profitRatio = (gainedPrice / consumePrice).toFixed(2);
                 } else if (gainedPrice > 0 && consumePrice === 0) {
-                    profitRatio = '∞'; // 收益大于0但消费为0
+                    profitRatio = '∞';
                     logger.warn(`[Weekly] 烽火地带赚损比异常 - 收益: ${gainedPrice}, 消费: ${consumePrice}, 设置为∞`);
                 }
                 
-                // 获取段位图片路径
                 const solRankImagePath = solRank !== '-' ? DataManager.getRankImagePath(solRank, 'sol') : null;
                 
-                // 解析资产趋势 - 处理7天数据
                 let assetTrend = null;
                 if (solData.Total_Price) {
                     const prices = solData.Total_Price.split(',');
                     const dayMap = {
-                        'Monday': '周一',
-                        'Tuesday': '周二',
-                        'Wednesday': '周三',
-                        'Thursday': '周四',
-                        'Friday': '周五',
-                        'Saturday': '周六',
-                        'Sunday': '周日'
+                        'Monday': '周一', 'Tuesday': '周二', 'Wednesday': '周三', 'Thursday': '周四',
+                        'Friday': '周五', 'Saturday': '周六', 'Sunday': '周日'
                     };
                     
-                    // 解析所有7天的数据
                     const dailyPrices = {};
                     prices.forEach(priceStr => {
                         const parts = priceStr.split('-');
                         if (parts.length >= 3) {
-                            const dayName = parts[0];
                             const price = parseInt(parts[2]);
                             if (!isNaN(price)) {
-                                dailyPrices[dayName] = price;
+                                dailyPrices[parts[0]] = price;
                             }
                         }
                     });
                     
-                    // 获取周一和周日的数据（开始和结束）
                     const monday = dailyPrices['Monday'];
                     const sunday = dailyPrices['Sunday'];
                     
                     if (monday !== undefined && sunday !== undefined) {
-                        // 计算7天的完整数据
                         const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
                         const allPrices = allDays.map(day => dailyPrices[day]).filter(p => p !== undefined);
-                        
-                        // 计算最高和最低值
                         const maxPrice = Math.max(...allPrices);
                         const minPrice = Math.min(...allPrices);
                         const priceRange = maxPrice - minPrice;
                         
-                        // 计算折线图坐标点
-                        const chartWidth = 600;
-                        const chartHeight = 120;
+                        // 资产趋势图加宽：避免横向过于拥挤导致“看起来很奇怪”
+                        const chartWidth = 2000;
+                        const chartHeight = 200;
                         const padding = { top: 20, right: 10, bottom: 30, left: 10 };
                         const plotWidth = chartWidth - padding.left - padding.right;
                         const plotHeight = chartHeight - padding.top - padding.bottom;
-                        const htmlContainerHeight = 140; // HTML容器高度（与CSS中的height一致）
                         
                         const points = allDays.map((day, index) => {
                             const price = dailyPrices[day];
-                            // X坐标：均匀分布
                             const x = padding.left + (index / (allDays.length - 1)) * plotWidth;
-                            // Y坐标：从底部开始，价格越高Y越小（SVG坐标系）
                             const y = padding.top + plotHeight - ((price - minPrice) / priceRange) * plotHeight;
-                            // Y坐标百分比（用于HTML定位）
-                            // 将SVG的Y坐标映射到HTML容器的百分比位置
-                            const yPercent = ((y / chartHeight) * 100).toFixed(2);
                             
                             return {
                                 dayName: dayMap[day] || day,
@@ -309,11 +260,10 @@ export class Weekly extends plugin {
                                 x: x.toFixed(1),
                                 y: y.toFixed(1),
                                 xPercent: ((x / chartWidth) * 100).toFixed(2),
-                                yPercent: yPercent
+                                yPercent: ((y / chartHeight) * 100).toFixed(2)
                             };
                         });
                         
-                        // 生成折线路径
                         let pathData = '';
                         if (points.length > 0) {
                             pathData = `M ${points[0].x},${points[0].y}`;
@@ -366,7 +316,6 @@ export class Weekly extends plugin {
                         : null
                 };
 
-                // 解析所有使用的干员
                 if (solData.total_ArmedForceId_num && solData.total_sol_num > 0) {
                     try {
                     const operatorsStr = solData.total_ArmedForceId_num;
@@ -399,7 +348,6 @@ export class Weekly extends plugin {
                     templateData.solData.operators = [];
                 }
         
-                // 解析烽火地图使用详情
                 if (solData.total_mapid_num && solData.total_sol_num > 0) {
                     try {
                     const mapsStr = solData.total_mapid_num;
@@ -428,7 +376,6 @@ export class Weekly extends plugin {
                     templateData.solData.maps = [];
                 }
 
-                // 解析高价值物资
                 if (solData.CarryOut_highprice_list) {
                     try {
                     const items = solData.CarryOut_highprice_list.split('#').map(s => {
@@ -447,7 +394,6 @@ export class Weekly extends plugin {
                 templateData.solData.highPriceItems = [];
             }
     
-                // 烽火地带队友数据
                 const sol_teammates = solData.teammates || [];
                 const active_sol_teammates = sol_teammates.filter(t => t.Friend_total_sol_num > 0);
                 templateData.solData.teammates = active_sol_teammates.map((t, i) => {
@@ -476,27 +422,17 @@ export class Weekly extends plugin {
                 });
                 }
             } else {
-                // 没有数据，但需要显示卡片
-                templateData.solData = {
-                    isEmpty: true
-                };
+                templateData.solData = { isEmpty: true };
             }
         }
 
-        // 处理全面战场数据
-        // 如果查询全部模式或指定mp模式，都需要显示卡片
         if (!mode || mode === 'mp') {
             if (mpData) {
-                // 判断是否有有效数据：总对局数大于0
                 const hasValidData = mpData.total_num && Number(mpData.total_num) > 0;
                 
                 if (!hasValidData) {
-                    // 没有数据，但需要显示卡片
-                    templateData.mpData = {
-                        isEmpty: true
-                    };
+                    templateData.mpData = { isEmpty: true };
                 } else {
-                    // 检查胜率计算，避免NaN
                     const totalNum = Number(mpData.total_num) || 0;
                     const winNum = Number(mpData.win_num) || 0;
                     let winRate = '0%';
@@ -506,7 +442,6 @@ export class Weekly extends plugin {
                     
                     const mpRank = mpData.Rank_Match_Score ? DataManager.getRankByScore(mpData.Rank_Match_Score, 'tdm') : '-';
                     
-                    // 检查命中率计算，避免NaN
                     const consumeBullet = Number(mpData.Consume_Bullet_Num) || 0;
                     const hitBullet = Number(mpData.Hit_Bullet_Num) || 0;
                     let hitRate = '0%';
@@ -514,7 +449,6 @@ export class Weekly extends plugin {
                         hitRate = ((hitBullet / consumeBullet) * 100).toFixed(1) + '%';
                     }
 
-                    // 获取段位图片路径
                     const mpRankImagePath = mpRank !== '-' ? DataManager.getRankImagePath(mpRank, 'tdm') : null;
 
                     templateData.mpData = {
@@ -541,7 +475,6 @@ export class Weekly extends plugin {
                             : null
                     };
 
-                    // 解析地图使用详情
                     if (mpData.max_inum_mapid && mpData.total_num > 0) {
                         try {
                             const mapsStr = mpData.max_inum_mapid;
@@ -570,7 +503,6 @@ export class Weekly extends plugin {
                         templateData.mpData.maps = [];
                     }
         
-                    // 解析战场干员使用情况
                     if (mpData.max_inum_DeployArmedForceType && mpData.total_num > 0) {
                         const operatorId = mpData.max_inum_DeployArmedForceType;
                         const operatorName = DataManager.getOperatorName(operatorId);
@@ -585,7 +517,6 @@ export class Weekly extends plugin {
                         };
                     }
         
-                    // 全面战场队友数据
                     const mp_teammates = mpData.teammates || [];
                     const active_mp_teammates = mp_teammates.filter(t => t.Friend_mp_total_num > 0 || t.Friend_mp_win_num > 0 || t.Friend_mp_KillNum > 0);
                     templateData.mpData.teammates = active_mp_teammates.map((t, i) => {
@@ -607,19 +538,105 @@ export class Weekly extends plugin {
                     });
                 }
             } else {
-                // 没有数据，但需要显示卡片
-                templateData.mpData = {
-                    isEmpty: true
-                };
+                templateData.mpData = { isEmpty: true };
             }
         }
 
-        // 渲染模板
         try {
-            return await Render.render('Template/weeklyReport/weeklyReport', templateData, {
-                e: e,
-                retType: 'default'
-            });
+            if (mode === 'sol') {
+                if (!templateData.solData || templateData.solData.isEmpty) {
+                    return e.reply('暂无烽火地带周报数据，不打两把吗？')
+                }
+                return await Render.render('Template/weeklyReport/weeklyReport', {
+                    ...templateData,
+                    mpData: null
+                }, {
+                    e: e,
+                    retType: 'default'
+                });
+            }
+            
+            if (mode === 'mp') {
+                if (!templateData.mpData || templateData.mpData.isEmpty) {
+                    return e.reply('暂无全面战场周报数据，不打两把吗？')
+                }
+                return await Render.render('Template/weeklyReport/weeklyReport', {
+                    ...templateData,
+                    solData: null
+                }, {
+                    e: e,
+                    retType: 'default'
+                });
+            }
+            
+            if (!mode) {
+                const hasSolData = templateData.solData && !templateData.solData.isEmpty;
+                const hasMpData = templateData.mpData && !templateData.mpData.isEmpty;
+                
+                if (!hasSolData && !hasMpData) {
+                    return e.reply('暂无周报数据，不打两把吗？');
+                }
+                
+                if (hasSolData && hasMpData) {
+                    const bot = Bot.pickUser(e.user_id);
+                    const forwardMsg = [];
+                    
+                    const solImage = await Render.render('Template/weeklyReport/weeklyReport', {
+                        ...templateData,
+                        mpData: null
+                    }, {
+                        e: e,
+                        retType: 'base64'
+                    });
+                    if (solImage) {
+                        forwardMsg.push({
+                            message: ['【烽火地带周报】\n', solImage],
+                            nickname: bot.nickname,
+                            user_id: bot.uin
+                        });
+                    }
+                    
+                    const mpImage = await Render.render('Template/weeklyReport/weeklyReport', {
+                        ...templateData,
+                        solData: null
+                    }, {
+                        e: e,
+                        retType: 'base64'
+                    });
+                    if (mpImage) {
+                        forwardMsg.push({
+                            message: ['【全面战场周报】\n', mpImage],
+                            nickname: bot.nickname,
+                            user_id: bot.uin
+                        });
+                    }
+                    
+                    if (forwardMsg.length > 0) {
+                        const result = await e.reply(await Bot.makeForwardMsg(forwardMsg), false, { recallMsg: 0 });
+                        if (!result) {
+                            await e.reply('生成转发消息失败，请联系管理员。');
+                        }
+                        return true;
+                    }
+                } else if (hasSolData) {
+                    return await Render.render('Template/weeklyReport/weeklyReport', {
+                        ...templateData,
+                        mpData: null
+                    }, {
+                        e: e,
+                        retType: 'default'
+                    });
+                } else if (hasMpData) {
+                    return await Render.render('Template/weeklyReport/weeklyReport', {
+                        ...templateData,
+                        solData: null
+                    }, {
+                        e: e,
+                        retType: 'default'
+                    });
+                }
+            }
+            
         } catch (error) {
             logger.error(`[Weekly] 周报渲染异常:`, error);
             await e.reply('周报渲染失败，请查看日志获取详细信息。');
@@ -675,7 +692,7 @@ export class Weekly extends plugin {
         }
         await e.reply(`已为您在本群开启周报推送！${timeInfo}`);
 
-      } else { // 关闭
+      } else {
         if (groupIndex === -1) {
           return e.reply('您尚未在本群开启周报推送。');
         }
