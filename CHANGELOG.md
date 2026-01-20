@@ -16,6 +16,7 @@
 - 优化出红记录渲染模板（`resources/Template/redRecord`）
 - 优化出红记录查询渲染模板（`resources/Template/redRecordList`）
 - 优化日报渲染模板（`resources/Template/dailyReport/`）
+- 优化周报渲染模板（`resources/Template/weeklyReport/`）
 
 ## [1.5.2-3] - 历史版本
 

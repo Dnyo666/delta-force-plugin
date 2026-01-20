@@ -88,10 +88,10 @@
                     {{each solData.assetTrend.allDays point}}
                     <g class="line-chart-point-group">
                         <circle class="line-chart-point" cx="{{point.x}}" cy="{{point.y}}" 
-                                r="4" fill="#0FF796" stroke="#0a0a0a" stroke-width="1.5"/>
+                                r="5" fill="#0FF796" stroke="#0a0a0a" stroke-width="2"/>
                         <text class="line-chart-value-text" x="{{point.x}}" y="{{point.y}}" 
-                              text-anchor="middle" dy="-15" fill="#0FF796" 
-                              font-size="12" font-weight="700" 
+                              text-anchor="middle" dy="-18" 
+                              font-size="14" font-weight="800" 
                               font-family="Arial, sans-serif" dominant-baseline="middle">
                             {{point.price}}
                         </text>
@@ -118,14 +118,14 @@
         <div class="section-header">
             <span class="dot"></span> 资产统计 / ASSET STATISTICS
         </div>
-        <div class="dashboard-grid">
-            <div class="data-node highlight">
+        <div class="dashboard-grid asset-grid">
+            <div class="data-node highlight asset-card">
                 <div class="node-label">资产净增 / NET INCREASE</div>
                 <span class="node-value large">{{solData.rise_Price || 0}}</span>
                 <div class="node-detail">(总收益 {{solData.Gained_Price || 0}} / 总消费 {{solData.consume_Price || 0}})</div>
             </div>
             {{if solData.profitRatio}}
-            <div class="data-node highlight">
+            <div class="data-node highlight asset-card">
                 <div class="node-label">赚损比 / PROFIT RATIO</div>
                 <span class="node-value large">{{solData.profitRatio}}</span>
                 <div class="node-detail">(收益/消费)</div>

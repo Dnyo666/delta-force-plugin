@@ -106,6 +106,11 @@ body {
     grid-template-columns: repeat(5, 1fr);
 }
 
+.dashboard-grid.asset-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+}
+
 .node-value.highlight-green {
     color: #0FF796;
 }
@@ -121,6 +126,47 @@ body {
 .data-node.highlight { 
     border-left-color: var(--primary-color); 
     background: rgba(15, 247, 150, 0.02); 
+}
+
+.data-node.asset-card {
+    padding: 35px;
+    background: rgba(15, 247, 150, 0.05);
+    border: 1px solid rgba(15, 247, 150, 0.2);
+    border-left-width: 4px;
+    border-left-color: var(--primary-color);
+    box-shadow: 0 4px 20px rgba(15, 247, 150, 0.1);
+    transition: all 0.3s ease;
+}
+
+.data-node.asset-card:hover {
+    background: rgba(15, 247, 150, 0.08);
+    border-color: rgba(15, 247, 150, 0.4);
+    box-shadow: 0 6px 30px rgba(15, 247, 150, 0.2);
+    transform: translateY(-2px);
+}
+
+.data-node.asset-card .node-label {
+    font-size: 26px;
+    margin-bottom: 20px;
+    color: #FFFFFF;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.data-node.asset-card .node-value.large {
+    font-size: 64px;
+    color: var(--primary-color);
+    text-shadow: 0 0 20px rgba(15, 247, 150, 0.5);
+    margin: 15px 0;
+    display: block;
+}
+
+.data-node.asset-card .node-detail {
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.7);
+    margin-top: 12px;
+    font-weight: 500;
+    line-height: 1.6;
 }
 
 .data-node.gold { 
@@ -198,7 +244,7 @@ body {
 .line-chart-wrapper {
     position: relative;
     width: 100%;
-    height: 180px;
+    height: 350px;
     margin: 0;
     overflow: visible;
     padding: 0;
@@ -206,24 +252,26 @@ body {
 
 .line-chart-svg {
     width: 100%;
-    height: 140px;
+    height: 190px;
     display: block;
     overflow: visible;
 }
 
 .line-chart-path {
     stroke: var(--primary-color);
-    stroke-width: 3;
+    stroke-width: 4;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
-    filter: drop-shadow(0 0 2px rgba(15, 247, 150, 0.5));
+    filter: drop-shadow(0 0 4px rgba(15, 247, 150, 0.8)) drop-shadow(0 0 8px rgba(15, 247, 150, 0.4));
 }
 
 .line-chart-point {
     fill: var(--primary-color);
     stroke: #0a0a0a;
-    stroke-width: 1.5;
+    stroke-width: 2;
+    r: 5;
+    filter: drop-shadow(0 0 4px rgba(15, 247, 150, 0.8));
 }
 
 .line-chart-value-text {
@@ -232,8 +280,13 @@ body {
     white-space: nowrap;
     dominant-baseline: middle;
     text-anchor: middle;
-    letter-spacing: 0.3px;
-    filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.9));
+    letter-spacing: 0.5px;
+    font-size: 40px;
+    font-weight: 800;
+    fill: #FFFFFF;
+    filter: drop-shadow(0 0 4px rgba(15, 247, 150, 0.9)) drop-shadow(0 0 8px rgba(0, 0, 0, 0.9)) drop-shadow(0 2px 4px rgba(0, 0, 0, 0.8));
+    background: rgba(0, 0, 0, 0.7);
+    padding: 2px 4px;
 }
 
 .line-chart-labels {
@@ -241,7 +294,7 @@ body {
     bottom: 0;
     left: 0;
     right: 0;
-    height: 30px;
+    height: 35px;
     display: flex;
     justify-content: space-between;
     padding: 0;
@@ -258,11 +311,15 @@ body {
 }
 
 .line-chart-label {
-    font-size: 10px;
-    color: rgba(255, 255, 255, 0.6);
-    font-weight: 500;
+    font-size: 24px;
+    color: #FFFFFF;
+    font-weight: 700;
     text-align: center;
     white-space: nowrap;
+    background: rgba(0, 0, 0, 0.6);
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid rgba(15, 247, 150, 0.3);
 }
 
 .chart-summary {
@@ -274,7 +331,7 @@ body {
 .chart-summary-text {
     color: var(--primary-color);
     font-weight: 700;
-    font-size: 18px;
+    font-size: 36px;
     letter-spacing: 1px;
 }
 
@@ -287,7 +344,7 @@ body {
 
 .favorite-card {
     position: relative;
-    height: 400px;
+    height: 500px;
     border-radius: 8px;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.1);
@@ -298,13 +355,15 @@ body {
     height: 100%;
     background-size: cover;
     background-position: center;
-    opacity: 0.5;
-    transition: 0.3s;
+    opacity: 0.85;
+    filter: brightness(0.95) contrast(1.1);
+    transition: all 0.3s ease;
 }
 
 .favorite-card:hover .favorite-bg {
-    transform: scale(1.1);
-    opacity: 0.8;
+    transform: scale(1.05);
+    opacity: 1;
+    filter: brightness(1) contrast(1.15);
 }
 
 .favorite-content {
@@ -312,8 +371,9 @@ body {
     bottom: 0;
     left: 0;
     width: 100%;
-    padding: 25px;
-    background: linear-gradient(transparent, rgba(0,0,0,0.9));
+    padding: 30px;
+    background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.85) 40%, transparent 100%);
+    backdrop-filter: blur(2px);
 }
 
 .favorite-label {
@@ -442,45 +502,52 @@ body {
 /* 干员列表 - 卡片样式 */
 .operator-list {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 15px;
 }
 
 .operator-item {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     background: rgba(255,255,255,0.03);
-    padding: 15px;
+    padding: 0;
     border-radius: 4px;
-    align-items: center;
-    gap: 12px;
+    align-items: stretch;
+    gap: 0;
     border: 1px solid rgba(255,255,255,0.05);
+    overflow: hidden;
 }
 
 .operator-img-box {
-    width: 100%;
-    height: 150px;
+    width: 400px;
+    height: 260px;
     background: rgba(0,0,0,0.3);
     border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .operator-img-box img {
-    max-width: 100%;
-    max-height: 100%;
+    width: 100%;
+    height: 100%;
     object-fit: contain;
+    border-radius: 4px;
+    filter: brightness(1.1) contrast(1.05);
 }
 
 .operator-info {
-    width: 100%;
+    flex: 1;
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: flex-start;
+    justify-content: center;
     gap: 8px;
-    text-align: center;
+    text-align: left;
+    padding: 20px;
 }
 
 .operator-name {
