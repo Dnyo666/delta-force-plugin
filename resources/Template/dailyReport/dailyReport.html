@@ -4,22 +4,21 @@
 {{/block}}
 {{block 'main'}}
 <div class="container {{if type === 'daily' && !((mpDetail && solDetail && solDetail.recentGainDate))}}single-mode{{/if}}">
-    <!-- 背景图片 -->
-    <img class="bg-image" src="{{_res_path}}imgs/others/loading13.png" alt="" />
-    <div class="bg-overlay"></div>
+    <!-- 整体背景图片 -->
+    <img class="bg-image" src="{{_res_path}}imgs/others/loading13.png" />
     
-    <!-- 头部区域 -->
+    <!-- ========== 头部区域 ========== -->
     <div class="header">
         <div class="header-content">
             <div class="header-left">
                 <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
-            </div>
             {{if type === 'profit'}}
             <div class="title">收益TOP3物资</div>
             {{/if}}
+            </div>
             <div class="header-right">
                 <div class="user-avatar-wrapper">
-                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';this.parentElement.style.display='none';}" />
+                    <img class="user-avatar" src="{{userAvatar}}" alt="用户头像" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';}" />
                 </div>
                 <div class="header-meta">
                     {{if userName}}

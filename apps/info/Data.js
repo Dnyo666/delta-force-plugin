@@ -179,7 +179,7 @@ export class Data extends plugin {
         const mapName = DataManager.getMapName(map.mapID)
         const mapImage = DataManager.getMapImagePath(mapName, 'sol')
         const baseMapName = mapName.replace(/-?(常规|机密|绝密|水淹|适应)$/, '')
-        return {
+          return {
           ...map,
           mapName: mapName,
           baseMapName: baseMapName,
@@ -226,7 +226,7 @@ export class Data extends plugin {
         } else {
           mergePendingGroups()
           resultList.push(group)
-        }
+          }
       })
       
       mergePendingGroups()
@@ -293,11 +293,11 @@ export class Data extends plugin {
       const mpMapList = (mpDetail.mapList || []).map(map => {
         const mapName = DataManager.getMapName(map.mapID)
         const mapImage = DataManager.getMapImagePath(mapName, 'mp')
-        return {
+          return {
           ...map,
-          mapName: mapName,
+            mapName: mapName,
           mapImage: mapImage
-        }
+          }
       }).sort((a, b) => b.totalCount - a.totalCount).slice(0, 10)
 
       const formatMPGameTime = (minutes) => {
@@ -306,7 +306,7 @@ export class Data extends plugin {
         const mins = minutes % 60
         return `${hours}小时${mins}分钟`
       }
-      
+
       templateData.mpDetail = {
         ...mpDetail,
         totalGameTime: formatMPGameTime(mpDetail.totalGameTime),

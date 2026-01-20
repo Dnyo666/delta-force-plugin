@@ -5,25 +5,23 @@
 {{block 'main'}}
 <div class="red-record-container">
     <!-- 整体背景图片 -->
-    <img class="bg-overlay" src="{{_res_path}}imgs/template/redCollection/bg.webp" />
+    <img class="bg-overlay" src="{{_res_path}}imgs/redCollection/bg.webp" />
     
-    <!-- ========== 顶部：用户信息区域 ========== -->
+    <!-- ========== 头部区域 ========== -->
     <div class="user-header">
         <div class="game-meta">
             <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
         </div>
         <div class="user-profile">
-            <div class="profile-sidebar"></div>
             <div class="avatar-wrapper">
-                <img class="avatar" src="{{userAvatar}}" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';var placeholder=this.nextElementSibling;if(placeholder&&placeholder.classList.contains('avatar-placeholder')){placeholder.style.display='block';}}" />
-                <div class="avatar-placeholder" style="display: none;"></div>
+                <img class="avatar" src="{{userAvatar}}" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';}" />
             </div>
             <div class="user-meta">
                 <div class="nickname">{{userName}}</div>
                 <div class="rank-tag">
                     <span class="rank-text">{{userRank}}</span>
                     {{if userRankImage}}
-                    <img class="rank-icon" src="{{_res_path}}{{userRankImage}}" alt="{{userRank}}" />
+                    <img class="rank-icon" src="{{_res_path}}{{userRankImage}}" alt="{{userRank}}" onerror="this.style.display='none';" />
                     {{/if}}
                 </div>
             </div>
@@ -31,7 +29,11 @@
     </div>
     
     <!-- ========== 物品详细展示区域 ========== -->
-    <div class="item-display-card">
+    <div class="section-block item-display-card">
+        <div class="section-header">
+            <span class="dot"></span> 物品详情 / ITEM DETAILS
+        </div>
+        
         <div class="item-title-box">
             <h1 class="item-name-text">{{itemName}}</h1>
             {{if itemType}}
@@ -48,18 +50,18 @@
             <!-- 右侧：解锁数据 -->
             <div class="unlock-data-panel">
                 <div class="data-row highlight">
-                    <span class="label">首次解锁</span>
+                    <span class="label">首次解锁 / FIRST UNLOCK</span>
                     <span class="value">{{firstUnlockTime}}</span>
                 </div>
         
-        {{if firstUnlockMapBg}}
+                {{if firstUnlockMapBg}}
                 <div class="map-box">
                     <img class="map-thumbnail" src="{{_res_path}}{{firstUnlockMapBg}}" onerror="this.style.display='none'" />
-        </div>
-        {{/if}}
+                </div>
+                {{/if}}
         
                 <div class="data-row">
-                    <span class="label">解锁地点</span>
+                    <span class="label">解锁地点 / UNLOCK LOCATION</span>
                     <span class="value">{{firstUnlockMap}}</span>
                 </div>
             </div>
@@ -67,11 +69,11 @@
     </div>
     
     <!-- ========== 历史记录区域 ========== -->
-    <div class="records-container">
+    <div class="section-block records-container">
         <div class="records-header">
-            <div class="records-title">出红记录</div>
+            <div class="records-title">出红记录 / RED RECORDS</div>
             {{if recordCount > 0}}
-            <div class="records-badge">?</div>
+            <div class="records-badge">{{recordCount}}</div>
             {{/if}}
         </div>
         
@@ -82,16 +84,16 @@
                     <div class="entry-index">{{index + 1}}</div>
                     <div class="entry-data">
                         <div class="entry-row">
-                            <span class="entry-label">出红时间</span>
+                            <span class="entry-label">出红时间 / TIME</span>
                             <span class="entry-value">{{record.time}}</span>
                         </div>
                         <div class="entry-row">
-                            <span class="entry-label">出红地点</span>
+                            <span class="entry-label">出红地点 / LOCATION</span>
                             <span class="entry-value">{{record.map}}</span>
                         </div>
                         {{if record.count}}
                         <div class="entry-row">
-                            <span class="entry-label">数量</span>
+                            <span class="entry-label">数量 / COUNT</span>
                             <span class="entry-value">{{record.count}}</span>
                         </div>
                         {{/if}}
@@ -106,11 +108,6 @@
         {{if recordCount > 20}}
         <p class="records-footer-note">（仅展示最新的 20 条记录）</p>
         {{/if}}
-    </div>
-    
-    <!-- 页脚 -->
-    <div class="template-footer">
-        <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
     </div>
 </div>
 {{/block}}

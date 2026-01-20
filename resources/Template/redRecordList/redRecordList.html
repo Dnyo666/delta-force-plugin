@@ -5,25 +5,23 @@
 {{block 'main'}}
 <div class="red-record-list-container">
     <!-- 整体背景图片 -->
-    <img class="bg-overlay" src="{{_res_path}}imgs/template/redCollection/bg.webp" />
+    <img class="bg-overlay" src="{{_res_path}}imgs/redCollection/bg.webp" />
     
-    <!-- ========== 顶部：用户信息区域 ========== -->
+    <!-- ========== 头部区域 ========== -->
     <div class="user-header">
         <div class="game-meta">
             <img class="game-logo" src="{{_res_path}}imgs/others/logo.png" alt="三角洲行动" />
         </div>
         <div class="user-profile">
-            <div class="profile-sidebar"></div>
             <div class="avatar-wrapper">
-                <img class="avatar" src="{{userAvatar}}" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';var placeholder=this.nextElementSibling;if(placeholder&&placeholder.classList.contains('avatar-placeholder')){placeholder.style.display='block';}}" />
-                <div class="avatar-placeholder" style="display: none;"></div>
+                <img class="avatar" src="{{userAvatar}}" data-qq-avatar="{{qqAvatarUrl}}" onerror="if(this.dataset.qqAvatar){this.src=this.dataset.qqAvatar;this.onerror=null;}else{this.style.display='none';}" />
             </div>
             <div class="user-meta">
                 <div class="nickname">{{userName}}</div>
                 <div class="rank-tag">
                     <span class="rank-text">{{userRank}}</span>
                     {{if userRankImage}}
-                    <img class="rank-icon" src="{{_res_path}}{{userRankImage}}" alt="{{userRank}}" />
+                    <img class="rank-icon" src="{{_res_path}}{{userRankImage}}" alt="{{userRank}}" onerror="this.style.display='none';" />
                     {{/if}}
                 </div>
             </div>
@@ -31,58 +29,70 @@
     </div>
     
     <!-- ========== 统计信息区域 ========== -->
-    <div class="statistics-section">
-        <div class="stat-title">出红记录统计</div>
-        <div class="stat-grid">
-            <div class="stat-item">
+    <div class="section-block stats-section">
+        <div class="section-header">
+            <span class="dot"></span> 出红记录统计 / STATISTICS
+        </div>
+        
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-content">
                 <div class="stat-label">收藏种类</div>
                 <div class="stat-value">{{statistics.redGodCount}}</div>
+                </div>
             </div>
-            <div class="stat-item">
+            <div class="stat-card">
+                <div class="stat-content">
                 <div class="stat-label">总出红次数</div>
                 <div class="stat-value">{{statistics.redTotalCount}}</div>
+                </div>
             </div>
-            <div class="stat-item">
+            <div class="stat-card highlight">
+                <div class="stat-content">
                 <div class="stat-label">总价值</div>
-                <div class="stat-value">{{statistics.redTotalValue}}</div>
+                    <div class="stat-value text-glow">{{statistics.redTotalValue}}</div>
+                </div>
             </div>
             {{if statistics.unlockedCount}}
-            <div class="stat-item">
+            <div class="stat-card">
+                <div class="stat-content">
                 <div class="stat-label">未解锁</div>
                 <div class="stat-value">{{statistics.unlockedCount}}</div>
+                </div>
             </div>
             {{/if}}
         </div>
     </div>
     
     <!-- ========== 出红记录列表 ========== -->
-    <div class="records-list-section">
-        <div class="records-header">
-            <div class="records-title">出红记录列表</div>
+    <div class="section-block list-section">
+        <div class="section-header">
+            <span class="dot"></span> 出红记录列表 / RECORD LIST
             {{if totalRecords > 0}}
-            <div class="records-count">共 {{totalRecords}} 条记录</div>
+            <span class="records-badge">{{totalRecords}}</span>
             {{/if}}
         </div>
         
         <div class="records-content">
             {{if records && records.length > 0}}
                 {{each records record index}}
-                <div class="record-item">
-                    <div class="record-index">{{index + 1}}</div>
-                    <div class="record-image">
-                        <img src="{{record.imageUrl}}" onerror="this.style.display='none'" />
+                <div class="record-entry {{if index < 3}}top-rank{{/if}}">
+                    <div class="entry-index">{{index + 1}}</div>
+                    <div class="entry-item-preview">
+                        <img src="{{record.imageUrl}}" onerror="this.style.opacity='0'" />
                     </div>
-                    <div class="record-info">
-                        <div class="record-name">{{record.name}}</div>
-                        <div class="record-details">
-                            <span class="detail-item">
-                                <span class="detail-label">出红次数：</span>
-                                <span class="detail-value">{{record.count}}</span>
-                            </span>
-                            <span class="detail-item">
-                                <span class="detail-label">总价值：</span>
-                                <span class="detail-value highlight">{{record.value}}</span>
-                            </span>
+                    <div class="entry-data">
+                        <div class="entry-row">
+                            <span class="entry-label">物品名称 / ITEM NAME</span>
+                            <span class="entry-value">{{record.name}}</span>
+                        </div>
+                        <div class="entry-row">
+                            <span class="entry-label">出红次数 / COUNT</span>
+                            <span class="entry-value">{{record.count}}</span>
+                        </div>
+                        <div class="entry-row">
+                            <span class="entry-label">总价值 / VALUE</span>
+                            <span class="entry-value highlight">{{record.value}}</span>
                         </div>
                     </div>
                 </div>
@@ -91,15 +101,6 @@
                 <div class="empty-state">暂无出红记录</div>
             {{/if}}
         </div>
-        
-        {{if totalRecords > 6}}
-        <p class="records-footer-note">（仅展示前 6 条记录，共 {{totalRecords}} 条）</p>
-        {{/if}}
-    </div>
-    
-    <!-- 页脚 -->
-    <div class="template-footer">
-        <div class="copyright-text">由 DeltaForce-Plugin-Yunzai 强力驱动</div>
     </div>
 </div>
 {{/block}}
