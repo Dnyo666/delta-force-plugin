@@ -153,20 +153,12 @@
                 <span class="node-value large">{{solData.Mandel_brick_num || 0}}</span>
             </div>
             <div class="data-node highlight">
-                <div class="node-label">搜鸟巢 / BIRD NESTS</div>
-                <span class="node-value large">{{solData.search_Birdsnest_num || 0}}</span>
-            </div>
-            <div class="data-node highlight">
                 <div class="node-label">里程 / MILEAGE</div>
                 <span class="node-value highlight-green">{{solData.mileage || 0}}km</span>
             </div>
             <div class="data-node highlight">
                 <div class="node-label">救援 / RESCUES</div>
                 <span class="node-value large">{{solData.total_Rescue_num || 0}}</span>
-            </div>
-            <div class="data-node highlight">
-                <div class="node-label">被鳄鱼偷袭 / CROCODILE ATTACKS</div>
-                <span class="node-value large">{{solData.Kill_ByCrocodile_num || 0}}</span>
             </div>
             <div class="data-node highlight">
                 <div class="node-label">游戏时长 / GAME TIME</div>
@@ -299,6 +291,72 @@
         </div>
     </div>
     {{/if}}
+
+    <!-- 好友TOP10（烽火数据） -->
+    {{if topFriends && topFriends.length > 0}}
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 好友TOP10（烽火地带） / FRIENDS TOP 10
+        </div>
+        <div class="teammate-list">
+            {{each topFriends friend}}
+            <div class="teammate-item" style="flex-direction: column; align-items: flex-start; padding: 20px;">
+                <div style="display: flex; align-items: center; width: 100%; margin-bottom: 15px; gap: 20px;">
+                    <div class="teammate-rank">{{friend.rank}}</div>
+                    <div class="teammate-avatar-box" style="margin-right: 0;">
+                        {{if friend.avatar}}
+                        <img src="{{friend.avatar}}" alt="{{friend.name}}" onerror="this.src='{{_res_path}}imgs/others/default_avatar.png'" />
+                        {{/if}}
+                    </div>
+                    <div class="teammate-info" style="flex: 1;">
+                        <div class="teammate-name">{{friend.name}}</div>
+                        <div class="teammate-stats">
+                            <div class="teammate-stat" style="color: #0FF796; font-weight: 700;">总收益: {{friend.total_gained_price}} | 净收益: {{friend.total_GainedPrice}} | 最大单次: {{friend.max_GainedPrice}}</div>
+                            <div class="teammate-stat">胜场: {{friend.win_num}} | 负场: {{friend.lose_num}} | 亲密度: {{friend.intimacy}}</div>
+                        </div>
+                    </div>
+                </div>
+                {{if friend.items && friend.items.length > 0}}
+                <div style="width: 100%; margin-top: 10px; padding-top: 15px; border-top: 1px solid rgba(255,255,255,0.1);">
+                    <div style="font-size: 20px; color: #0FF796; font-weight: 700; margin-bottom: 10px;">高价值物品 / HIGH-VALUE ITEMS</div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+                        {{each friend.items item}}
+                        <div style="display: flex; align-items: center; gap: 10px; background: rgba(15, 247, 150, 0.05); padding: 10px; border-radius: 4px; border: 1px solid rgba(15, 247, 150, 0.2);">
+                            <div style="width: 60px; height: 60px; background: rgba(0,0,0,0.3); border-radius: 4px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden;">
+                                <img src="{{item.imageUrl}}" alt="{{item.name}}" style="max-width: 100%; max-height: 100%; object-fit: contain;" onerror="this.style.display='none';" />
+                            </div>
+                            <div style="display: flex; flex-direction: column; gap: 4px;">
+                                <div style="font-size: 22px; font-weight: 700; color: #FFFFFF;">{{item.name}}</div>
+                                <div style="font-size: 18px; color: #0FF796; font-weight: 700;">{{item.price}}</div>
+                                {{if item.inum > 1}}
+                                <div style="font-size: 16px; color: rgba(255,255,255,0.7);">数量: {{item.inum}}</div>
+                                {{/if}}
+                            </div>
+                        </div>
+                        {{/each}}
+                    </div>
+                </div>
+                {{/if}}
+            </div>
+            {{/each}}
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- report1 - 烽火地带收益统计 -->
+    {{if report1}}
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 烽火地带收益统计 / SOL REVENUE STATS
+        </div>
+        <div class="dashboard-grid asset-grid">
+            <div class="data-node highlight asset-card">
+                <div class="node-label">总出售价格 / TOTAL SELL PRICE</div>
+                <span class="node-value large">{{report1.total_sell_price || 0}}</span>
+            </div>
+        </div>
+    </div>
+    {{/if}}
     {{/if}}
 
     {{if mpData && !mpData.isEmpty}}
@@ -427,6 +485,186 @@
                 </div>
             </div>
             {{/each}}
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- report3 - 全面战场详细统计 -->
+    {{if report3}}
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 全面战场详细统计 / MP DETAILED STATS
+        </div>
+        <div class="dashboard-grid">
+            <div class="data-node highlight">
+                <div class="node-label">最高对局数 / MAX MATCHES</div>
+                <span class="node-value large">{{report3.max_mpmatch_num || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高载具使用时长 / MAX VEHICLE TIME</div>
+                <span class="node-value">{{report3.max_vehicle_usedtime || '0'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总载具击杀 / TOTAL VEHICLE KILLS</div>
+                <span class="node-value large">{{report3.total_killvehicle || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总载具使用时长 / TOTAL VEHICLE TIME</div>
+                <span class="node-value">{{report3.total_vehicle_usedtime || '0'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总载具使用次数 / TOTAL VEHICLE USES</div>
+                <span class="node-value large">{{report3.total_vehicle_inum || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高分击杀数 / MAX SCORE KILLS</div>
+                <span class="node-value large">{{report3.max_score_killnum || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高分死亡数 / MAX SCORE DEATHS</div>
+                <span class="node-value large">{{report3.max_score_death || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">胜场数 / WINS</div>
+                <span class="node-value large">{{report3.win_mpmatch_num || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高分助攻 / MAX SCORE ASSISTS</div>
+                <span class="node-value large">{{report3.max_score_assist || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总对局数 / TOTAL MATCHES</div>
+                <span class="node-value large">{{report3.total_mpmatch_num || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高分地图 / MAX SCORE MAP</div>
+                <span class="node-value">{{report3.max_score_mapid || '无'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高对局救援数 / MAX RESCUES</div>
+                <span class="node-value large">{{report3.max_mpmatch_num_Rescue || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高对局干员 / MAX OPERATOR</div>
+                <span class="node-value">{{report3.max_mpmatch_num_deployarmedforcetype || '无'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高分时间 / MAX SCORE TIME</div>
+                <span class="node-value">{{report3.max_score_dteventtime || '-'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总击杀数 / TOTAL KILLS</div>
+                <span class="node-value large">{{report3.total_killnum || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总得分 / TOTAL SCORE</div>
+                <span class="node-value large">{{report3.total_score || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高对局游戏时长 / MAX GAME TIME</div>
+                <span class="node-value">{{report3.max_mpmatch_num_GameTime || '0'}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">总载具击杀数 / TOTAL VEHICLE KILLS</div>
+                <span class="node-value large">{{report3.total_vehicle_killnum || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高载具击杀玩家数 / MAX VEHICLE KILLS</div>
+                <span class="node-value large">{{report3.max_vehicle_usedtime_killplayer || 0}}</span>
+            </div>
+            <div class="data-node highlight">
+                <div class="node-label">最高对局得分 / MAX MATCH SCORE</div>
+                <span class="node-value large">{{report3.max_mpmatch_num_Score || 0}}</span>
+            </div>
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- report4 - 全面战场队友统计 -->
+    {{if report4}}
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 全面战场队友统计 / MP TEAMMATE STATS
+        </div>
+        <div class="favorite-grid">
+            {{if report4.best_teammate}}
+            <div class="favorite-card">
+                <div class="favorite-content">
+                    <div class="favorite-label">最佳队友 / BEST TEAMMATE</div>
+                    <div class="teammate-item" style="margin-top: 20px; background: rgba(15, 247, 150, 0.1);">
+                        <div class="teammate-avatar-box">
+                            {{if report4.best_teammate.avatar}}
+                            <img src="{{report4.best_teammate.avatar}}" alt="{{report4.best_teammate.name}}" onerror="this.src='{{_res_path}}imgs/others/default_avatar.png'" />
+                            {{/if}}
+                        </div>
+                        <div class="teammate-info">
+                            <div class="teammate-name">{{report4.best_teammate.name}}</div>
+                            <div class="teammate-stats">
+                                <div class="teammate-stat">亲密度: {{report4.best_teammate.intimacy}} | 胜场: {{report4.best_teammate.win_num}} | 负场: {{report4.best_teammate.lose_num}}</div>
+                                <div class="teammate-stat">击杀: {{report4.best_teammate.kill_num}} | 助攻: {{report4.best_teammate.assist}} | 得分: {{report4.best_teammate.score}}</div>
+                                <div class="teammate-stat">常用干员: {{report4.best_teammate.operator}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+            {{if report4.worst_teammate}}
+            <div class="favorite-card">
+                <div class="favorite-content">
+                    <div class="favorite-label">最差队友 / WORST TEAMMATE</div>
+                    <div class="teammate-item" style="margin-top: 20px; background: rgba(255, 0, 0, 0.1);">
+                        <div class="teammate-avatar-box">
+                            {{if report4.worst_teammate.avatar}}
+                            <img src="{{report4.worst_teammate.avatar}}" alt="{{report4.worst_teammate.name}}" onerror="this.src='{{_res_path}}imgs/others/default_avatar.png'" />
+                            {{/if}}
+                        </div>
+                        <div class="teammate-info">
+                            <div class="teammate-name">{{report4.worst_teammate.name}}</div>
+                            <div class="teammate-stats">
+                                <div class="teammate-stat">亲密度: {{report4.worst_teammate.intimacy}} | 胜场: {{report4.worst_teammate.win_num}} | 负场: {{report4.worst_teammate.lose_num}}</div>
+                                <div class="teammate-stat">击杀: {{report4.worst_teammate.kill_num}} | 助攻: {{report4.worst_teammate.assist}} | 得分: {{report4.worst_teammate.score}}</div>
+                                <div class="teammate-stat">常用干员: {{report4.worst_teammate.operator}}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+    {{/if}}
+
+    <!-- bk - 全面战场载具统计 -->
+    {{if bk && bk.vehicles && bk.vehicles.length > 0}}
+    <div class="section-block">
+        <div class="section-header">
+            <span class="dot"></span> 全面战场载具统计 / MP VEHICLE STATS
+        </div>
+        <div class="dashboard-grid asset-grid">
+            <div class="data-node highlight asset-card">
+                <div class="node-label">平均得分 / AVG SCORE</div>
+                <span class="node-value large">{{bk.avg_score || '0'}}</span>
+            </div>
+            <div class="data-node highlight asset-card">
+                <div class="node-label">支援呼叫次数 / SUPPORT CALLS</div>
+                <span class="node-value large">{{bk.support_count || 0}}</span>
+            </div>
+        </div>
+        <div class="map-list" style="margin-top: 30px;">
+            <div class="section-header" style="font-size: 28px; margin-bottom: 20px;">
+                <span class="dot"></span> 载具使用排行 / VEHICLE USAGE RANKING
+            </div>
+            <div class="map-row">
+                {{each bk.vehicles vehicle}}
+                <div class="map-card">
+                    <div class="map-content">
+                        <div class="map-name">{{vehicle.vehicle_name}}</div>
+                        <div class="map-stats">使用次数: {{vehicle.inum}}次</div>
+                    </div>
+                </div>
+                {{/each}}
+            </div>
         </div>
     </div>
     {{/if}}

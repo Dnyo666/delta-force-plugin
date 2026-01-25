@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v2.2.3**
+**版本号：v2.3.0**
 
 ## WebSocket 服务
 
@@ -1648,6 +1648,10 @@ GET /df/object/list?primary=props&second=consume
 - `primary`: 一级分类 (可选)
 - `second`: 二级分类 (可选)
 
+**响应字段说明:**
+- `objectName`: 官方物品名称
+- `gameName`: 游戏内名字（如果数据库中有设置则使用设置值，否则默认为 `objectName`）
+
 ### 2. 搜索物品
 ```http
 GET /df/object/search?name=非洲
@@ -1660,6 +1664,77 @@ GET /df/object/search?id=14060000003
 **参数说明:**
 - `name`: 物品名称 (模糊搜索)
 - `id`: 物品ID (支持单个ID或逗号分隔的多个ID)（示例：14060000003；14060000003,14060000004；[14060000003,14060000004]）
+
+**响应字段说明:**
+- `objectName`: 官方物品名称
+- `gameName`: 游戏内名字（如果数据库中有设置则使用设置值，否则默认为 `objectName`）
+
+### 3. 设置物品游戏内名字（管理员）
+```http
+POST /df/object/setGameName
+```
+
+**功能说明**：管理员接口，用于设置物品的游戏内名字，修正部分物品游戏外名字和游戏内名字不同的情况。
+
+**权限要求**：需要管理员 clientID
+
+**请求体 (application/json)**：
+```json
+{
+  "clientID": "管理员ID",
+  "objectId": "14060000003",
+  "gameName": "游戏内显示的名字"
+}
+```
+
+**参数说明:**
+- `clientID`: 管理员ID（必填，可通过请求体或Query参数传递）
+- `objectId`: 物品ID（必填）
+- `gameName`: 游戏内名字（可选，传空字符串、null或不传则清除已设置的gameName）
+
+**成功响应示例（设置）：**
+```json
+{
+  "success": true,
+  "message": "游戏内名字设置成功",
+  "data": {
+    "objectId": 14060000003,
+    "objectName": "官方名称",
+    "gameName": "游戏内显示的名字"
+  }
+}
+```
+
+**成功响应示例（清除）：**
+```json
+{
+  "success": true,
+  "message": "已清除游戏内名字",
+  "data": {
+    "objectId": 14060000003,
+    "objectName": "官方名称",
+    "gameName": null
+  }
+}
+```
+
+**错误响应示例：**
+```json
+{
+  "success": false,
+  "code": "1001",
+  "message": "缺少必要参数: clientID"
+}
+```
+
+**错误码说明：**
+| 错误码 | HTTP状态码 | 说明 |
+|--------|-----------|------|
+| `1001` | 400 | 缺少必要参数: clientID |
+| `1002` | 400 | 缺少必需参数: objectId |
+| `1003` | 403 | 需要管理员权限 / gameName 必须是字符串类型 |
+| `1004` | 404 | 未找到物品 |
+| `9000` | 500 | 系统内部错误 |
 
 ### 健康状态信息
 ```http
@@ -1734,6 +1809,10 @@ GET /df/object/ammo?days=7
 
 **功能说明**：获取所有弹药物品及其价格历史数据，支持指定天数的历史价格查询
 
+**响应字段说明:**
+- `objectName`: 官方物品名称
+- `gameName`: 游戏内名字（如果数据库中有设置则使用设置值，否则默认为 `objectName`）
+
 **响应示例：**
 ```json
 {
@@ -1743,7 +1822,8 @@ GET /df/object/ammo?days=7
     "bullets": [
       {
         "objectID": 15010000001,
-        "name": "5.56x45mm NATO",
+        "objectName": "5.56x45mm NATO",
+        "gameName": "5.56x45mm NATO",
         "primaryClass": "ammo",
         "secondClass": "rifle",
         "caliber": "5.56x45mm",
@@ -3624,13 +3704,28 @@ GET /df/person/dailyRecord?frameworkToken=xxxxx&type=sol
 
 ### 周报
 ```http
-GET /df/person/weeklyRecord?frameworkToken=xxxx&type=sol&isShowNullFriend=false&date=20250706
+GET /df/person/weeklyRecord?frameworkToken=xxxx&type=sol&date=20250706&showExtra=true
 ```
 **参数说明**
 - `type`：游戏模式（sol和mp分别为烽火地带和全面战场）（可选，默认查全部）
-- `日期`:周末日期（格式：20250622、20250706）（可选，默认最新周）
+- `date`：周末日期（格式：20250622、20250706）（可选，默认最新周）
+- `showExtra`：是否展示补充数据（可选，默认false）
+  - `false`：不获取 reportDm 数据，响应更快
+  - `true`：获取完整的 reportDm 数据（包含 report1-4、wbn、fk、bk）
 
-**注意**：本次周报直接更新在原接口上，新增和移除了一些字段，请自行请求后查看，队友数据在friends字段里，高光对局数据在highlights字段里
+**响应字段说明**
+- `friends`：队友数据
+- `highlights`：高光对局数据
+- `reportDm`：补充数据（仅 showExtra=true 时返回）
+  - `report1`：烽火地带收益统计
+  - `report2`：队友收益统计
+  - `report3`：全面战场统计
+  - `report4`：全面战场队友统计
+  - `wbn`：好友周报部分数据（已解析为结构化数组）
+  - `fk`：烽火地带详细统计
+  - `bk`：全面战场详细统计
+
+**注意**：队友数据在 friends 字段里，高光对局数据在 highlights 字段里，补充数据在 reportDm 字段里（需设置 showExtra=true）
 
 ### 个人信息
 ```http
@@ -4867,7 +4962,7 @@ wss://your-api-domain:port/ws?type=ocr&key=your-connection-secret
 ```json
 {
   "type": "ocr_task_update",
-  "taskId": "task_001",
+  "taskId": "ocr_server_001_weapon_1763126753000",
   "status": "running",
   "progress": 50,
   "result": {
@@ -4878,7 +4973,7 @@ wss://your-api-domain:port/ws?type=ocr&key=your-connection-secret
 ```
 
 **参数说明**：
-- `taskId`: 任务唯一标识（必填）
+- `taskId`: 任务唯一标识（**必填**，必须使用从 `ocr_task_command` 中收到的 `taskId`）
 - `status`: 任务状态（必填）
   - `pending`: 待处理
   - `running`: 运行中
@@ -4886,6 +4981,8 @@ wss://your-api-domain:port/ws?type=ocr&key=your-connection-secret
   - `failed`: 失败
 - `progress`: 任务进度（可选，0-100）
 - `result`: 任务结果（可选，任务完成时包含结果数据）
+
+**重要**：`taskId` 必须使用从 `ocr_task_command` 消息中收到的值，不要自行生成或使用 `taskName`。
 
 **服务端响应（成功）**：
 ```json
@@ -5217,6 +5314,7 @@ wss://your-api-domain:port/ws?type=ocr&key=your-connection-secret
   "channel": "ocr:all",
   "data": {
     "taskId": "task_001",
+    "taskName": "weapon",
     "status": "running",
     "progress": 50,
     "result": null,
@@ -5238,6 +5336,7 @@ wss://your-api-domain:port/ws?type=ocr&key=your-connection-secret
   "type": "ocr_task_command",
   "data": {
     "command": "start",
+    "taskId": "ocr_server_001_weapon_1763126753000",
     "taskName": "weapon",
     "params": {
       "cycle_count": 10
@@ -5253,6 +5352,7 @@ wss://your-api-domain:port/ws?type=ocr&key=your-connection-secret
   "type": "ocr_task_command",
   "data": {
     "command": "stop",
+    "taskId": "ocr_server_001_weapon_1763126753000",
     "taskName": "weapon"
   },
   "timestamp": 1763126753000
@@ -5261,8 +5361,11 @@ wss://your-api-domain:port/ws?type=ocr&key=your-connection-secret
 
 **参数说明**：
 - `command`: 命令类型（`start` 或 `stop`）
+- `taskId`: 任务唯一标识（**必填**，OCR 客户端上报状态时必须使用此 ID）
 - `taskName`: 任务名称
 - `params`: 任务参数（仅启动命令时有效）
+
+**重要**：OCR 客户端在收到任务命令后，通过 `ocr_task_update` 上报任务状态时，**必须使用 `taskId` 字段**，而不是 `taskName`。
 
 ### 可用频道
 
@@ -5359,695 +5462,6 @@ T=60s:   服务器检查 isAlive = false ✗，立即断开连接
    - 只有管理员 clientId 才能执行任务管理操作（启动、停止、查询状态）
    - 所有管理操作都会记录到管理员操作日志中
 8. **任务互斥**：建议 OCR 服务器实现任务互斥机制，确保同一时间只运行一个任务
-
----
-
-## 任务系统 API
-
-任务系统插件提供三角洲行动游戏完整任务数据的查询接口，包括部门任务线、赛季任务、命运契约等。
-
-### 任务线接口
-
-#### 1. 获取所有任务线
-
-```http
-GET /df/quest/lines
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "questLineId": 1,
-      "questType": 1,
-      "rootQuestId": 1001,
-      "lineName": { "sourceString": "震荡危情" },
-      "openLevel": 1,
-      "seasonId": 0,
-      "merchantId": 0
-    },
-    {
-      "questLineId": 2,
-      "questType": 1,
-      "rootQuestId": 2001,
-      "lineName": { "sourceString": "跨越生命线" },
-      "openLevel": 5,
-      "seasonId": 0,
-      "merchantId": 0
-    }
-  ],
-  "total": 11
-}
-```
-
-**字段说明**：
-- `questLineId`: 任务线ID
-- `questType`: 类型（1=主线, 2=支线）
-- `rootQuestId`: 起始任务ID
-- `lineName`: 任务线名称（本地化字符串）
-- `openLevel`: 开放等级
-- `seasonId`: 赛季ID（0=非赛季任务）
-
-#### 2. 获取任务线详情
-
-```http
-GET /df/quest/line/:lineId
-```
-
-**路径参数**：
-- `lineId`: 任务线ID
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": {
-    "questLineId": 1,
-    "questType": 1,
-    "rootQuestId": 1001,
-    "lineName": { "sourceString": "震荡危情" },
-    "lineCover": "/Game/UI/QuestLine/Cover_1.png",
-    "openLevel": 1,
-    "quests": [
-      {
-        "questId": 1001,
-        "name": { "sourceString": "初入阿萨拉" },
-        "desc": { "sourceString": "前往阿萨拉地区..." },
-        "questType": 1,
-        "questClass": 1,
-        "acceptRequiredLevel": 1,
-        "objectiveList": [10001, 10002],
-        "rewardList": [20001]
-      }
-    ]
-  }
-}
-```
-
-#### 3. 获取任务线树形结构
-
-```http
-GET /df/quest/line/:lineId/tree
-```
-
-**路径参数**：
-- `lineId`: 任务线ID
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": {
-    "questLine": {
-      "questLineId": 1,
-      "lineName": { "sourceString": "震荡危情" }
-    },
-    "tree": {
-      "questId": 1001,
-      "name": { "sourceString": "初入阿萨拉" },
-      "level": 1,
-      "children": [
-        {
-          "questId": 1002,
-          "name": { "sourceString": "探索前哨" },
-          "level": 2,
-          "children": [...]
-        }
-      ]
-    }
-  }
-}
-```
-
-### 任务接口
-
-#### 1. 获取任务详情
-
-```http
-GET /df/quest/:questId
-```
-
-**路径参数**：
-- `questId`: 任务ID
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": {
-    "questId": 1001,
-    "name": { "sourceString": "初入阿萨拉" },
-    "desc": { "sourceString": "前往阿萨拉地区..." },
-    "questType": 1,
-    "questClass": 1,
-    "acceptRequiredLevel": 1,
-    "previousIdList": [],
-    "objectiveList": [10001, 10002],
-    "rewardList": [20001, 20002],
-    "objectivesDetail": [
-      {
-        "objectiveId": 10001,
-        "type": 1,
-        "objectiveDesc": { "sourceString": "抵达营地" },
-        "requiredCount": 1
-      }
-    ],
-    "rewardsDetail": [
-      {
-        "rewardId": 20001,
-        "type": 1,
-        "itemId": 10001,
-        "number": 1000
-      }
-    ],
-    "previousQuestsDetail": [],
-    "nextQuestsDetail": [
-      { "questId": 1002, "name": { "sourceString": "探索前哨" } }
-    ]
-  }
-}
-```
-
-#### 2. 搜索任务
-
-```http
-GET /df/quest/search
-```
-
-**查询参数**：
-- `keyword`: 搜索关键字（按任务名称模糊匹配）
-- `type`: 任务类型筛选
-- `minLevel`: 最低等级筛选
-- `maxLevel`: 最高等级筛选
-- `page`: 页码（默认1）
-- `limit`: 每页数量（默认20）
-
-**请求示例**：
-```http
-GET /df/quest/search?keyword=武器&minLevel=10&maxLevel=20&page=1&limit=10
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "questId": 2015,
-      "name": { "sourceString": "全副武装" },
-      "desc": { "sourceString": "收集指定武器..." },
-      "questType": 1,
-      "questClass": 2,
-      "acceptRequiredLevel": 15
-    }
-  ],
-  "pagination": {
-    "page": 1,
-    "limit": 10,
-    "total": 1,
-    "pages": 1
-  }
-}
-```
-
-#### 3. 获取任务目标
-
-```http
-GET /df/quest/objectives/:questId
-```
-
-**路径参数**：
-- `questId`: 任务ID
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "objectiveId": 10001,
-      "type": 1,
-      "objectiveDesc": { "sourceString": "抵达指定区域" },
-      "requiredCount": 1,
-      "mapId": [2201],
-      "bShowTracking": true
-    },
-    {
-      "objectiveId": 10002,
-      "type": 3,
-      "objectiveDesc": { "sourceString": "击杀敌人" },
-      "requiredCount": 5,
-      "timeLimit": 300
-    }
-  ]
-}
-```
-
-#### 4. 获取任务奖励
-
-```http
-GET /df/quest/rewards/:questId
-```
-
-**路径参数**：
-- `questId`: 任务ID
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "rewardId": 20001,
-      "type": 1,
-      "itemId": 10001,
-      "number": 1000,
-      "bindType": 0,
-      "importantReward": false
-    },
-    {
-      "rewardId": 20002,
-      "type": 2,
-      "itemId": 50001,
-      "number": 1,
-      "importantReward": true
-    }
-  ]
-}
-```
-
-### 赛季任务接口
-
-#### 1. 获取赛季任务线列表
-
-```http
-GET /df/quest/season/lines
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "lineId": 1,
-      "name": { "sourceString": "S1起源" },
-      "seasonIdArr": [1],
-      "openLevel": 1,
-      "finalQuestId": 9001
-    },
-    {
-      "lineId": 2,
-      "name": { "sourceString": "焰火" },
-      "seasonIdArr": [2],
-      "openLevel": 1,
-      "finalQuestId": 9002
-    }
-  ],
-  "total": 6
-}
-```
-
-#### 2. 获取赛季任务线详情
-
-```http
-GET /df/quest/season/line/:lineId
-```
-
-**路径参数**：
-- `lineId`: 赛季任务线ID
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": {
-    "lineId": 1,
-    "name": { "sourceString": "S1起源" },
-    "desc": { "sourceString": "赛季任务描述..." },
-    "seasonIdArr": [1],
-    "stages": [
-      {
-        "stageId": 1,
-        "name": { "sourceString": "蛰伏" },
-        "stageSequence": 1,
-        "stageUnlockStarCount": 0,
-        "mainGroup": {
-          "groupId": 1,
-          "name": { "sourceString": "主线任务" },
-          "groupType": 1,
-          "questIdArr": [3001, 3002, 3003]
-        },
-        "subGroups": [
-          {
-            "groupId": 2,
-            "name": { "sourceString": "支线任务" },
-            "groupType": 2,
-            "questIdArr": [4001, 4002]
-          }
-        ]
-      }
-    ],
-    "fateQuests": [
-      {
-        "fateQuestId": 1,
-        "questId": 5001,
-        "seasonId": 1,
-        "fateQuestSequence": 1
-      }
-    ]
-  }
-}
-```
-
-#### 3. 获取赛季阶段列表
-
-```http
-GET /df/quest/season/stages
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "stageId": 1,
-      "name": { "sourceString": "蛰伏" },
-      "stageSequence": 1,
-      "stageMainGroup": 1,
-      "stageSubGroupArr": [2, 3],
-      "stageUnlockStarCount": 0
-    },
-    {
-      "stageId": 2,
-      "name": { "sourceString": "信号源" },
-      "stageSequence": 2,
-      "stageUnlockStarCount": 10
-    }
-  ],
-  "total": 24
-}
-```
-
-#### 4. 获取赛季任务分组
-
-```http
-GET /df/quest/season/groups
-```
-
-**查询参数**：
-- `type`: 分组类型筛选（1=主线, 2=标准支线, 3=备用支线）
-
-**请求示例**：
-```http
-GET /df/quest/season/groups?type=1
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "groupId": 1,
-      "name": { "sourceString": "主线任务" },
-      "titleName": { "sourceString": "第一章" },
-      "groupType": 1,
-      "sequence": 1,
-      "questIdArr": [3001, 3002, 3003],
-      "gropStarCount": 3
-    }
-  ],
-  "total": 16
-}
-```
-
-### 命运契约接口
-
-#### 获取命运契约列表
-
-```http
-GET /df/quest/fate
-```
-
-**查询参数**：
-- `seasonId`: 按赛季ID筛选（可选）
-
-**请求示例**：
-```http
-GET /df/quest/fate?seasonId=10007
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "fateQuestId": 170001,
-      "questId": 78001,
-      "seasonId": 10007,
-      "fateQuestSequence": 1,
-      "fateQuestUnlockTime": 0,
-      "fateQuestImg": "/Game/UI/Fate/Fate_1.png",
-      "questDetail": {
-        "questId": 78001,
-        "name": { "sourceString": "支配标杆" },
-        "desc": { "sourceString": "在烽火地带的任意地图中击败领主..." }
-      }
-    }
-  ],
-  "total": 18
-}
-```
-
-### 收集者系统接口
-
-收集者是赛季任务中的随机收集任务系统，玩家需要收集指定物品以获得奖励。
-
-#### 获取收集者物品分组
-
-```http
-GET /df/quest/collector/groups
-```
-
-**查询参数**：
-- `type`: 按分组类型筛选（可选，1=低级, 2=中级, 3=高级）
-
-**请求示例**：
-```http
-GET /df/quest/collector/groups?type=1
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "collectorGroupId": 170001,
-      "collectorGroupName": { "sourceString": "收集木制把手" },
-      "collectorGroupDesc": { "sourceString": "木制把手可以在地图中捡取获得" },
-      "collectorGroupType": 1,
-      "prob": 1000,
-      "itemListArr": [400001],
-      "itemCountArr": [4]
-    }
-  ],
-  "total": 45,
-  "typeStats": {
-    "type1": 15,
-    "type2": 15,
-    "type3": 15
-  }
-}
-```
-
-**字段说明**：
-| 字段 | 说明 |
-|------|------|
-| `collectorGroupId` | 收集者分组ID |
-| `collectorGroupName` | 收集任务名称 |
-| `collectorGroupDesc` | 收集任务描述 |
-| `collectorGroupType` | 类型 (1=低级, 2=中级, 3=高级) |
-| `prob` | 概率权重（用于随机抽取） |
-| `itemListArr` | 需要收集的物品ID列表 |
-| `itemCountArr` | 需要收集的物品数量 |
-| `typeStats` | 按类型统计数量 |
-
-#### 获取收集者奖励配置
-
-```http
-GET /df/quest/collector/rewards
-```
-
-**查询参数**：
-- `seasonId`: 按赛季ID筛选（可选）
-
-**请求示例**：
-```http
-GET /df/quest/collector/rewards?seasonId=10007
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "collectorRewardId": 170001,
-      "seasonId": 10007,
-      "collectorCount": 4,
-      "rewardIdArr": [62025]
-    },
-    {
-      "collectorRewardId": 170002,
-      "seasonId": 10007,
-      "collectorCount": 8,
-      "rewardIdArr": [62026]
-    }
-  ],
-  "total": 12
-}
-```
-
-**字段说明**：
-| 字段 | 说明 |
-|------|------|
-| `collectorRewardId` | 奖励配置ID |
-| `seasonId` | 所属赛季ID |
-| `collectorCount` | 完成多少次收集后获得此奖励 |
-| `rewardIdArr` | 奖励ID列表（关联 QuestRewards） |
-
-#### 获取收集者槽位概率
-
-```http
-GET /df/quest/collector/slots
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "collectorSlotId": 1,
-      "groupProb1": 6000,
-      "groupProb2": 3000,
-      "groupProb3": 1000
-    },
-    {
-      "collectorSlotId": 2,
-      "groupProb1": 5000,
-      "groupProb2": 3500,
-      "groupProb3": 1500
-    }
-  ],
-  "total": 3
-}
-```
-
-**字段说明**：
-| 字段 | 说明 |
-|------|------|
-| `collectorSlotId` | 槽位ID（对应收集者任务栏位） |
-| `groupProb1` | 低级分组概率（万分比，6000=60%） |
-| `groupProb2` | 中级分组概率（万分比） |
-| `groupProb3` | 高级分组概率（万分比） |
-
-### 统计接口
-
-#### 获取任务统计信息
-
-```http
-GET /df/quest/stats
-```
-
-**响应示例**：
-```json
-{
-  "success": true,
-  "data": {
-    "questLines": 9,
-    "quests": 486,
-    "objectives": 1200,
-    "rewards": 800,
-    "seasonLines": 3,
-    "stages": 12,
-    "groups": 48,
-    "fateQuests": 18,
-    "conditions": 150,
-    "collectorGroups": 45,
-    "collectorRewards": 12,
-    "collectorSlots": 3
-  }
-}
-```
-
-### 数据结构说明
-
-#### LocalizedString（本地化字符串）
-
-所有文本字段使用本地化字符串格式：
-
-```json
-{
-  "sourceString": "中文原文",
-  "tableId": "翻译表ID",
-  "key": "翻译键",
-  "localizedString": "本地化后的文本"
-}
-```
-
-**使用建议**：直接使用 `sourceString` 获取中文文本。
-
-#### 任务类型 (questType)
-
-| 值 | 说明 |
-|----|------|
-| 1 | 主线任务 |
-| 2 | 支线任务 |
-| 3 | 赛季任务 |
-| 4 | 命运契约 |
-
-#### 奖励类型 (type)
-
-| 值 | 说明 |
-|----|------|
-| 1 | 货币 |
-| 2 | 物品 |
-| 3 | 经验 |
-
-### 注意事项
-
-1. 任务链关系通过 `previousIdList` 字段表示前置任务
-2. 所有接口返回的文本字段为 `LocalizedString` 对象，使用 `sourceString` 属性获取中文
-3. **收集者系统**是赛季任务的子系统，玩家随机获得收集任务并收集物品换取奖励
-
-### 任务系统架构
-
-```
-任务系统
-├── 部门任务线 (QuestLine)          # 9条，merchantId关联NPC
-│   └── 任务 (Quest)                # 通过previousIdList形成任务链
-│       ├── 任务目标 (QuestObjective)
-│       └── 任务奖励 (QuestReward)
-│
-├── 赛季任务线 (SeasonQuestLine)    # 3条，按赛季分组
-│   └── 赛季阶段 (SeasonQuestStage) # 每赛季4阶段
-│       └── 任务分组 (SeasonQuestGroup)
-│           └── 任务 (Quest)
-│
-├── 收集者系统 (Collector)           # 赛季子系统
-│   ├── 物品分组 (CollectorGroup)    # 45个，分3个等级
-│   ├── 奖励配置 (CollectorReward)   # 每赛季6个奖励等级
-│   └── 槽位概率 (CollectorSlot)     # 3个槽位
-│
-└── 命运契约 (FateQuest)             # 18个，赛季挑战任务
-```
 
 ---
 
@@ -6358,3 +5772,1409 @@ GET /df/tts/audio/:filename?token=xxx
 5. **后续请求**: 根据文本长度，通常 5~30 秒
 6. **超时时间**: 默认 120 秒
 7. **音频格式**: 支持 WAV, MP3, AAC, M4A, OGG, FLAC
+
+---
+
+## Koishi 资源同步服务
+
+### 概述
+
+Koishi 资源同步服务用于从 GitHub 仓库递归获取资源文件目录，并存储到本地数据库供分发使用。该服务会自动定时同步（默认 30 分钟），不存储文件内容，只存储文件的元数据和下载 URL。
+
+**数据来源**: `Entropy-Increase-Team/koishi-plugin-delta-force` 仓库的 `resources` 目录
+
+### 获取资源列表
+
+获取所有已同步的文件列表（扁平结构）。
+
+```http
+GET /koishi/resources
+```
+
+**查询参数**
+
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `owner` | string | ❌ | Entropy-Increase-Team | 仓库所有者 |
+| `repo` | string | ❌ | koishi-plugin-delta-force | 仓库名称 |
+| `branch` | string | ❌ | main | 分支名称 |
+| `path` | string | ❌ | resources | 根目录路径 |
+
+**响应示例**
+
+```json
+{
+  "code": "SUCCESS",
+  "data": {
+    "repoKey": "Entropy-Increase-Team/koishi-plugin-delta-force/main/resources",
+    "syncedAt": "2026-01-20T02:35:00.000Z",
+    "totalFiles": 42,
+    "totalSize": 1234567,
+    "files": [
+      {
+        "name": "collection.css",
+        "path": "resources/Template/collection/collection.css",
+        "size": 25576,
+        "sha": "09429ca4a0ed77fb69787e7d73b9ddd5fea4727b",
+        "download_url": "https://raw.githubusercontent.com/Entropy-Increase-Team/koishi-plugin-delta-force/main/resources/Template/collection/collection.css",
+        "html_url": "https://github.com/Entropy-Increase-Team/koishi-plugin-delta-force/blob/main/resources/Template/collection/collection.css"
+      }
+    ]
+  }
+}
+```
+
+---
+
+### 获取资源树形结构
+
+获取所有已同步资源的树形目录结构。
+
+```http
+GET /koishi/resources/tree
+```
+
+**查询参数**
+
+同 `/koishi/resources`
+
+**响应示例**
+
+```json
+{
+  "code": "SUCCESS",
+  "data": {
+    "repoKey": "Entropy-Increase-Team/koishi-plugin-delta-force/main/resources",
+    "syncedAt": "2026-01-20T02:35:00.000Z",
+    "totalFiles": 42,
+    "totalDirs": 5,
+    "totalSize": 1234567,
+    "tree": {
+      "name": "resources",
+      "path": "resources",
+      "type": "dir",
+      "children": [
+        {
+          "name": "Template",
+          "path": "resources/Template",
+          "type": "dir",
+          "children": [
+            {
+              "name": "collection",
+              "path": "resources/Template/collection",
+              "type": "dir",
+              "children": [
+                {
+                  "name": "collection.css",
+                  "path": "resources/Template/collection/collection.css",
+                  "type": "file",
+                  "size": 25576,
+                  "sha": "09429ca4a0ed77fb69787e7d73b9ddd5fea4727b",
+                  "download_url": "https://raw.githubusercontent.com/...",
+                  "html_url": "https://github.com/..."
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+---
+
+### 获取单个文件信息
+
+获取指定文件的详细信息。
+
+```http
+GET /koishi/resources/file?path=<文件路径>
+```
+
+**查询参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `path` | string | ✅ | 文件路径，如 `Template/collection/collection.css` |
+| `owner` | string | ❌ | 仓库所有者 |
+| `repo` | string | ❌ | 仓库名称 |
+| `branch` | string | ❌ | 分支名称 |
+
+**响应示例**
+
+```json
+{
+  "code": "SUCCESS",
+  "data": {
+    "name": "collection.css",
+    "path": "resources/Template/collection/collection.css",
+    "type": "file",
+    "size": 25576,
+    "sha": "09429ca4a0ed77fb69787e7d73b9ddd5fea4727b",
+    "download_url": "https://raw.githubusercontent.com/Entropy-Increase-Team/koishi-plugin-delta-force/main/resources/Template/collection/collection.css",
+    "html_url": "https://github.com/Entropy-Increase-Team/koishi-plugin-delta-force/blob/main/resources/Template/collection/collection.css",
+    "git_url": "https://api.github.com/repos/Entropy-Increase-Team/koishi-plugin-delta-force/git/blobs/09429ca4a0ed77fb69787e7d73b9ddd5fea4727b"
+  }
+}
+```
+
+**错误响应**
+
+| code | 说明 |
+|------|------|
+| `INVALID_PARAMS` | 缺少 path 参数 |
+| `RESOURCE_NOT_FOUND` | 资源未同步 |
+| `FILE_NOT_FOUND` | 文件不存在 |
+
+---
+
+### 获取同步状态
+
+获取资源同步状态和 GitHub API Rate Limit 信息。
+
+```http
+GET /koishi/resources/status
+```
+
+**查询参数**
+
+同 `/koishi/resources`
+
+**响应示例**
+
+```json
+{
+  "code": "SUCCESS",
+  "data": {
+    "synced": true,
+    "repoKey": "Entropy-Increase-Team/koishi-plugin-delta-force/main/resources",
+    "syncedAt": "2026-01-20T02:35:00.000Z",
+    "totalFiles": 42,
+    "totalDirs": 5,
+    "totalSize": 1234567,
+    "rateLimit": {
+      "remaining": 4998,
+      "limit": 5000,
+      "reset": "2026-01-20T03:00:00.000Z"
+    }
+  }
+}
+```
+
+### 自动同步机制
+
+- **同步间隔**: 默认每 30 分钟自动同步一次
+- **启动同步**: 服务启动后 5 秒执行首次同步
+- **防重入**: 同步进行中时跳过新的同步请求
+- **Rate Limit**: 自动处理 GitHub API 频率限制，低于阈值时等待重置
+
+---
+
+## 任务系统 API
+
+任务系统提供游戏任务数据的查询功能，包括任务线、任务详情、赛季任务、命运契约、收集者系统等。
+
+### 任务线相关
+
+#### 1. 获取所有任务线
+
+```http
+GET /df/quest/lines
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "questLineId": 10001,
+      "questType": 1,
+      "rootQuestId": 10901,
+      "lineName": { "sourceString": "新手引导" },
+      "openLevel": 1,
+      "seasonId": 0,
+      "merchantId": 0
+    }
+  ],
+  "total": 50
+}
+```
+
+#### 2. 获取任务线详情
+
+```http
+GET /df/quest/line/:lineId
+```
+
+**路径参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `lineId` | number | ✅ | 任务线ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": {
+    "questLineId": 10001,
+    "questType": 1,
+    "rootQuestId": 10901,
+    "lineName": { "sourceString": "新手引导" },
+    "lineCover": "/Game/UI/...",
+    "openLevel": 1,
+    "quests": [
+      {
+        "questId": 10901,
+        "name": { "sourceString": "初次见面" },
+        "questType": 1,
+        "acceptRequiredLevel": 1
+      }
+    ]
+  }
+}
+```
+
+#### 3. 获取任务线树形结构
+
+```http
+GET /df/quest/line/:lineId/tree
+```
+
+**路径参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `lineId` | number | ✅ | 任务线ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": {
+    "questLine": {
+      "questLineId": 10001,
+      "lineName": { "sourceString": "新手引导" }
+    },
+    "tree": {
+      "questId": 10901,
+      "name": { "sourceString": "初次见面" },
+      "level": 1,
+      "questType": 1,
+      "children": [
+        {
+          "questId": 10902,
+          "name": { "sourceString": "熟悉环境" },
+          "level": 1,
+          "questType": 1,
+          "children": []
+        }
+      ]
+    }
+  }
+}
+```
+
+### 任务相关
+
+#### 4. 获取任务详情
+
+```http
+GET /df/quest/:questId
+```
+
+**路径参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `questId` | number | ✅ | 任务ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": {
+    "questId": 10902,
+    "questType": 1,
+    "questClass": 1,
+    "name": { "sourceString": "熟悉环境" },
+    "desc": { "sourceString": "完成新手教程..." },
+    "acceptRequiredLevel": 1,
+    "previousIdList": [10901],
+    "objectiveList": [1001, 1002],
+    "rewardList": [2001],
+    "objectivesDetail": [
+      {
+        "objectiveId": 1001,
+        "type": 1,
+        "requiredCount": 1,
+        "objectiveDesc": { "sourceString": "与NPC对话" }
+      }
+    ],
+    "rewardsDetail": [
+      {
+        "rewardId": 2001,
+        "type": 1,
+        "number": 1000,
+        "importantReward": false
+      }
+    ],
+    "previousQuestsDetail": [
+      { "questId": 10901, "name": { "sourceString": "初次见面" } }
+    ],
+    "nextQuestsDetail": [
+      { "questId": 10903, "name": { "sourceString": "首次战斗" } }
+    ]
+  }
+}
+```
+
+#### 5. 搜索任务
+
+```http
+GET /df/quest/search
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `keyword` | string | ❌ | - | 任务名称关键词 |
+| `type` | number | ❌ | - | 任务类型 (1=主线, 2=支线, 3=赛季, 4=命运契约) |
+| `minLevel` | number | ❌ | - | 最低等级要求 |
+| `maxLevel` | number | ❌ | - | 最高等级要求 |
+| `page` | number | ❌ | 1 | 页码 |
+| `limit` | number | ❌ | 20 | 每页数量 |
+
+**请求示例**：
+```http
+GET /df/quest/search?keyword=新手&type=1&page=1&limit=10
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "questId": 10901,
+      "name": { "sourceString": "新手引导-初次见面" },
+      "desc": { "sourceString": "..." },
+      "questType": 1,
+      "questClass": 1,
+      "acceptRequiredLevel": 1
+    }
+  ],
+  "pagination": {
+    "page": 1,
+    "limit": 10,
+    "total": 5,
+    "pages": 1
+  }
+}
+```
+
+#### 6. 获取任务目标
+
+```http
+GET /df/quest/objectives/:questId
+```
+
+**路径参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `questId` | number | ✅ | 任务ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "objectiveId": 1001,
+      "type": 1,
+      "requiredCount": 1,
+      "objectiveDesc": { "sourceString": "与NPC对话" },
+      "timeLimit": 0
+    }
+  ]
+}
+```
+
+#### 7. 获取任务奖励
+
+```http
+GET /df/quest/rewards/:questId
+```
+
+**路径参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `questId` | number | ✅ | 任务ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "rewardId": 2001,
+      "type": 1,
+      "number": 1000,
+      "importantReward": false
+    }
+  ]
+}
+```
+
+### 赛季任务相关
+
+#### 8. 获取赛季任务线列表
+
+```http
+GET /df/quest/season/lines
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "lineId": 1,
+      "name": { "sourceString": "S7赛季任务" },
+      "seasonIdArr": [7],
+      "openLevel": 1,
+      "finalQuestId": 70100
+    }
+  ],
+  "total": 3
+}
+```
+
+#### 9. 获取赛季任务线详情
+
+```http
+GET /df/quest/season/line/:lineId
+```
+
+**路径参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `lineId` | number | ✅ | 赛季任务线ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": {
+    "lineId": 1,
+    "name": { "sourceString": "S7赛季任务" },
+    "seasonIdArr": [7],
+    "stages": [
+      {
+        "stageId": 1,
+        "stageSequence": 1,
+        "stageName": { "sourceString": "第一阶段" },
+        "mainGroup": { "groupId": 101, "groupName": { "sourceString": "主线任务组" } },
+        "subGroups": []
+      }
+    ],
+    "fateQuests": []
+  }
+}
+```
+
+#### 10. 获取赛季阶段列表
+
+```http
+GET /df/quest/season/stages
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "stageId": 1,
+      "stageSequence": 1,
+      "stageName": { "sourceString": "第一阶段" },
+      "stageMainGroup": 101,
+      "stageSubGroupArr": [102, 103]
+    }
+  ],
+  "total": 10
+}
+```
+
+#### 11. 获取赛季任务分组
+
+```http
+GET /df/quest/season/groups
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `type` | number | ❌ | 分组类型 |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "groupId": 101,
+      "groupType": 1,
+      "groupName": { "sourceString": "主线任务组" },
+      "questIdArr": [70001, 70002, 70003]
+    }
+  ],
+  "total": 20
+}
+```
+
+### 命运契约
+
+#### 12. 获取命运契约列表
+
+```http
+GET /df/quest/fate
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `seasonId` | number | ❌ | 赛季ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "fateQuestId": 1,
+      "questId": 80001,
+      "seasonId": 7,
+      "fateQuestSequence": 1,
+      "questDetail": {
+        "questId": 80001,
+        "name": { "sourceString": "命运契约-第一章" },
+        "desc": { "sourceString": "..." }
+      }
+    }
+  ],
+  "total": 5
+}
+```
+
+### 收集者系统
+
+#### 13. 获取收集者分组
+
+```http
+GET /df/quest/collector/groups
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `type` | number | ❌ | 分组类型 (1/2/3) |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "collectorGroupId": 1,
+      "collectorGroupName": { "sourceString": "收集品组A" },
+      "collectorGroupDesc": { "sourceString": "..." },
+      "collectorGroupType": 1,
+      "prob": 100,
+      "itemListArr": [15001, 15002],
+      "itemCountArr": [1, 2]
+    }
+  ],
+  "total": 30,
+  "typeStats": {
+    "type1": 10,
+    "type2": 15,
+    "type3": 5
+  }
+}
+```
+
+#### 14. 获取收集者奖励
+
+```http
+GET /df/quest/collector/rewards
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `seasonId` | number | ❌ | 赛季ID |
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "collectorRewardId": 1,
+      "seasonId": 7,
+      "collectorCount": 10,
+      "rewardItemArr": [30001],
+      "rewardCountArr": [1]
+    }
+  ],
+  "total": 20
+}
+```
+
+#### 15. 获取收集者槽位
+
+```http
+GET /df/quest/collector/slots
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "collectorSlotId": 1,
+      "slotName": { "sourceString": "槽位1" }
+    }
+  ],
+  "total": 10
+}
+```
+
+### 任务道具
+
+#### 16. 获取任务道具列表
+
+```http
+GET /df/quest/items
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 默认值 | 说明 |
+|------|------|------|--------|------|
+| `search` | string | ❌ | - | 搜索关键词（ID/名称/简称） |
+| `page` | number | ❌ | 1 | 页码 |
+| `limit` | number | ❌ | 50 | 每页数量（最大200） |
+
+**请求示例**：
+```http
+GET /df/quest/items?search=侦察&page=1&limit=20
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "itemId": "15090910088",
+      "name": "侦察机器人",
+      "shortName": "侦察机器人",
+      "description": "在工蜂机器人基础上增加了全天候摄录机能的产物..."
+    }
+  ],
+  "total": 1,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 1
+}
+```
+
+#### 17. 获取单个任务道具
+
+```http
+GET /df/quest/item/:itemId
+```
+
+**路径参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `itemId` | string | ✅ | 物品ID |
+
+**请求示例**：
+```http
+GET /df/quest/item/15090910088
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": {
+    "itemId": "15090910088",
+    "name": "侦察机器人",
+    "shortName": "侦察机器人",
+    "description": "在工蜂机器人基础上增加了全天候摄录机能的产物，拥有一定程度上的自律侦察能力，并能够针对侦察结果自动进行分析整合回传。"
+  }
+}
+```
+
+### 统计与同步
+
+#### 18. 获取任务系统统计
+
+```http
+GET /df/quest/stats
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "data": {
+    "questLines": 50,
+    "quests": 500,
+    "objectives": 1200,
+    "rewards": 800,
+    "seasonLines": 3,
+    "stages": 30,
+    "groups": 100,
+    "fateQuests": 20,
+    "conditions": 150,
+    "collectorGroups": 30,
+    "collectorRewards": 20,
+    "collectorSlots": 10,
+    "characterCheckingConditions": 50,
+    "complexPropObjectives": 80,
+    "complexWeaponTerms": 40,
+    "solContractRewards": 60,
+    "solQuestMapConfigs": 100,
+    "solObjectiveTypes": 30,
+    "solTargetTypes": 25,
+    "solQuestDialogs": 200,
+    "seasonQuestConfigs": 10,
+    "seasonQuestGuides": 15
+  }
+}
+```
+
+#### 19. 同步任务数据（管理员）
+
+```http
+POST /df/quest/sync
+```
+
+**请求体**：
+```json
+{
+  "clientID": "管理员ID"
+}
+```
+
+**响应示例**：
+```json
+{
+  "success": true,
+  "message": "数据同步完成",
+  "results": {
+    "questLines": { "success": 50, "failed": 0 },
+    "quests": { "success": 500, "failed": 0 },
+    "objectives": { "success": 1200, "failed": 0 },
+    "rewards": { "success": 800, "failed": 0 },
+    "gameItems": { "success": 1500, "failed": 0 }
+  }
+}
+```
+
+**错误响应**：
+| code | 说明 |
+|------|------|
+| `1001` | 缺少必要参数 clientID |
+| `1003` | 需要管理员权限 |
+
+---
+
+## 玩家任务跟踪 API
+
+玩家任务跟踪系统提供任务进度管理功能，分为**临时跟踪**（任务线/任务跟踪）和**永久进度**（任务完成状态）两部分。
+
+### 通用参数说明
+
+所有接口都需要以下用户身份参数：
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID（游戏QQ号等） |
+| `clientID` | string | ✅ | 后端用户ID（需已注册且邮箱已验证） |
+| `clientType` | string | ✅ | 客户端类型（如 `web`、`bot`） |
+
+**错误码说明**：
+| code | 说明 |
+|------|------|
+| `-1` | 缺少必要参数 |
+| `-2` | clientID 未注册或邮箱未验证 |
+| `-3` | 任务/任务线不存在 |
+| `-4` | 已在跟踪列表中 |
+| `-5` | 任务已完成，无需跟踪 |
+
+### 任务线跟踪（临时）
+
+#### 1. 添加任务线跟踪
+
+```http
+POST /df/quest/tracker/line/add
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questLineId": 10001
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "任务线添加成功",
+  "data": {
+    "questLine": {
+      "questLineId": 10001,
+      "lineName": "新手引导",
+      "rootQuestId": 10901,
+      "addedAt": "2026-01-21T03:00:00.000Z"
+    },
+    "questsAdded": 8,
+    "questsSkipped": 2,
+    "skippedReason": "已完成的任务不会被添加到跟踪列表"
+  }
+}
+```
+
+#### 2. 移除任务线跟踪
+
+```http
+POST /df/quest/tracker/line/remove
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questLineId": 10001
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "任务线跟踪已移除（任务进度不受影响）"
+}
+```
+
+#### 3. 获取跟踪的任务线
+
+```http
+GET /df/quest/tracker/lines
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+
+**请求示例**：
+```http
+GET /df/quest/tracker/lines?platformID=123456&clientID=68734e4f5d67fecc0d4ac0b0&clientType=web
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": [
+    {
+      "questLineId": 10001,
+      "lineName": "新手引导",
+      "rootQuestId": 10901,
+      "addedAt": "2026-01-21T03:00:00.000Z",
+      "progress": {
+        "completed": 5,
+        "total": 10,
+        "percentage": 50,
+        "tracking": 5
+      }
+    }
+  ]
+}
+```
+
+### 任务跟踪（临时）
+
+#### 4. 添加任务跟踪
+
+```http
+POST /df/quest/tracker/quest/add
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 10902
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "任务跟踪添加成功",
+  "data": {
+    "quest": {
+      "questId": 10902,
+      "questLineId": 10001,
+      "addedAt": "2026-01-21T03:00:00.000Z"
+    },
+    "questName": "熟悉环境"
+  }
+}
+```
+
+#### 5. 移除任务跟踪
+
+```http
+POST /df/quest/tracker/quest/remove
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 10902
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "任务跟踪已移除（进度不受影响）"
+}
+```
+
+#### 6. 获取跟踪的任务
+
+```http
+GET /df/quest/tracker/quests
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+| `questLineId` | number | ❌ | 筛选指定任务线 |
+
+**请求示例**：
+```http
+GET /df/quest/tracker/quests?platformID=123456&clientID=68734e4f5d67fecc0d4ac0b0&clientType=web
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": [
+    {
+      "questId": 10902,
+      "questLineId": 10001,
+      "addedAt": "2026-01-21T03:00:00.000Z",
+      "questName": "熟悉环境",
+      "questDesc": "完成新手教程...",
+      "questType": 1,
+      "questClass": 1,
+      "acceptRequiredLevel": 1,
+      "progress": {
+        "status": "in_progress",
+        "objectives": [
+          {
+            "objectiveId": 1001,
+            "currentCount": 0,
+            "requiredCount": 1,
+            "completed": false
+          }
+        ],
+        "startedAt": "2026-01-21T03:05:00.000Z"
+      }
+    }
+  ]
+}
+```
+
+### 任务进度（永久）
+
+#### 7. 标记任务完成
+
+```http
+POST /df/quest/progress/complete
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 10902
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "任务已标记为完成，并已从跟踪列表移除",
+  "data": {
+    "questId": 10902,
+    "questName": "熟悉环境",
+    "completedAt": "2026-01-21T03:10:00.000Z"
+  }
+}
+```
+
+#### 8. 取消任务完成
+
+```http
+POST /df/quest/progress/uncomplete
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 10902
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "任务已标记为未完成"
+}
+```
+
+#### 9. 更新任务进度
+
+```http
+POST /df/quest/progress/update
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 10902,
+  "objectiveId": 1001,
+  "currentCount": 1,
+  "completed": true,
+  "note": "备注信息"
+}
+```
+
+**参数说明**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `questId` | number | ✅ | 任务ID |
+| `objectiveId` | number | ❌ | 目标ID（更新特定目标时必填） |
+| `currentCount` | number | ❌ | 当前计数 |
+| `completed` | boolean | ❌ | 目标是否完成 |
+| `note` | string | ❌ | 备注信息 |
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "进度更新成功"
+}
+```
+
+**说明**：
+- 如果所有目标都完成，任务状态会自动更新为 `completed`
+- 完成的任务会自动从跟踪列表移除
+
+#### 10. 获取任务进度列表
+
+```http
+GET /df/quest/progress/list
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+| `status` | string | ❌ | 筛选状态 (`not_started`/`in_progress`/`completed`) |
+| `questLineId` | number | ❌ | 筛选指定任务线 |
+
+**请求示例**：
+```http
+GET /df/quest/progress/list?platformID=123456&clientID=68734e4f5d67fecc0d4ac0b0&clientType=web&status=completed
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": [
+    {
+      "questId": 10901,
+      "questLineId": 10001,
+      "status": "completed",
+      "objectives": [
+        {
+          "objectiveId": 1001,
+          "currentCount": 1,
+          "requiredCount": 1,
+          "completed": true
+        }
+      ],
+      "completedAt": "2026-01-21T03:00:00.000Z",
+      "questName": "初次见面",
+      "questDesc": "...",
+      "questType": 1,
+      "questClass": 1,
+      "acceptRequiredLevel": 1,
+      "isTracked": false
+    }
+  ]
+}
+```
+
+#### 11. 获取单个任务进度
+
+```http
+GET /df/quest/progress/:questId
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+
+**请求示例**：
+```http
+GET /df/quest/progress/10902?platformID=123456&clientID=68734e4f5d67fecc0d4ac0b0&clientType=web
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": {
+    "questId": 10902,
+    "questLineId": 10001,
+    "status": "in_progress",
+    "objectives": [
+      {
+        "objectiveId": 1001,
+        "currentCount": 0,
+        "requiredCount": 1,
+        "completed": false
+      }
+    ],
+    "startedAt": "2026-01-21T03:05:00.000Z",
+    "questName": "熟悉环境",
+    "questDesc": "...",
+    "isTracked": true
+  }
+}
+```
+
+### 批量操作
+
+#### 12. 一键完成前置任务
+
+```http
+POST /df/quest/progress/complete-prerequisites
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 10905
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "已完成 4 个前置任务",
+  "data": {
+    "completedCount": 4,
+    "totalPrerequisites": 4,
+    "prerequisites": [
+      { "questId": 10901, "questName": "初次见面", "questType": 1 },
+      { "questId": 10902, "questName": "熟悉环境", "questType": 1 },
+      { "questId": 10903, "questName": "首次战斗", "questType": 1 },
+      { "questId": 10904, "questName": "装备升级", "questType": 1 }
+    ]
+  }
+}
+```
+
+#### 13. 重置跟踪记录
+
+```http
+POST /df/quest/tracker/reset
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web"
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "跟踪记录已重置（任务进度不受影响）"
+}
+```
+
+**说明**：仅清除临时跟踪数据，不影响永久进度记录。
+
+#### 14. 重置任务进度
+
+```http
+POST /df/quest/progress/reset
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "confirmReset": true
+}
+```
+
+**参数说明**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `confirmReset` | boolean | ✅ | 必须为 `true` 才能执行重置 |
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "任务进度已全部重置"
+}
+```
+
+**⚠️ 警告**：此操作会清除所有任务进度记录，不可恢复！
+
+### 综合查询
+
+#### 15. 获取跟踪概览
+
+```http
+GET /df/quest/tracker/overview
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+
+**请求示例**：
+```http
+GET /df/quest/tracker/overview?platformID=123456&clientID=68734e4f5d67fecc0d4ac0b0&clientType=web
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": {
+    "tracking": {
+      "questLines": 2,
+      "quests": 15
+    },
+    "progress": {
+      "total": 50,
+      "notStarted": 10,
+      "inProgress": 15,
+      "completed": 25
+    },
+    "recentActivity": [
+      {
+        "questId": 10905,
+        "questName": "深入敌后",
+        "status": "completed",
+        "lastUpdate": "2026-01-21T03:30:00.000Z"
+      },
+      {
+        "questId": 10904,
+        "questName": "装备升级",
+        "status": "completed",
+        "lastUpdate": "2026-01-21T03:25:00.000Z"
+      }
+    ]
+  }
+}
+```
+
+**字段说明**：
+- `tracking` - 当前跟踪统计（临时数据）
+- `progress` - 任务进度统计（永久数据）
+- `recentActivity` - 最近10个有更新的任务
