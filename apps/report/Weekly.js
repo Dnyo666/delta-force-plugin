@@ -46,6 +46,7 @@ export class Weekly extends plugin {
         let mode = ''
         let isShowNullFriend = true
         let date = ''
+        let showExtra = false
 
         for (const arg of args) {
             if (['烽火', '烽火地带', 'sol', '摸金'].includes(arg)) {
@@ -56,13 +57,15 @@ export class Weekly extends plugin {
                 isShowNullFriend = false
             } else if (['展示', '是'].includes(arg)) {
                 isShowNullFriend = true
+            } else if (['详细', 'detail', 'extra'].includes(arg)) {
+                showExtra = true
             } else if (/^\d{8}$/.test(arg)) {
                 date = arg
             }
         }
 
         await e.reply('正在查询您的本周战报，请稍候...');
-        const res = await this.api.getWeeklyRecord(token, mode, isShowNullFriend, date);
+        const res = await this.api.getWeeklyRecord(token, mode, isShowNullFriend, date, showExtra);
 
         if (await utils.handleApiError(res, e)) return true;
     
@@ -303,10 +306,8 @@ export class Weekly extends plugin {
                     total_Quest_num: solData.total_Quest_num || 0,
                     use_Keycard_num: solData.use_Keycard_num || 0,
                     Mandel_brick_num: solData.Mandel_brick_num || 0,
-                    search_Birdsnest_num: solData.search_Birdsnest_num || 0,
                     mileage: solData.Total_Mileage ? (solData.Total_Mileage / 100000).toFixed(2) : '0',
                     total_Rescue_num: solData.total_Rescue_num || 0,
-                    Kill_ByCrocodile_num: solData.Kill_ByCrocodile_num || 0,
                     gameTime: `${Math.floor((solData.total_Online_Time || 0) / 3600)}小时${Math.floor(((solData.total_Online_Time || 0) % 3600) / 60)}分钟`,
                     mostUsedMap: solData.mostUsedMap || '无',
                     mostUsedMapImagePath: solData.mostUsedMap ? DataManager.getMapImagePath(solData.mostUsedMap, 'sol') : null,
@@ -424,6 +425,354 @@ export class Weekly extends plugin {
             } else {
                 templateData.solData = { isEmpty: true };
             }
+        }
+
+        // 处理reportDm补充数据
+        const reportDm = res.data?.reportDm;
+        if (reportDm) {
+            // 处理好友top10数据（烽火数据）
+            if (reportDm.wbn?.friends && Array.isArray(reportDm.wbn.friends)) {
+                const friendsData = reportDm.wbn.friends;
+                // 按 total_gained_price 排序，取前10名
+                const sortedFriends = friendsData
+                    .filter(f => f.total_gained_price && Number(f.total_gained_price) > 0)
+                    .sort((a, b) => Number(b.total_gained_price) - Number(a.total_gained_price))
+                    .slice(0, 10);
+                
+                if (sortedFriends.length > 0) {
+                    // 获取好友的昵称和头像
+                    const friendOpenIDs = sortedFriends.map(f => f.Friendopenid);
+                    const friendNicknameMap = new Map();
+                    const friendAvatarMap = new Map();
+                    
+                    const friendPromises = friendOpenIDs.map(openid => 
+                        this.api.getFriendInfo(token, openid)
+                    );
+                    const friendResults = await Promise.allSettled(friendPromises);
+                    
+                    friendResults.forEach((result, index) => {
+                        const openid = friendOpenIDs[index];
+                        if (result.status === 'fulfilled' && result.value?.success && result.value.data) {
+                            const data = result.value.data;
+                            if (data.charac_name) {
+                                friendNicknameMap.set(openid, data.charac_name);
+                            }
+                            if (data.picurl) {
+                                let avatarUrl = data.picurl;
+                                if (/^[0-9]+$/.test(avatarUrl)) {
+                                    avatarUrl = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${avatarUrl}.webp`;
+                                } else {
+                                    try {
+                                        avatarUrl = decodeURIComponent(avatarUrl);
+                                    } catch (e) {}
+                                }
+                                friendAvatarMap.set(openid, avatarUrl);
+                            }
+                        }
+                    });
+                    
+                    // 收集所有物品ID
+                    const allItemIDs = new Set();
+                    sortedFriends.forEach(friend => {
+                        // 处理 CarryOut_highprice_list
+                        if (friend.CarryOut_highprice_list && Array.isArray(friend.CarryOut_highprice_list)) {
+                            friend.CarryOut_highprice_list.forEach(item => {
+                                if (item.itemid) {
+                                    allItemIDs.add(String(item.itemid));
+                                }
+                            });
+                        }
+                        // 处理 CarryOut_top2_highprice_list
+                        if (friend.CarryOut_top2_highprice_list && Array.isArray(friend.CarryOut_top2_highprice_list)) {
+                            friend.CarryOut_top2_highprice_list.forEach(item => {
+                                if (item.itemid) {
+                                    allItemIDs.add(String(item.itemid));
+                                }
+                            });
+                        }
+                    });
+                    
+                    // 获取物品名称
+                    let itemNameMap = {};
+                    if (allItemIDs.size > 0) {
+                        try {
+                            const itemIDsArray = Array.from(allItemIDs);
+                            const itemIDsString = itemIDsArray.join(',');
+                            const itemRes = await this.api.searchObject('', itemIDsString);
+                            
+                            if (itemRes && itemRes.success && itemRes.data && itemRes.data.keywords && Array.isArray(itemRes.data.keywords)) {
+                                itemRes.data.keywords.forEach(item => {
+                                    if (item.objectID) {
+                                        const id = String(item.objectID);
+                                        const name = item.name || item.objectName;
+                                        if (name) {
+                                            itemNameMap[id] = name;
+                                        }
+                                    }
+                                });
+                                logger.debug(`[Weekly] 成功获取 ${Object.keys(itemNameMap).length}/${allItemIDs.size} 个物品名称`);
+                            }
+                        } catch (error) {
+                            logger.warn(`[Weekly] 获取物品名称失败:`, error);
+                        }
+                    }
+                    
+                    // 格式化价格
+                    const formatPrice = (price) => {
+                        if (!price || isNaN(price)) return '0';
+                        const numPrice = Number(price);
+                        if (numPrice >= 1000000) {
+                            return (numPrice / 1000000).toFixed(2) + 'M';
+                        } else if (numPrice >= 1000) {
+                            return (numPrice / 1000).toFixed(1) + 'K';
+                        } else {
+                            return numPrice.toLocaleString();
+                        }
+                    };
+                    
+                    templateData.topFriends = sortedFriends.map((friend, index) => {
+                        const friendName = friendNicknameMap.get(friend.Friendopenid) || `...${String(friend.Friendopenid).slice(-6)}`;
+                        const friendAvatar = friendAvatarMap.get(friend.Friendopenid) || '';
+                        
+                        // 处理物品列表
+                        const items = [];
+                        const addedItemIds = new Set(); // 用于去重
+                        
+                        // 优先显示 CarryOut_highprice_list
+                        if (friend.CarryOut_highprice_list && Array.isArray(friend.CarryOut_highprice_list)) {
+                            friend.CarryOut_highprice_list.forEach(item => {
+                                if (item.itemid && !addedItemIds.has(item.itemid)) {
+                                    const itemId = String(item.itemid);
+                                    const rawPrice = Number(item.iPrice || 0);
+                                    addedItemIds.add(item.itemid);
+                                    items.push({
+                                        itemid: item.itemid,
+                                        name: itemNameMap[itemId] || `物品${item.itemid}`,
+                                        imageUrl: `https://playerhub.df.qq.com/playerhub/60004/object/${item.itemid}.png`,
+                                        price: formatPrice(rawPrice),
+                                        rawPrice: rawPrice, // 保存原始价格用于排序
+                                        inum: item.inum || 1,
+                                        quality: item.quality || 0
+                                    });
+                                }
+                            });
+                        }
+                        
+                        // 补充显示 CarryOut_top2_highprice_list（如果还有空位且未添加过）
+                        if (friend.CarryOut_top2_highprice_list && Array.isArray(friend.CarryOut_top2_highprice_list)) {
+                            friend.CarryOut_top2_highprice_list.forEach(item => {
+                                if (item.itemid && !addedItemIds.has(item.itemid) && items.length < 3) {
+                                    const itemId = String(item.itemid);
+                                    const rawPrice = Number(item.iPrice || 0);
+                                    addedItemIds.add(item.itemid);
+                                    items.push({
+                                        itemid: item.itemid,
+                                        name: itemNameMap[itemId] || `物品${item.itemid}`,
+                                        imageUrl: `https://playerhub.df.qq.com/playerhub/60004/object/${item.itemid}.png`,
+                                        price: formatPrice(rawPrice),
+                                        rawPrice: rawPrice, // 保存原始价格用于排序
+                                        inum: item.inum || 1,
+                                        quality: item.quality || 0
+                                    });
+                                }
+                            });
+                        }
+                        
+                        // 按价格从高到低排序
+                        items.sort((a, b) => b.rawPrice - a.rawPrice);
+                        
+                        return {
+                            rank: index + 1,
+                            name: friendName,
+                            avatar: friendAvatar,
+                            total_gained_price: Number(friend.total_gained_price || 0).toLocaleString(),
+                            total_GainedPrice: formatPrice(friend.total_GainedPrice || 0), // 净收益
+                            max_GainedPrice: formatPrice(friend.max_GainedPrice || 0), // 最大单次收益
+                            win_num: friend.win_num || 0,
+                            lose_num: friend.lose_num || 0,
+                            intimacy: friend.FriendIntimacy || 0,
+                            items: items.slice(0, 3) // 最多显示3个物品
+                        };
+                    });
+                } else {
+                    templateData.topFriends = [];
+                }
+            } else {
+                templateData.topFriends = [];
+            }
+
+            // 处理report1 - 烽火地带收益统计
+            if (reportDm.report1) {
+                templateData.report1 = {
+                    total_sell_price: Number(reportDm.report1.total_sell_price || 0).toLocaleString()
+                };
+            }
+
+            // 处理report3 - 全面战场详细统计
+            if (reportDm.report3) {
+                const r3 = reportDm.report3;
+                const maxScoreMapId = r3.max_score_mapid ? DataManager.getMapName(r3.max_score_mapid) : '无';
+                const maxScoreOperator = r3.max_mpmatch_num_deployarmedforcetype ? DataManager.getOperatorName(r3.max_mpmatch_num_deployarmedforcetype) : '无';
+                const maxVehicleOperator = r3.max_vehicle_usedtime_vehicleid ? `载具ID: ${r3.max_vehicle_usedtime_vehicleid}` : '无';
+                
+                templateData.report3 = {
+                    max_mpmatch_num: r3.max_mpmatch_num || 0,
+                    max_vehicle_usedtime: r3.max_vehicle_usedtime ? `${Math.floor(Number(r3.max_vehicle_usedtime) / 60)}分钟` : '0',
+                    total_killvehicle: r3.total_killvehicle || 0,
+                    total_vehicle_usedtime: r3.total_vehicle_usedtime ? `${Math.floor(Number(r3.total_vehicle_usedtime) / 60)}分钟` : '0',
+                    total_vehicle_inum: r3.total_vehicle_inum || 0,
+                    max_score_killnum: r3.max_score_killnum || 0,
+                    max_score_death: r3.max_score_death || 0,
+                    win_mpmatch_num: r3.win_mpmatch_num || 0,
+                    max_score_assist: r3.max_score_assist || 0,
+                    total_mpmatch_num: r3.total_mpmatch_num || 0,
+                    max_score_mapid: maxScoreMapId,
+                    max_score_mapid_image: r3.max_score_mapid ? DataManager.getMapImagePath(maxScoreMapId, 'mp') : null,
+                    max_mpmatch_num_Rescue: r3.max_mpmatch_num_Rescue || 0,
+                    max_mpmatch_num_deployarmedforcetype: maxScoreOperator,
+                    max_mpmatch_num_deployarmedforcetype_image: r3.max_mpmatch_num_deployarmedforcetype ? DataManager.getOperatorImagePath(maxScoreOperator) : null,
+                    max_score_dteventtime: r3.max_score_dteventtime || '-',
+                    total_killnum: r3.total_killnum || 0,
+                    max_vehicle_usedtime_vehicleid: maxVehicleOperator,
+                    total_score: Number(r3.total_score || 0).toLocaleString(),
+                    max_mpmatch_num_GameTime: r3.max_mpmatch_num_GameTime ? `${Math.floor(Number(r3.max_mpmatch_num_GameTime) / 3600)}小时${Math.floor((Number(r3.max_mpmatch_num_GameTime) % 3600) / 60)}分钟` : '0',
+                    total_vehicle_killnum: r3.total_vehicle_killnum || 0,
+                    max_vehicle_usedtime_killplayer: r3.max_vehicle_usedtime_killplayer || 0,
+                    max_mpmatch_num_Score: Number(r3.max_mpmatch_num_Score || 0).toLocaleString()
+                };
+            }
+
+            // 处理report4 - 全面战场队友统计
+            if (reportDm.report4) {
+                const r4 = reportDm.report4;
+                // 获取最佳队友和最差队友的信息
+                const bestTeammateId = r4.max_mpwinnum_memberid;
+                const worstTeammateId = r4.max_mplosenum_memberid;
+                
+                let bestTeammateName = '未知';
+                let bestTeammateAvatar = '';
+                let worstTeammateName = '未知';
+                let worstTeammateAvatar = '';
+                
+                // 并行获取两个队友的信息
+                const teammatePromises = [];
+                if (bestTeammateId) {
+                    teammatePromises.push(
+                        this.api.getFriendInfo(token, bestTeammateId).then(bestInfo => ({ type: 'best', info: bestInfo })).catch(e => {
+                            logger.debug(`[Weekly] 获取最佳队友信息失败:`, e);
+                            return { type: 'best', info: null };
+                        })
+                    );
+                } else {
+                    teammatePromises.push(Promise.resolve({ type: 'best', info: null }));
+                }
+                
+                if (worstTeammateId) {
+                    teammatePromises.push(
+                        this.api.getFriendInfo(token, worstTeammateId).then(worstInfo => ({ type: 'worst', info: worstInfo })).catch(e => {
+                            logger.debug(`[Weekly] 获取最差队友信息失败:`, e);
+                            return { type: 'worst', info: null };
+                        })
+                    );
+                } else {
+                    teammatePromises.push(Promise.resolve({ type: 'worst', info: null }));
+                }
+                
+                const teammateResults = await Promise.all(teammatePromises);
+                
+                teammateResults.forEach(result => {
+                    if (result.type === 'best' && result.info?.success && result.info.data) {
+                        const data = result.info.data;
+                        bestTeammateName = data.charac_name || '未知';
+                        if (data.picurl) {
+                            let avatarUrl = data.picurl;
+                            if (/^[0-9]+$/.test(avatarUrl)) {
+                                avatarUrl = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${avatarUrl}.webp`;
+                            } else {
+                                try {
+                                    avatarUrl = decodeURIComponent(avatarUrl);
+                                } catch (e) {}
+                            }
+                            bestTeammateAvatar = avatarUrl;
+                        }
+                    } else if (result.type === 'worst' && result.info?.success && result.info.data) {
+                        const data = result.info.data;
+                        worstTeammateName = data.charac_name || '未知';
+                        if (data.picurl) {
+                            let avatarUrl = data.picurl;
+                            if (/^[0-9]+$/.test(avatarUrl)) {
+                                avatarUrl = `https://wegame.gtimg.com/g.2001918-r.ea725/helper/df/skin/${avatarUrl}.webp`;
+                            } else {
+                                try {
+                                    avatarUrl = decodeURIComponent(avatarUrl);
+                                } catch (e) {}
+                            }
+                            worstTeammateAvatar = avatarUrl;
+                        }
+                    }
+                });
+                
+                const bestOperator = r4.max_mpwinnum_member_deployarmedforcetype ? DataManager.getOperatorName(r4.max_mpwinnum_member_deployarmedforcetype) : '无';
+                const worstOperator = r4.max_mplosenum_member_deployarmedforcetype ? DataManager.getOperatorName(r4.max_mplosenum_member_deployarmedforcetype) : '无';
+                
+                templateData.report4 = {
+                    best_teammate: {
+                        name: bestTeammateName,
+                        avatar: bestTeammateAvatar,
+                        intimacy: r4.max_mpwinnum_member_friendintimacy || 0,
+                        win_num: r4.max_mpwinnum_player_winmun || 0,
+                        lose_num: r4.max_mpwinnum_player_wlosemun || 0,
+                        kill_num: r4.max_mpwinnum_player_killnum || 0,
+                        assist: r4.max_mpwinnum_player_assist || 0,
+                        score: Number(r4.max_mpwinnum_player_score || 0).toLocaleString(),
+                        operator: bestOperator,
+                        operator_image: r4.max_mpwinnum_member_deployarmedforcetype ? DataManager.getOperatorImagePath(bestOperator) : null
+                    },
+                    worst_teammate: {
+                        name: worstTeammateName,
+                        avatar: worstTeammateAvatar,
+                        intimacy: r4.max_mplosenum_member_friendintimacy || 0,
+                        win_num: r4.max_mplosenum_player_winmun || 0,
+                        lose_num: r4.max_mplosenum_player_wlosemun || 0,
+                        kill_num: r4.max_mplosenum_player_killnum || 0,
+                        assist: r4.max_mplosenum_player_assist || 0,
+                        score: Number(r4.max_mplosenum_player_score || 0).toLocaleString(),
+                        operator: worstOperator,
+                        operator_image: r4.max_mplosenum_member_deployarmedforcetype ? DataManager.getOperatorImagePath(worstOperator) : null
+                    }
+                };
+            }
+
+            // 处理bk - 全面战场详细统计（载具数据）
+            if (reportDm.bk) {
+                const bk = reportDm.bk;
+                if (bk.mp_vehicleid_list && Array.isArray(bk.mp_vehicleid_list)) {
+                    templateData.bk = {
+                        vehicles: bk.mp_vehicleid_list.map(v => ({
+                            vehicleid: v.vehicleid,
+                            inum: v.inum || 0,
+                            vehicle_name: `载具${v.vehicleid}` // 暂时显示ID，后续可以添加载具名称映射
+                        })).sort((a, b) => b.inum - a.inum),
+                        avg_score: Number(bk.mp_avgscore || 0).toFixed(1),
+                        support_count: bk.mp_supportcount || 0,
+                        support_details: {
+                            '1001012': bk.mp_supportcount_1001012 || 0,
+                            '1001011': bk.mp_supportcount_1001011 || 0,
+                            '1001014': bk.mp_supportcount_1001014 || 0,
+                            '1001015': bk.mp_supportcount_1001015 || 0
+                        }
+                    };
+                } else {
+                    templateData.bk = {
+                        vehicles: [],
+                        avg_score: '0',
+                        support_count: 0,
+                        support_details: {}
+                    };
+                }
+            }
+        } else {
+            templateData.topFriends = [];
         }
 
         if (!mode || mode === 'mp') {

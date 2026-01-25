@@ -660,10 +660,11 @@ export default class Code {
    * @param {boolean} isShowNullFriend - 是否显示空值队友
    * @param {string} date - 日期，格式 YYYYMMDD
    */
-  async getWeeklyRecord(frameworkToken, type = '', isShowNullFriend = true, date = '') {
+  async getWeeklyRecord(frameworkToken, type = '', isShowNullFriend = true, date = '', showExtra = false) {
       const params = { frameworkToken, isShowNullFriend: String(isShowNullFriend) };
       if (type) params.type = type;
       if (date) params.date = date;
+      if (showExtra) params.showExtra = String(showExtra);
       return this.request('/df/person/weeklyRecord', params, 'GET');
   }
 
