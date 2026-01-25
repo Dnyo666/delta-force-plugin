@@ -8,7 +8,7 @@ Delta Force API 是一个基于 Koa 框架的游戏数据查询和管理系统�
 
 **对于接口任何返回数据中不懂的部分，请看https://delta-force.apifox.cn，该接口文档由浅巷墨黎整理**
 
-**版本号：v2.3.0**
+**版本号：v2.4.0**
 
 ## WebSocket 服务
 
@@ -7178,3 +7178,657 @@ GET /df/quest/tracker/overview?platformID=123456&clientID=68734e4f5d67fecc0d4ac0
 - `tracking` - 当前跟踪统计（临时数据）
 - `progress` - 任务进度统计（永久数据）
 - `recentActivity` - 最近10个有更新的任务
+
+---
+
+## 赛季任务跟踪 API
+
+赛季任务采用**阶段制跟踪**，跟踪赛季任务线时会自动跟踪第一阶段。完成当前阶段主线后自动进阶到下一阶段（保留当前阶段用于支线任务）。
+
+### 核心概念
+
+| 概念 | 说明 |
+|------|------|
+| 赛季任务线 (Season Quest Line) | 赛季任务的顶层容器，包含多个阶段 |
+| 阶段 (Stage) | 每个阶段包含一个主线分组和多个支线分组 |
+| 主线分组 (Main Group) | 阶段的核心任务，完成后自动进阶到下一阶段 |
+| 支线分组 (Sub Group) | 阶段的可选任务，全部完成后结束该阶段跟踪 |
+| 星星 (Star) | 完成任务获得星星，解锁下一阶段需要足够的累计星星 |
+
+### 自动进阶逻辑
+
+1. **跟踪任务线** → 自动跟踪第一阶段
+2. **完成主线所有任务** → 标记阶段主线完成 + 自动跟踪下一阶段（需满足星星要求）
+3. **完成所有支线任务** → 移除该阶段的跟踪
+4. **保留当前阶段** → 主线完成后当前阶段仍保留（用于支线任务）
+
+### 赛季任务线跟踪
+
+#### 1. 跟踪赛季任务线
+
+```http
+POST /df/quest/tracker/season/line/add
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "lineId": 1
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "赛季任务线跟踪成功，已自动跟踪第一阶段",
+  "data": {
+    "trackedLine": {
+      "lineId": 1,
+      "lineName": "S7赛季任务",
+      "seasonId": 7,
+      "currentStageId": 101,
+      "currentStageSequence": 1,
+      "addedAt": "2026-01-25T13:00:00.000Z"
+    },
+    "trackedStage": {
+      "stageId": 101,
+      "lineId": 1,
+      "stageSequence": 1,
+      "stageName": "第一阶段",
+      "mainGroupId": 1001,
+      "subGroupIds": [1002, 1003],
+      "unlockStarCount": 0,
+      "addedAt": "2026-01-25T13:00:00.000Z"
+    },
+    "stageProgress": {
+      "stageId": 101,
+      "lineId": 1,
+      "stageSequence": 1,
+      "status": "unlocked",
+      "mainGroupCompleted": false,
+      "subGroupsCompleted": [],
+      "currentStarCount": 0,
+      "totalStarCount": 10,
+      "unlockedAt": "2026-01-25T13:00:00.000Z"
+    }
+  }
+}
+```
+
+#### 2. 取消跟踪赛季任务线
+
+```http
+POST /df/quest/tracker/season/line/remove
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "lineId": 1
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "赛季任务线跟踪已移除（任务进度不受影响）"
+}
+```
+
+#### 3. 获取跟踪的赛季任务线
+
+```http
+GET /df/quest/tracker/season/lines
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": [
+    {
+      "lineId": 1,
+      "lineName": "S7赛季任务",
+      "seasonId": 7,
+      "currentStageId": 102,
+      "currentStageSequence": 2,
+      "addedAt": "2026-01-25T13:00:00.000Z",
+      "progress": {
+        "completed": 15,
+        "total": 50,
+        "percentage": 30,
+        "tracking": 3
+      }
+    }
+  ]
+}
+```
+
+**字段说明**：
+- `currentStageId` - 当前跟踪的阶段ID
+- `currentStageSequence` - 当前阶段顺序（1, 2, 3...）
+- `progress.tracking` - 当前正在跟踪的单项任务数
+
+### 赛季阶段跟踪
+
+#### 4. 手动跟踪阶段
+
+```http
+POST /df/quest/tracker/season/stage/track
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "lineId": 1,
+  "stageId": 102
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "阶段跟踪成功",
+  "data": {
+    "trackedStage": {
+      "stageId": 102,
+      "lineId": 1,
+      "stageSequence": 2,
+      "stageName": "第二阶段",
+      "mainGroupId": 1004,
+      "subGroupIds": [1005, 1006],
+      "unlockStarCount": 10,
+      "addedAt": "2026-01-25T13:30:00.000Z"
+    }
+  }
+}
+```
+
+#### 5. 获取跟踪的阶段
+
+```http
+GET /df/quest/tracker/season/stages
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+| `lineId` | number | ❌ | 筛选指定任务线的阶段 |
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": [
+    {
+      "stageId": 101,
+      "lineId": 1,
+      "stageSequence": 1,
+      "stageName": "第一阶段",
+      "mainGroupId": 1001,
+      "subGroupIds": [1002, 1003],
+      "unlockStarCount": 0,
+      "addedAt": "2026-01-25T13:00:00.000Z"
+    },
+    {
+      "stageId": 102,
+      "lineId": 1,
+      "stageSequence": 2,
+      "stageName": "第二阶段",
+      "mainGroupId": 1004,
+      "subGroupIds": [1005, 1006],
+      "unlockStarCount": 10,
+      "addedAt": "2026-01-25T13:30:00.000Z"
+    }
+  ]
+}
+```
+
+### 赛季阶段进度
+
+#### 6. 完成阶段主线
+
+```http
+POST /df/quest/progress/season/stage/complete
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "lineId": 1,
+  "stageId": 101,
+  "starCount": 10
+}
+```
+
+**参数说明**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `lineId` | number | ✅ | 赛季任务线ID |
+| `stageId` | number | ✅ | 阶段ID |
+| `starCount` | number | ❌ | 获得的星星数（默认为阶段总星星数） |
+
+**响应示例（自动进阶）**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "阶段完成，已自动跟踪下一阶段：第二阶段",
+  "data": {
+    "autoAdvanced": true,
+    "nextTrackedStage": {
+      "stageId": 102,
+      "lineId": 1,
+      "stageSequence": 2,
+      "stageName": "第二阶段",
+      "mainGroupId": 1004,
+      "subGroupIds": [1005, 1006],
+      "unlockStarCount": 10,
+      "addedAt": "2026-01-25T13:30:00.000Z"
+    },
+    "nextStageProgress": {
+      "stageId": 102,
+      "status": "unlocked",
+      "mainGroupCompleted": false
+    }
+  }
+}
+```
+
+**响应示例（星星不足）**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "阶段完成，但星星不足以解锁下一阶段（需要 20，当前 15）",
+  "data": {
+    "autoAdvanced": false,
+    "nextStageId": 103,
+    "nextStageUnlockStarCount": 20,
+    "currentTotalStars": 15
+  }
+}
+```
+
+#### 7. 完成阶段支线
+
+```http
+POST /df/quest/progress/season/stage/complete-subgroup
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "lineId": 1,
+  "stageId": 101,
+  "subGroupId": 1002,
+  "starCount": 5
+}
+```
+
+**响应示例（支线完成）**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "支线完成",
+  "data": {
+    "subGroupCompleted": true,
+    "stageFullyCompleted": false,
+    "remainingSubGroups": [1003]
+  }
+}
+```
+
+**响应示例（阶段全部完成）**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "支线完成，该阶段所有任务已完成，已结束阶段跟踪",
+  "data": {
+    "subGroupCompleted": true,
+    "stageFullyCompleted": true,
+    "stageTrackingRemoved": true
+  }
+}
+```
+
+#### 8. 一键完成前置阶段
+
+```http
+POST /df/quest/progress/season/stage/complete-prerequisites
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "lineId": 1,
+  "targetStageId": 103
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "已完成 2 个前置阶段，现在可以跟踪第三阶段",
+  "data": {
+    "completedStages": [
+      { "stageId": 101, "stageName": "第一阶段" },
+      { "stageId": 102, "stageName": "第二阶段" }
+    ],
+    "targetStage": {
+      "stageId": 103,
+      "stageName": "第三阶段"
+    }
+  }
+}
+```
+
+#### 9. 获取阶段进度列表
+
+```http
+GET /df/quest/progress/season/stages
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+| `lineId` | number | ❌ | 筛选指定任务线的阶段 |
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": [
+    {
+      "stageId": 101,
+      "lineId": 1,
+      "stageSequence": 1,
+      "status": "completed",
+      "mainGroupCompleted": true,
+      "subGroupsCompleted": [1002, 1003],
+      "currentStarCount": 10,
+      "totalStarCount": 10,
+      "unlockedAt": "2026-01-25T13:00:00.000Z",
+      "completedAt": "2026-01-25T13:30:00.000Z"
+    },
+    {
+      "stageId": 102,
+      "lineId": 1,
+      "stageSequence": 2,
+      "status": "unlocked",
+      "mainGroupCompleted": false,
+      "subGroupsCompleted": [],
+      "currentStarCount": 0,
+      "totalStarCount": 15,
+      "unlockedAt": "2026-01-25T13:30:00.000Z"
+    }
+  ]
+}
+```
+
+**状态说明**：
+| 状态 | 说明 |
+|------|------|
+| `locked` | 未解锁（星星不足） |
+| `unlocked` | 已解锁，可以开始 |
+| `in_progress` | 进行中 |
+| `completed` | 主线已完成 |
+
+### 赛季任务进度
+
+#### 10. 完成赛季任务
+
+```http
+POST /df/quest/progress/season/complete
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 70101,
+  "groupId": 1001,
+  "stageId": 101,
+  "lineId": 1
+}
+```
+
+**参数说明**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `questId` | number | ✅ | 任务ID |
+| `groupId` | number | ✅ | 分组ID |
+| `stageId` | number | ❌ | 阶段ID |
+| `lineId` | number | ❌ | 任务线ID |
+
+**响应示例（普通完成）**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "赛季任务已标记为完成，并已从跟踪列表移除",
+  "data": {
+    "questId": 70101,
+    "questName": "初探战区",
+    "completedAt": "2026-01-25T14:00:00.000Z",
+    "autoAdvanced": false,
+    "nextStage": null
+  }
+}
+```
+
+**响应示例（主线全部完成，自动进阶）**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "赛季任务已完成，主线全部完成，已自动进阶到：第二阶段",
+  "data": {
+    "questId": 70105,
+    "questName": "深入敌后",
+    "completedAt": "2026-01-25T14:30:00.000Z",
+    "autoAdvanced": true,
+    "nextStage": {
+      "stageId": 102,
+      "stageName": "第二阶段"
+    }
+  }
+}
+```
+
+**说明**：当完成的任务是主线分组的最后一个任务时，系统会自动：
+1. 标记阶段主线完成
+2. 计算累计星星数
+3. 如果星星足够，自动跟踪下一阶段
+4. 更新任务线的当前阶段指向
+
+#### 11. 取消赛季任务完成
+
+```http
+POST /df/quest/progress/season/uncomplete
+```
+
+**请求体**：
+```json
+{
+  "platformID": "123456",
+  "clientID": "68734e4f5d67fecc0d4ac0b0",
+  "clientType": "web",
+  "questId": 70101
+}
+```
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "message": "赛季任务已标记为未完成"
+}
+```
+
+#### 12. 获取赛季任务进度列表
+
+```http
+GET /df/quest/progress/season/list
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+| `status` | string | ❌ | 筛选状态 |
+| `lineId` | number | ❌ | 筛选任务线 |
+| `stageId` | number | ❌ | 筛选阶段 |
+| `groupId` | number | ❌ | 筛选分组 |
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": [
+    {
+      "questId": 70101,
+      "groupId": 1001,
+      "stageId": 101,
+      "lineId": 1,
+      "status": "completed",
+      "objectives": [
+        {
+          "objectiveId": 7001,
+          "currentCount": 1,
+          "requiredCount": 1,
+          "completed": true
+        }
+      ],
+      "completedAt": "2026-01-25T14:00:00.000Z"
+    }
+  ]
+}
+```
+
+### 赛季跟踪综合查询
+
+#### 13. 获取赛季跟踪概览
+
+```http
+GET /df/quest/tracker/season/overview
+```
+
+**查询参数**：
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `platformID` | string | ✅ | 平台用户ID |
+| `clientID` | string | ✅ | 后端用户ID |
+| `clientType` | string | ✅ | 客户端类型 |
+
+**响应示例**：
+```json
+{
+  "code": 0,
+  "success": true,
+  "data": {
+    "trackedSeasonQuestLines": [
+      {
+        "lineId": 1,
+        "lineName": "S7赛季任务",
+        "currentStageId": 102,
+        "currentStageSequence": 2
+      }
+    ],
+    "trackedSeasonStages": [
+      {
+        "stageId": 101,
+        "lineId": 1,
+        "stageName": "第一阶段",
+        "mainGroupId": 1001
+      },
+      {
+        "stageId": 102,
+        "lineId": 1,
+        "stageName": "第二阶段",
+        "mainGroupId": 1004
+      }
+    ],
+    "seasonStageProgress": [
+      {
+        "stageId": 101,
+        "status": "completed",
+        "mainGroupCompleted": true,
+        "currentStarCount": 10
+      },
+      {
+        "stageId": 102,
+        "status": "unlocked",
+        "mainGroupCompleted": false,
+        "currentStarCount": 0
+      }
+    ],
+    "trackedSeasonQuests": 5,
+    "seasonQuestProgress": {
+      "total": 20,
+      "completed": 8
+    }
+  }
+}
+```
+
+### 错误码说明
+
+| 错误码 | 说明 |
+|--------|------|
+| `-1` | 缺少必要参数 |
+| `-2` | 用户验证失败 |
+| `-3` | 资源不存在（任务线/阶段/任务） |
+| `-4` | 状态冲突（已跟踪/已完成） |
+| `-5` | 权限不足（支线不属于此阶段） |
+| `-6` | 重复操作（支线已完成） |
