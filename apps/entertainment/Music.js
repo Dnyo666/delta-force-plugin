@@ -202,7 +202,7 @@ export class Music extends plugin {
       const title = music.fileName || '未知歌曲'
       const singer = music.artist || '未知艺术家'
       const preview = music.metadata?.cover || ''
-      const jumpUrl = 'https://shushu.fan'
+      const jumpUrl = 'https://sjz.hengj.cn'
 
       // OneBotv11 协议
       if (this.e.bot?.adapter === 'OneBotv11' || this.e.bot?.adapter?.name === 'OneBotv11') {
