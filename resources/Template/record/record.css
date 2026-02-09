@@ -140,9 +140,10 @@ body {
 
 /* 增强数据区域的遮罩感 */
 .data-section {
-    position: absolute;
+    position: relative;
     width: 100%;
-    height: 100%;
+    min-height: 300px;
+    height: auto;
     display: flex;
     flex-direction: column;
     z-index: 2;
@@ -228,16 +229,17 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: flex-start;
+    padding-top: 15px;
     min-height: 0;
 }
 
 /* 优化数据网格布局，使其更像专业战绩面板 */
 .data-content {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-    gap: 15px;
-    padding: 20px 18px 0 18px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    padding: 15px 25px 5px 25px;
 }
 
 /* 重新定义数据项样式 */
@@ -276,12 +278,14 @@ body {
 .highlight-kda {
     color: #0FF796;
     font-weight: 700;
-    font-size: 19px;
+    font-size: 22px;
+    font-family: 'Consolas', 'Monaco', monospace;
 }
 
 .highlight-income {
     font-weight: 700;
-    font-size: 19px;
+    font-size: 22px;
+    font-family: 'Consolas', 'Monaco', monospace;
 }
 
 /* 净收益正负颜色 */
